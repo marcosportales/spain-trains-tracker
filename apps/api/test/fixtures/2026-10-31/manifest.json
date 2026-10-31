@@ -1,0 +1,189 @@
+{
+  "recordedAt": "2026-10-31T22:35:22.564Z",
+  "entries": [
+    {
+      "file": "alerts.pb",
+      "url": "https://gtfsrt.renfe.com/alerts.pb",
+      "timestamp": "2026-10-31T22:35:22.752Z",
+      "etag": "\"6ac5f5a4-a724:dtagent10347260902154543mnM/\"",
+      "bytes": 42788
+    },
+    {
+      "file": "flota.json",
+      "url": "https://tiempo-real.renfe.com/renfe-visor/flota.json",
+      "timestamp": "2026-10-31T22:35:22.909Z",
+      "etag": "\"6ae66d25-c5ea:dtagent10347260902154543af9i\"",
+      "bytes": 50666
+    },
+    {
+      "file": "flotaLD.json",
+      "url": "https://tiempo-real.largorecorrido.renfe.com/renfe-visor/flotaLD.json",
+      "timestamp": "2026-10-31T22:35:22.783Z",
+      "etag": "\"6ae66d20-11c9:dtagent10347260902154543af9i\"",
+      "bytes": 4553
+    },
+    {
+      "file": "static/cercanias/agency.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 302,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/calendar.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 7701,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/routes.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 7716,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/shapes.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 1588,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/stop_times.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 7701,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/stops.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 7711,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/transfers.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 3020,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/cercanias/trips.txt",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_CER_FOMENTO/fomento_transit.zip",
+      "timestamp": "2026-10-31T22:35:23.306Z",
+      "etag": "\"6ae55bf9-fb332e\"",
+      "bytes": 7701,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/estaciones.csv",
+      "url": "https://ssl.renfe.com/ftransit/Fichero_estaciones/estaciones.csv",
+      "timestamp": "2026-10-31T22:35:23.110Z",
+      "etag": "\"6ae5495e-22b4b\"",
+      "bytes": 7145,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/agency.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 702,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/calendar_dates.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 17901,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/calendar.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 17901,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/routes.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 17901,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/stop_times.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 17901,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/stops.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 17920,
+      "rowLimit": 50
+    },
+    {
+      "file": "static/larga-distancia/trips.txt",
+      "url": "https://ssl.renfe.com/gtransit/Fichero_AV_LD/google_transit.zip",
+      "timestamp": "2026-10-31T22:35:26.537Z",
+      "etag": "\"6ae53355-d6de4\"",
+      "bytes": 17901,
+      "rowLimit": 50
+    },
+    {
+      "file": "trenesConEstacionesLD.json",
+      "url": "https://tiempo-real.largorecorrido.renfe.com/renfe-visor/trenesConEstacionesLD.json",
+      "timestamp": "2026-10-31T22:35:23.068Z",
+      "etag": "\"6ae66d20-8a3c:dtagent10347260902154543af9i\"",
+      "bytes": 35388
+    },
+    {
+      "file": "trip_updates_LD.pb",
+      "url": "https://gtfsrt.renfe.com/trip_updates_LD.pb",
+      "timestamp": "2026-10-31T22:35:22.737Z",
+      "etag": "\"6ae66d20-f50:dtagent10347260902154543mnM/\"",
+      "bytes": 3920
+    },
+    {
+      "file": "trip_updates.pb",
+      "url": "https://gtfsrt.renfe.com/trip_updates.pb",
+      "timestamp": "2026-10-31T22:35:22.718Z",
+      "etag": "\"6ae66d24-1f86:dtagent10347260902154543mnM/\"",
+      "bytes": 8070
+    },
+    {
+      "file": "vehicle_positions_LD.pb",
+      "url": "https://gtfsrt.renfe.com/vehicle_positions_LD.pb",
+      "timestamp": "2026-10-31T22:35:22.700Z",
+      "etag": "\"6ae66d20-47d:dtagent10347260902154543mnM/\"",
+      "bytes": 1149
+    },
+    {
+      "file": "vehicle_positions.pb",
+      "url": "https://gtfsrt.renfe.com/vehicle_positions.pb",
+      "timestamp": "2026-10-31T22:35:22.565Z",
+      "etag": "\"6ae66d25-2656:dtagent10347260902154543mnM/\"",
+      "bytes": 9814
+    }
+  ]
+}

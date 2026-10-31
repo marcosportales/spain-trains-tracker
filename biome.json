@@ -6,7 +6,15 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!**/dist", "!**/.next", "!**/.turbo", "!**/coverage", "!**/*.md"]
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/.next",
+      "!**/.turbo",
+      "!**/coverage",
+      "!**/*.md",
+      "!**/test/fixtures"
+    ]
   },
   "formatter": {
     "enabled": true,
