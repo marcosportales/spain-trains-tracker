@@ -7,6 +7,7 @@ describe('parseEnv', () => {
       NODE_ENV: 'development',
       PORT: 3001,
       LOG_LEVEL: 'info',
+      DATABASE_URL: 'postgresql://stt:stt@localhost:5432/stt',
       WORKER_HEARTBEAT_INTERVAL_MS: 20_000,
     });
   });
@@ -18,6 +19,7 @@ describe('parseEnv', () => {
   });
 
   it('rejects invalid values with a readable message', () => {
+    expect(() => parseEnv({ NODE_ENV: 'production' })).toThrow(/DATABASE_URL/);
     expect(() => parseEnv({ PORT: 'abc' })).toThrow(/PORT/);
     expect(() => parseEnv({ LOG_LEVEL: 'loud' })).toThrow(/LOG_LEVEL/);
   });

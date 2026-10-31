@@ -41,6 +41,8 @@ packages/   # shared libraries (@stt/contracts, ...)
 | `pnpm test`      | Vitest in every workspace (or `pnpm vitest` at root) |
 | `pnpm db:up`     | Start the local database and wait until healthy     |
 | `pnpm db:down`   | Stop the local database (data volume is kept)        |
+| `pnpm --filter api db:migrate` | Apply Drizzle migrations to `DATABASE_URL` |
+| `pnpm --filter api db:generate` | Generate a migration from schema changes (`db:generate:custom` for raw SQL: hypertables, PostGIS) |
 
 ### Adding a workspace
 
