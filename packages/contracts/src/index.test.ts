@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { CONTRACTS_PACKAGE } from './index.js';
+import * as contracts from './index.js';
 
-describe('@stt/contracts', () => {
-  it('exposes its package name', () => {
-    expect(CONTRACTS_PACKAGE).toBe('@stt/contracts');
+describe('@stt/contracts public entry', () => {
+  it('exports every schema', () => {
+    expect(Object.keys(contracts).sort()).toEqual([
+      'HubCode',
+      'LiveRun',
+      'RunStatus',
+      'ServiceDate',
+      'ServiceType',
+      'Source',
+      'TrainNumber',
+    ]);
   });
 });
