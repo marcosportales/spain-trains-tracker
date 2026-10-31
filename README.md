@@ -20,7 +20,7 @@ pnpm turbo lint typecheck test
 
 ### Local database
 
-Copy `.env.example` to `.env`, then `pnpm db:up`. This starts Postgres 17 with PostGIS and TimescaleDB on `localhost:5432` (`DATABASE_URL` is in `.env.example`). Extensions are enabled by [`docker/initdb/`](./docker/initdb) on first start. To wipe the data, run `docker compose down -v`.
+Copy `.env.example` to `.env`, then `pnpm db:up`. This starts Postgres 17 with PostGIS and TimescaleDB on `localhost:5432` (bound to the loopback interface only) (`DATABASE_URL` is in `.env.example`). Extensions are enabled by [`docker/initdb/`](./docker/initdb) on first start. To wipe the data, run `docker compose down -v`.
 
 ### Workspace layout
 
