@@ -33,6 +33,9 @@
       "quoteStyle": "single",
       "semicolons": "always",
       "trailingCommas": "all"
+    },
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
     }
   },
   "assist": {
@@ -42,5 +45,31 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/api/src/domain/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@nestjs/*"],
+                    "message": "Domain is plain TypeScript: no framework imports (ADR 0001)."
+                  },
+                  {
+                    "group": ["**/infrastructure/**", "**/application/**"],
+                    "message": "Dependency direction: infrastructure \u2192 application \u2192 domain."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
