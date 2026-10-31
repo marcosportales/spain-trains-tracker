@@ -1,0 +1,23 @@
+services:
+  db:
+    # Bundles TimescaleDB and PostGIS for Postgres 17 (see docs/adr/0002).
+    image: timescale/timescaledb-ha:pg17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-stt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stt}
+      POSTGRES_DB: ${POSTGRES_DB:-stt}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/home/postgres/pgdata
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # -h 127.0.0.1 skips the init-time server (unix socket only), so healthy means extensions are loaded.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  db-data:
