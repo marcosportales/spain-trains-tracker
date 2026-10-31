@@ -15,7 +15,8 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "db:up": "docker compose up -d --wait",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "record-fixtures": "pnpm --filter @stt/scripts record-fixtures"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
