@@ -1,0 +1,17 @@
+{
+  "Metadata": {
+    "title": "Spain Trains Tracker",
+    "description": "Live Renfe trains"
+  },
+  "Header": {
+    "appName": "Spain Trains Tracker",
+    "language": "Language"
+  },
+  "Home": {
+    "title": "Live Renfe trains",
+    "subtitle": "Real-time map of train Runs across Spain."
+  },
+  "Footer": {
+    "attribution": "Datos: Renfe (data.renfe.com), CC BY 4.0"
+  }
+}

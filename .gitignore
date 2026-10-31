@@ -27,3 +27,6 @@ coverage/
 
 # Claude Code worktrees
 .claude/worktrees/
+
+# Next.js generated
+next-env.d.ts

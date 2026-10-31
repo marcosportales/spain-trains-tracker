@@ -1,0 +1,17 @@
+{
+  "Metadata": {
+    "title": "Spain Trains Tracker",
+    "description": "Trenes de Renfe en directo"
+  },
+  "Header": {
+    "appName": "Spain Trains Tracker",
+    "language": "Idioma"
+  },
+  "Home": {
+    "title": "Trenes de Renfe en directo",
+    "subtitle": "Mapa en tiempo real de las circulaciones en España."
+  },
+  "Footer": {
+    "attribution": "Datos: Renfe (data.renfe.com), CC BY 4.0"
+  }
+}
