@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildManifestEntry, fixtureDirName, trimDelimitedText } from './fixtures.ts';
+import {
+  buildManifestEntry,
+  fixtureDirName,
+  isSafeEntryName,
+  trimDelimitedText,
+} from './fixtures.ts';
 
 describe('trimDelimitedText', () => {
   it('keeps the header plus the first N data rows', () => {
@@ -66,5 +71,33 @@ describe('buildManifestEntry', () => {
       rowLimit: 50,
     });
     expect(entry.rowLimit).toBe(50);
+  });
+});
+
+describe('isSafeEntryName', () => {
+  it('accepts plain relative names', () => {
+    expect(isSafeEntryName('stops.txt')).toBe(true);
+    expect(isSafeEntryName('sub/stops.txt')).toBe(true);
+  });
+
+  it('rejects absolute paths', () => {
+    expect(isSafeEntryName('/etc/passwd.txt')).toBe(false);
+    expect(isSafeEntryName('C:\\evil.txt')).toBe(false);
+    expect(isSafeEntryName('\\evil.txt')).toBe(false);
+  });
+
+  it('rejects any parent-directory segment', () => {
+    expect(isSafeEntryName('../x.txt')).toBe(false);
+    expect(isSafeEntryName('a/../../x.txt')).toBe(false);
+    expect(isSafeEntryName('a\\..\\x.txt')).toBe(false);
+  });
+
+  it('rejects empty names and NUL bytes', () => {
+    expect(isSafeEntryName('')).toBe(false);
+    expect(isSafeEntryName('a\0b.txt')).toBe(false);
+  });
+
+  it('allows dots inside segment names', () => {
+    expect(isSafeEntryName('a..b/c.txt')).toBe(true);
   });
 });

@@ -40,3 +40,10 @@ export function buildManifestEntry(input: {
   if (input.rowLimit !== undefined) entry.rowLimit = input.rowLimit;
   return entry;
 }
+
+/** True when a zip entry name is a relative path with no `..` segment (no zip-slip). */
+export function isSafeEntryName(name: string): boolean {
+  if (name === '' || name.includes('\0')) return false;
+  if (name.startsWith('/') || name.startsWith('\\') || /^[A-Za-z]:/.test(name)) return false;
+  return !name.split(/[\\/]/).includes('..');
+}

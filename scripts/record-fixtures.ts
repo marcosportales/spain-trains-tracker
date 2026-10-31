@@ -5,7 +5,7 @@
  * Requires the `unzip` binary (static GTFS zips are large; only the first rows are kept).
  */
 import { execFile, spawn } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +13,7 @@ import { promisify } from 'node:util';
 import {
   buildManifestEntry,
   fixtureDirName,
+  isSafeEntryName,
   type ManifestEntry,
   trimDelimitedText,
 } from './fixtures.ts';
@@ -48,7 +49,13 @@ async function download(url: string): Promise<{ response: Response; body: Buffer
 
 async function listZip(zipPath: string): Promise<string[]> {
   const { stdout } = await execFileAsync('unzip', ['-Z1', zipPath], { maxBuffer: 1 << 20 });
-  return stdout.split('\n').filter((name) => name.endsWith('.txt'));
+  const names: string[] = [];
+  for (const name of stdout.split('\n')) {
+    if (!name.endsWith('.txt')) continue;
+    if (isSafeEntryName(name)) names.push(name);
+    else console.warn(`skip unsafe zip entry name: ${JSON.stringify(name)}`);
+  }
+  return names;
 }
 
 /** Stream one zip entry and stop reading once enough lines for `rows` data rows arrived. */
@@ -74,8 +81,10 @@ async function main() {
   if (!Number.isInteger(rows) || rows < 0) throw new Error('--rows must be a non-negative integer');
 
   const now = new Date();
-  const dir = join(outRoot, fixtureDirName(now));
-  await mkdir(dir, { recursive: true });
+  const finalDir = join(outRoot, fixtureDirName(now));
+  // Record into a staging dir; only swap it in if every download succeeded.
+  await mkdir(outRoot, { recursive: true });
+  const dir = await mkdtemp(join(outRoot, '.staging-'));
   const entries: ManifestEntry[] = [];
   const failures: string[] = [];
 
@@ -151,15 +160,22 @@ async function main() {
     await rm(tmp, { recursive: true, force: true });
   }
 
-  entries.sort((a, b) => a.file.localeCompare(b.file));
-  await writeFile(
-    join(dir, 'manifest.json'),
-    `${JSON.stringify({ recordedAt: now.toISOString(), entries }, null, 2)}\n`,
-  );
-  console.log(`\nWrote ${entries.length} files to ${dir}`);
-  if (failures.length > 0) {
-    console.error(`${failures.length} download(s) failed`);
-    process.exitCode = 1;
+  try {
+    if (failures.length > 0) {
+      console.error(`${failures.length} download(s) failed; keeping existing fixtures untouched`);
+      process.exitCode = 1;
+      return;
+    }
+    entries.sort((a, b) => a.file.localeCompare(b.file));
+    await writeFile(
+      join(dir, 'manifest.json'),
+      `${JSON.stringify({ recordedAt: now.toISOString(), entries }, null, 2)}\n`,
+    );
+    await rm(finalDir, { recursive: true, force: true });
+    await rename(dir, finalDir);
+    console.log(`\nWrote ${entries.length} files to ${finalDir}`);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
   }
 }
 
