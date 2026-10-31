@@ -1,0 +1,24 @@
+{
+  "name": "spain-trains-tracker",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.4",
+    "turbo": "2.11.10",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  }
+}
