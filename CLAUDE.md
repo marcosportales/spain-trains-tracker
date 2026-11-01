@@ -20,3 +20,7 @@ Strict rules when asked to implement a GitHub issue with `/mattpocock-skills:imp
 2. **Branch per issue.** Create the branch from `main`: `<issue-number>-<short-kebab-slug>` (e.g. `12-parse-renfe-gtfs`). All work for the issue happens on that branch, in its own worktree if extra worktrees are in use.
 3. **Commits via `/commit:commit`.** Make every commit with that skill. When it asks, choose **commit and push** yourself, without asking the user.
 4. **Open a PR when done.** Use `gh pr create` against `main`. The PR body includes `Closes #<issue-number>` so merging the PR closes the issue automatically.
+
+## Code conventions
+
+- **Relative imports end in `.js`**, even though the files are `.ts` (`import { Hub } from './hub.js'`). The repo uses `module`/`moduleResolution: NodeNext` and ESM (`"type": "module"`), where TypeScript requires the extension (TS2835 without it) and Node needs it at runtime. TypeScript resolves `./hub.js` to `hub.ts`. Never write `.ts` or omit the extension.
