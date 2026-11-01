@@ -109,3 +109,16 @@ describe('SERVICE_TYPE_COLORS', () => {
     ]);
   });
 });
+
+describe('toFeatureCollection positions', () => {
+  it('draws a Run at its animated position when one is given', () => {
+    const runs = liveRunsReducer(initialLiveRuns, { type: 'snapshot', runs: [run('1')] });
+    const collection = toFeatureCollection(runs, new Map([[runKey(run('1')), [1.5, 2.5]]]));
+    expect(collection.features[0]?.geometry.coordinates).toEqual([1.5, 2.5]);
+  });
+
+  it('falls back to the reported position otherwise', () => {
+    const runs = liveRunsReducer(initialLiveRuns, { type: 'snapshot', runs: [run('1')] });
+    expect(toFeatureCollection(runs).features[0]?.geometry.coordinates).toEqual([-3.7, 40.4]);
+  });
+});

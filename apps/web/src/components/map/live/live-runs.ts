@@ -45,13 +45,17 @@ export type LiveRunProperties = {
   snapped: boolean;
 } & RunId;
 
-export function toFeatureCollection(runs: LiveRuns): FeatureCollection<Point, LiveRunProperties> {
+/** `positions` overrides where a Run is drawn (its animated position); the reported one is the default. */
+export function toFeatureCollection(
+  runs: LiveRuns,
+  positions?: ReadonlyMap<string, readonly [number, number]>,
+): FeatureCollection<Point, LiveRunProperties> {
   const features: Feature<Point, LiveRunProperties>[] = [];
   for (const [key, run] of runs) {
     features.push({
       type: 'Feature',
       id: key,
-      geometry: { type: 'Point', coordinates: [run.lon, run.lat] },
+      geometry: { type: 'Point', coordinates: [...(positions?.get(key) ?? [run.lon, run.lat])] },
       properties: {
         serviceType: run.serviceType,
         label: run.lineCode ?? run.trainNumber,

@@ -13,6 +13,9 @@
   },
   "dependencies": {
     "@stt/contracts": "workspace:*",
+    "@turf/along": "^7.4.0",
+    "@turf/helpers": "^7.4.0",
+    "@turf/nearest-point-on-line": "^7.4.0",
     "maplibre-gl": "6.16.0",
     "next": "16.4.3",
     "next-intl": "4.14.9",
