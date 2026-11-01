@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { attributionHtml, MAP_STYLE_URL, SPAIN_VIEW } from './map-config';
 
 export function TrainMap({ label }: { label: string }) {
-  const container = useRef<HTMLDivElement>(null);
+  const container = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!container.current) return;
@@ -26,5 +26,5 @@ export function TrainMap({ label }: { label: string }) {
     return () => map.remove();
   }, []);
 
-  return <div ref={container} role="region" aria-label={label} className="h-full w-full" />;
+  return <section ref={container} aria-label={label} className="h-full w-full" />;
 }
