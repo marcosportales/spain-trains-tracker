@@ -8,6 +8,7 @@ import { LiveRunsReader } from '../../application/live/live-runs.reader.js';
 import { LiveStream } from '../../application/live/live-stream.js';
 import { MovementRepository } from '../../application/movement/movement.repository.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
+import { FeedHealthStore } from '../../application/realtime/feed-health.store.js';
 import { GetRunDetail } from '../../application/run/get-run-detail.use-case.js';
 import { RunDetailReader } from '../../application/run/run-detail.reader.js';
 import { SearchReader } from '../../application/search/search.reader.js';
@@ -17,6 +18,7 @@ import { ListStations } from '../../application/station/list-stations.use-case.j
 import { StationBoardReader } from '../../application/station/station-board.reader.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import { DbModule } from '../db/db.module.js';
+import { DrizzleFeedHealthStore } from '../db/drizzle-feed-health.store.js';
 import { DrizzleLiveRunsReader } from '../db/drizzle-live-runs.reader.js';
 import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
@@ -46,6 +48,7 @@ import { StationsController } from './stations.controller.js';
   ],
   providers: [
     GetHealth,
+    { provide: FeedHealthStore, useClass: DrizzleFeedHealthStore },
     { provide: LiveRunsReader, useClass: DrizzleLiveRunsReader },
     { provide: NetworkRepository, useClass: DrizzleNetworkRepository },
     {

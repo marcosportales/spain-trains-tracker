@@ -7,15 +7,19 @@ import { MovementRepository } from '../../application/movement/movement.reposito
 import { ImportStaticNetwork } from '../../application/network/import-static-network.use-case.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
 import { StaticFeeds } from '../../application/network/static-feeds.js';
+import { FeedHealthSource } from '../../application/realtime/feed-health.source.js';
+import { FeedHealthStore } from '../../application/realtime/feed-health.store.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import type { Env } from '../config/env.js';
 import { DbModule } from '../db/db.module.js';
+import { DrizzleFeedHealthStore } from '../db/drizzle-feed-health.store.js';
 import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { PostgresLiveUpdatesPublisher } from '../db/postgres-live-updates.publisher.js';
 import { LoggingModule } from '../logging/logging.module.js';
 import { HttpStaticFeeds } from '../renfe/http-static-feeds.js';
 import { RenfeVisorFeed } from '../renfe/visor/visor-feed.js';
+import { FeedHealthReporter } from './feed-health.reporter.js';
 import { FeedPollers } from './feed-pollers.js';
 import { HEARTBEAT_INTERVAL_MS, HEARTBEAT_LOGGER, HeartbeatService } from './heartbeat.service.js';
 import {
@@ -78,6 +82,24 @@ import { createVisorPollers } from './visor-pollers.js';
             cycle,
             repository: movement,
           }),
+        ),
+    },
+    { provide: FeedHealthSource, useExisting: FeedPollers },
+    { provide: FeedHealthStore, useClass: DrizzleFeedHealthStore },
+    {
+      provide: FeedHealthReporter,
+      inject: [FeedHealthSource, FeedHealthStore, ConfigService, Logger],
+      useFactory: (
+        source: FeedHealthSource,
+        store: FeedHealthStore,
+        config: ConfigService<Env, true>,
+        logger: Logger,
+      ) =>
+        new FeedHealthReporter(
+          source,
+          store,
+          config.get('WORKER_HEARTBEAT_INTERVAL_MS', { infer: true }),
+          logger,
         ),
     },
     { provide: STATIC_IMPORT_LOGGER, useExisting: Logger },

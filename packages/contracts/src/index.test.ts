@@ -5,6 +5,8 @@ describe('@stt/contracts public entry', () => {
   it('exports every schema', () => {
     expect(Object.keys(contracts).sort()).toEqual([
       'CycleId',
+      'FeedHealthDto',
+      'HealthDto',
       'HubCode',
       'LineCode',
       'LineDto',

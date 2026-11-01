@@ -8,10 +8,18 @@ describe('parseEnv', () => {
       PORT: 3001,
       LOG_LEVEL: 'info',
       DATABASE_URL: 'postgresql://stt:stt@localhost:5432/stt',
+      WEB_ORIGIN: 'http://localhost:3000',
       WORKER_HEARTBEAT_INTERVAL_MS: 20_000,
       FEED_POLL_INTERVAL_MS: 20_000,
       VISOR_FEED_ENABLED: false,
     });
+  });
+
+  it('reduces WEB_ORIGIN to a bare origin so CORS matches the browser Origin header', () => {
+    expect(parseEnv({ WEB_ORIGIN: 'https://trains.example.com/' }).WEB_ORIGIN).toBe(
+      'https://trains.example.com',
+    );
+    expect(() => parseEnv({ WEB_ORIGIN: 'not a url' })).toThrow(/WEB_ORIGIN/);
   });
 
   it('coerces numeric values from strings', () => {
