@@ -1,7 +1,12 @@
 'use client';
 
 import type { LiveRun, RunId } from '@stt/contracts';
-import { AttributionControl, Map as MapLibreMap, NavigationControl } from 'maplibre-gl';
+import {
+  AttributionControl,
+  Map as MapLibreMap,
+  NavigationControl,
+  setWorkerUrl,
+} from 'maplibre-gl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useSearchParams } from 'next/navigation';
@@ -22,6 +27,10 @@ import { StationsLayer } from './stations/StationsLayer';
 import { useStations } from './stations/use-stations';
 import { TrackGeometryLayer } from './track/TrackGeometryLayer';
 import { useTrackGeometry } from './track/use-track-geometry';
+
+// MapLibre derives its worker URL from its own `import.meta.url`, which the bundler rewrites to a
+// non-http URL, leaving the worker (and with it every GeoJSON layer) unable to start.
+setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href);
 
 type Props = {
   label: string;
