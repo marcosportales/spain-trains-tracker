@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest';
+import { InvalidMovementValueError } from './errors.js';
+import { createRun } from './run.js';
+import { createRunId } from './run-id.js';
+
+describe('createRun', () => {
+  const id = createRunId('3063', '2026-10-31');
+
+  it('creates a Run with its service type and optional Line', () => {
+    expect(createRun({ id, serviceType: 'ave', lineCode: ' AVE ' })).toEqual({
+      id,
+      serviceType: 'ave',
+      lineCode: 'AVE',
+    });
+    expect(createRun({ id, serviceType: 'cercanias' })).not.toHaveProperty('lineCode');
+  });
+
+  it('rejects an unknown service type or blank Line', () => {
+    expect(() => createRun({ id, serviceType: 'tram' as never })).toThrow(
+      InvalidMovementValueError,
+    );
+    expect(() => createRun({ id, serviceType: 'ave', lineCode: ' ' })).toThrow(
+      InvalidMovementValueError,
+    );
+  });
+});
