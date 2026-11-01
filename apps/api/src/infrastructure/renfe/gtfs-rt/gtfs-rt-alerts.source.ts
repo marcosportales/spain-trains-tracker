@@ -64,16 +64,18 @@ export class GtfsRtAlertsSource extends ServiceAlertsSource {
     const lineByRoute =
       routeIds.size === 0 ? new Map() : await this.lines.lineCodesForRouteIds([...routeIds]);
 
-    const alerts: ServiceAlert[] = [];
+    // A feed may repeat an id; storage takes one row per id, so the last one wins.
+    const alerts = new Map<string, ServiceAlert>();
     for (const { id, alert } of entities) {
       try {
-        alerts.push(toServiceAlert(id, alert, lineByRoute));
+        const converted = toServiceAlert(id, alert, lineByRoute);
+        alerts.set(converted.id, converted);
       } catch (error) {
         if (!(error instanceof InvalidMovementValueError)) throw error;
         this.onSkipped({ entityId: id, reason: error.message });
       }
     }
-    return alerts;
+    return [...alerts.values()];
   }
 }
 
