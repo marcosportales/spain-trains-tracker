@@ -54,5 +54,22 @@
       "media_distancia": "Medium distance",
       "ancho_metrico": "Metre gauge"
     }
+  },
+  "StationBoard": {
+    "title": "{station} board",
+    "window": "Next 2 hours",
+    "tabs": "Board type",
+    "departures": "Departures",
+    "arrivals": "Arrivals",
+    "to": "To {station}",
+    "from": "From {station}",
+    "empty": "No Runs in the next 2 hours",
+    "stale": "Could not refresh; showing the last known board",
+    "badge": {
+      "on_time": "On time",
+      "late": "{minutes} min late",
+      "cancelled": "Cancelled",
+      "unknown": "Delay unknown"
+    }
   }
 }
