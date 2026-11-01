@@ -29,5 +29,30 @@
       "media_distancia": "Media Distancia",
       "ancho_metrico": "Ancho métrico"
     }
+  },
+  "RunDetail": {
+    "title": "Circulación {trainNumber}",
+    "close": "Cerrar",
+    "route": "{origin} → {destination}",
+    "nextStation": "Próxima estación",
+    "accessibility": "Accesibilidad",
+    "accessible": "Accesible en silla de ruedas",
+    "notAccessible": "No accesible en silla de ruedas",
+    "rollingStock": "Material",
+    "stops": "Paradas",
+    "noStops": "Horario no disponible",
+    "badge": {
+      "on_time": "Puntual",
+      "late": "{minutes} min de retraso",
+      "cancelled": "Cancelado",
+      "unknown": "Retraso desconocido"
+    },
+    "serviceTypes": {
+      "cercanias": "Cercanías",
+      "ave": "AVE",
+      "larga_distancia": "Larga Distancia",
+      "media_distancia": "Media Distancia",
+      "ancho_metrico": "Ancho métrico"
+    }
   }
 }

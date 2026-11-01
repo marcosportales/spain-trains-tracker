@@ -29,5 +29,30 @@
       "media_distancia": "Medium distance",
       "ancho_metrico": "Metre gauge"
     }
+  },
+  "RunDetail": {
+    "title": "Run {trainNumber}",
+    "close": "Close",
+    "route": "{origin} → {destination}",
+    "nextStation": "Next station",
+    "accessibility": "Accessibility",
+    "accessible": "Wheelchair accessible",
+    "notAccessible": "Not wheelchair accessible",
+    "rollingStock": "Rolling stock",
+    "stops": "Stops",
+    "noStops": "No timetable available",
+    "badge": {
+      "on_time": "On time",
+      "late": "{minutes} min late",
+      "cancelled": "Cancelled",
+      "unknown": "Delay unknown"
+    },
+    "serviceTypes": {
+      "cercanias": "Cercanías",
+      "ave": "AVE",
+      "larga_distancia": "Long distance",
+      "media_distancia": "Medium distance",
+      "ancho_metrico": "Metre gauge"
+    }
   }
 }
