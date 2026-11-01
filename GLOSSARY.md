@@ -53,6 +53,10 @@ _Avoid_: State
 How far a Run is behind its schedule at a given moment, in seconds.
 _Avoid_: Lateness, retraso (in code)
 
+**Station board**:
+The next 2 hours of scheduled departures and arrivals at a Station, with each Run's live Delay and Service status.
+_Avoid_: Timetable, schedule (the board is the timetable joined with live data)
+
 **Service alert**:
 An official notice from Renfe about a disruption that affects one or more Lines.
 _Avoid_: Incident, aviso (in code)

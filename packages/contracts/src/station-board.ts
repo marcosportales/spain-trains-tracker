@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ServiceStatus } from './run-detail.js';
 import { LineCode, StationCode, Timestamp } from './run-id.js';
 import { ServiceDate } from './service-date.js';
 import { ServiceType } from './service-type.js';
@@ -15,6 +16,8 @@ export const StationBoardEntry = z.object({
   scheduledAt: Timestamp,
   estimatedAt: Timestamp.optional(),
   delaySeconds: z.number().int().optional(),
+  /** `cancelled` when Renfe has called the Run off. */
+  serviceStatus: ServiceStatus.optional(),
 });
 export type StationBoardEntry = z.infer<typeof StationBoardEntry>;
 
