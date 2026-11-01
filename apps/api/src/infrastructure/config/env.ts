@@ -10,6 +10,7 @@ const envSchema = z
       .default('info'),
     DATABASE_URL: z.string().min(1).optional(),
     WORKER_HEARTBEAT_INTERVAL_MS: z.coerce.number().int().positive().default(20_000),
+    FEED_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(20_000),
   })
   .refine((env) => env.NODE_ENV !== 'production' || env.DATABASE_URL, {
     path: ['DATABASE_URL'],
