@@ -10,6 +10,9 @@ export function Header() {
       <Link href="/" className="shrink-0 font-semibold">
         {t('appName')}
       </Link>
+      <Link href="/punctuality" className="shrink-0 text-sm">
+        {t('punctuality')}
+      </Link>
       <SearchBox />
       <LocaleSwitcher />
     </header>

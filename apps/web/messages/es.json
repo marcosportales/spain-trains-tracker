@@ -5,7 +5,8 @@
   },
   "Header": {
     "appName": "Spain Trains Tracker",
-    "language": "Idioma"
+    "language": "Idioma",
+    "punctuality": "Puntualidad"
   },
   "Home": {
     "title": "Trenes de Renfe en directo",
@@ -100,5 +101,25 @@
     "lines": "Líneas: {lines}",
     "source": "Fuente: Renfe",
     "since": "desde {when}"
+  },
+  "Punctuality": {
+    "title": "Puntualidad",
+    "description": "Qué líneas circulan a su hora y cuándo se producen los retrasos. Basado en los retrasos que informa Renfe.",
+    "window": "Periodo",
+    "lastDays": "Últimos {days} días",
+    "ranking": "Ranking de líneas",
+    "empty": "Aún no hay datos suficientes para ordenar las líneas",
+    "line": "Línea",
+    "onTime": "Puntualidad",
+    "avgDelay": "Retraso medio",
+    "observations": "Observaciones",
+    "minutes": "{minutes} min",
+    "showHours": "Ver por hora",
+    "byHour": "Retraso por hora del día",
+    "forAllLines": "Todas las líneas, retraso medio por hora (hora de Madrid)",
+    "forLine": "{line}, retraso medio por hora (hora de Madrid)",
+    "hourTitle": "{hour}:00, retraso medio de {minutes} min",
+    "noData": "{hour}:00, sin datos",
+    "error": "No se pudo actualizar; se muestran las últimas cifras conocidas"
   }
 }
