@@ -19,10 +19,12 @@ export function TrainMap({ label }: { label: string }) {
       dragRotate: false,
     });
     map.touchZoomRotate.disableRotation();
-    map.addControl(new AttributionControl({ customAttribution: attributionHtml() }));
+    map.addControl(
+      new AttributionControl({ compact: false, customAttribution: attributionHtml() }),
+    );
     map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
     return () => map.remove();
   }, []);
 
-  return <div ref={container} role="application" aria-label={label} className="h-full w-full" />;
+  return <div ref={container} role="region" aria-label={label} className="h-full w-full" />;
 }
