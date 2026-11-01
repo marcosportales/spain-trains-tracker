@@ -35,10 +35,10 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className="flex min-h-screen flex-col">
+      <body className="flex h-dvh flex-col">
         <NextIntlClientProvider>
           <Header />
-          <main className="flex-1 p-4">{children}</main>
+          <main className="relative min-h-0 flex-1">{children}</main>
           <Footer />
         </NextIntlClientProvider>
       </body>

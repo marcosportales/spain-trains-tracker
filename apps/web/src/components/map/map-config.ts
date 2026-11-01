@@ -1,0 +1,17 @@
+export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
+export const SPAIN_VIEW = {
+  center: [-3.7, 40.2] as [number, number],
+  zoom: 5.4,
+};
+
+export const ATTRIBUTION: { label: string; href: string }[] = [
+  { label: '© OpenStreetMap contributors', href: 'https://www.openstreetmap.org/copyright' },
+  { label: 'OpenFreeMap', href: 'https://openfreemap.org' },
+  { label: 'Renfe', href: 'https://data.renfe.com' },
+];
+
+export const attributionHtml = (): string =>
+  ATTRIBUTION.map((a) => `<a href="${a.href}" target="_blank" rel="noopener">${a.label}</a>`).join(
+    ' | ',
+  );

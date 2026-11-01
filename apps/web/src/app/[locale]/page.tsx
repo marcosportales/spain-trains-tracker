@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { use } from 'react';
+import { TrainMap } from '@/components/map/TrainMap';
 
 export default function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params);
@@ -8,8 +9,8 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
   const t = useTranslations('Home');
   return (
     <>
-      <h1 className="text-2xl font-bold">{t('title')}</h1>
-      <p>{t('subtitle')}</p>
+      <h1 className="sr-only">{t('title')}</h1>
+      <TrainMap label={t('mapLabel')} />
     </>
   );
 }

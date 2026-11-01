@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "maplibre-gl": "6.16.0",
     "next": "16.4.3",
     "next-intl": "4.14.9",
     "react": "19.3.1",
