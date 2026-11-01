@@ -2,7 +2,9 @@
 
 import type { RunId } from '@stt/contracts';
 import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import type { TrackPaths } from '../motion/interpolation';
+import { RunMotions } from '../motion/run-motions';
 import { type LiveRuns, SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
@@ -51,16 +53,30 @@ function addLayers(map: MapLibreMap) {
   });
 }
 
-/** Renders live Runs on `map`, updating the GeoJSON source in place on every diff. */
+const prefersReducedMotion = (): boolean =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Renders live Runs on `map`, updating the GeoJSON source in place on every diff. Runs glide
+ * between consecutive positions (along `paths`, the Track geometry by Line code, when they have
+ * one), unless the user prefers reduced motion.
+ */
 export function LiveRunsLayer({
   map,
   runs,
+  paths,
   onSelect,
 }: {
   map: MapLibreMap | null;
   runs: LiveRuns;
+  paths?: ReadonlyMap<string, TrackPaths>;
   onSelect?: (id: RunId) => void;
 }) {
+  // Rebuilt when the Track geometry arrives; Runs then restart from their reported positions.
+  const motions = useMemo(
+    () => new RunMotions({ ...(paths && { paths }), reducedMotion: prefersReducedMotion() }),
+    [paths],
+  );
   const select = useRef(onSelect);
   select.current = onSelect;
 
@@ -89,9 +105,16 @@ export function LiveRunsLayer({
 
   useEffect(() => {
     if (!map) return;
+    let frame: number | undefined;
+    const draw = (now: number) => {
+      const source = map.getSource(SOURCE_ID) as GeoJSONSource;
+      source.setData(toFeatureCollection(runs, motions.positionsAt(now)));
+      frame = motions.isAnimating(now) ? requestAnimationFrame(draw) : undefined;
+    };
     const sync = () => {
       if (!map.getSource(SOURCE_ID)) addLayers(map);
-      (map.getSource(SOURCE_ID) as GeoJSONSource).setData(toFeatureCollection(runs));
+      motions.update(runs, performance.now());
+      draw(performance.now());
     };
     // `isStyleLoaded()` dips to false while a source reloads, so once the layers exist
     // we push data straight away instead of waiting for a `load` that will not fire again.
@@ -99,8 +122,9 @@ export function LiveRunsLayer({
     else map.once('load', sync);
     return () => {
       map.off('load', sync);
+      if (frame !== undefined) cancelAnimationFrame(frame);
     };
-  }, [map, runs]);
+  }, [map, runs, motions]);
 
   return null;
 }
