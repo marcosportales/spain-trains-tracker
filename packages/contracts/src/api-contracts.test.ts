@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DelayByHour,
   LineDto,
   LiveDiff,
   LiveSnapshot,
+  PunctualityRanking,
   RunDetail,
   SearchResult,
   ServiceAlertDto,
@@ -203,4 +205,42 @@ describe('LineDto', () => {
       },
     }));
   it('rejects a non-kebab hubCode', () => rejects(LineDto, { ...ok, hubCode: 'Madrid' }));
+});
+
+describe('PunctualityRanking', () => {
+  const ok = {
+    days: 7,
+    lines: [
+      {
+        lineCode: 'C1',
+        name: 'C1',
+        serviceType: 'cercanias',
+        hubCode: 'madrid',
+        observations: 120,
+        onTimePct: 91.5,
+        avgSeconds: -20,
+      },
+    ],
+  };
+  it('accepts an example payload', () => expect(PunctualityRanking.parse(ok)).toEqual(ok));
+  it('accepts an empty ranking', () =>
+    expect(PunctualityRanking.safeParse({ days: 7, lines: [] }).success).toBe(true));
+  it('rejects an on-time share above 100', () =>
+    rejects(PunctualityRanking, { ...ok, lines: [{ ...ok.lines[0], onTimePct: 101 }] }));
+});
+
+describe('DelayByHour', () => {
+  const hours = Array.from({ length: 24 }, (_, hour) => ({
+    hour,
+    observations: 0,
+    avgSeconds: null,
+    onTimePct: null,
+  }));
+  it('accepts 24 hours', () =>
+    expect(DelayByHour.parse({ days: 7, lineCode: 'C1', hours })).toEqual({
+      days: 7,
+      lineCode: 'C1',
+      hours,
+    }));
+  it('rejects fewer than 24 hours', () => rejects(DelayByHour, { days: 7, hours: hours.slice(1) }));
 });
