@@ -7,20 +7,24 @@ import { LiveStream } from '../../application/live/live-stream.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
 import { GetRunDetail } from '../../application/run/get-run-detail.use-case.js';
 import { RunDetailReader } from '../../application/run/run-detail.reader.js';
+import { GetStationBoard } from '../../application/station/get-station-board.use-case.js';
+import { StationBoardReader } from '../../application/station/station-board.reader.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import { DbModule } from '../db/db.module.js';
 import { DrizzleLiveRunsReader } from '../db/drizzle-live-runs.reader.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { DrizzleRunDetailReader } from '../db/drizzle-run-detail.reader.js';
+import { DrizzleStationBoardReader } from '../db/drizzle-station-board.reader.js';
 import { PostgresLiveNotifications } from '../db/postgres-live-notifications.js';
 import { LoggingModule } from '../logging/logging.module.js';
 import { HealthController } from './health.controller.js';
 import { LiveController } from './live.controller.js';
 import { RunsController } from './runs.controller.js';
+import { StationsController } from './stations.controller.js';
 
 @Module({
   imports: [AppConfigModule, LoggingModule, DbModule],
-  controllers: [HealthController, LiveController, RunsController],
+  controllers: [HealthController, LiveController, RunsController, StationsController],
   providers: [
     GetHealth,
     { provide: LiveRunsReader, useClass: DrizzleLiveRunsReader },
@@ -37,6 +41,13 @@ import { RunsController } from './runs.controller.js';
       inject: [RunDetailReader, NetworkRepository],
       useFactory: (reader: RunDetailReader, network: NetworkRepository) =>
         new GetRunDetail(reader, network),
+    },
+    { provide: StationBoardReader, useClass: DrizzleStationBoardReader },
+    {
+      provide: GetStationBoard,
+      inject: [StationBoardReader, NetworkRepository],
+      useFactory: (reader: StationBoardReader, network: NetworkRepository) =>
+        new GetStationBoard(reader, network),
     },
     { provide: LiveNotifications, useClass: PostgresLiveNotifications },
     {
