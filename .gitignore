@@ -30,3 +30,7 @@ coverage/
 
 # Next.js generated
 next-env.d.ts
+
+# Playwright
+test-results/
+playwright-report/

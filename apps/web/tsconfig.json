@@ -20,6 +20,8 @@
     "src",
     "messages",
     "vitest.config.ts",
+    "playwright.config.ts",
+    "e2e",
     "next.config.ts",
     ".next/types/**/*.ts"
   ],
