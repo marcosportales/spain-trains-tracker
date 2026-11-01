@@ -11,7 +11,9 @@ import {
   createSighting,
   type Delay,
   InvalidMovementValueError,
+  madridLocalToDate,
   normalizeTrainNumber,
+  parseMadridLocalTimestamp,
   type Run,
   type RunStopEstimate,
   type Sighting,
@@ -25,7 +27,6 @@ import {
   scheduledRunsByTripId,
   trimmedOrUndefined,
 } from '../gtfs-rt/gtfs-rt-common.js';
-import { madridLocalToDate, parseMadridLocalTimestamp } from './madrid-time.js';
 
 export type { SkippedEntity };
 
