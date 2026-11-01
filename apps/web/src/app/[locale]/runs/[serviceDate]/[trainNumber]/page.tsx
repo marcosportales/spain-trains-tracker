@@ -30,6 +30,7 @@ export default async function RunPage({ params }: { params: Params }) {
       <Suspense>
         <TrainMap
           label={t('mapLabel')}
+          stationsHint={t('stationsHint')}
           selected={{ serviceDate: detail.run.serviceDate, trainNumber: detail.run.trainNumber }}
           selectedFallback={detail.run}
         />

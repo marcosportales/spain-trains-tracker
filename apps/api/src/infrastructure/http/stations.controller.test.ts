@@ -1,10 +1,11 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { StationBoard } from '@stt/contracts';
+import { StationBoard, StationList } from '@stt/contracts';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestDatabase, type TestDatabase } from '../../../test/support/test-database.js';
 import { GetStationBoard } from '../../application/station/get-station-board.use-case.js';
+import { ListStations } from '../../application/station/list-stations.use-case.js';
 import {
   createDelay,
   createRun,
@@ -55,6 +56,7 @@ describe('GET /stations/:code/board', () => {
             () => NOW,
           ),
         },
+        { provide: ListStations, useValue: new ListStations(network) },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
@@ -135,6 +137,13 @@ describe('GET /stations/:code/board', () => {
 
   const get = (path: string) => request(app.getHttpServer()).get(path);
   const board = async (path: string) => StationBoard.parse((await get(path).expect(200)).body);
+
+  it('lists every Station with its coordinates', async () => {
+    const result = StationList.parse((await get('/stations').expect(200)).body);
+    expect(result).toEqual(
+      ['A', 'B', 'C'].map((code) => ({ code, name: `Station ${code}`, lat: 40, lon: -3 })),
+    );
+  });
 
   it('answers 404 for an unknown Station', async () => {
     await get('/stations/ZZZ/board').expect(404);

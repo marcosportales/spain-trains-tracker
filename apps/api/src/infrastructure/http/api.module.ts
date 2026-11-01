@@ -8,6 +8,7 @@ import { NetworkRepository } from '../../application/network/network.repository.
 import { GetRunDetail } from '../../application/run/get-run-detail.use-case.js';
 import { RunDetailReader } from '../../application/run/run-detail.reader.js';
 import { GetStationBoard } from '../../application/station/get-station-board.use-case.js';
+import { ListStations } from '../../application/station/list-stations.use-case.js';
 import { StationBoardReader } from '../../application/station/station-board.reader.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import { DbModule } from '../db/db.module.js';
@@ -48,6 +49,11 @@ import { StationsController } from './stations.controller.js';
       inject: [StationBoardReader, NetworkRepository],
       useFactory: (reader: StationBoardReader, network: NetworkRepository) =>
         new GetStationBoard(reader, network),
+    },
+    {
+      provide: ListStations,
+      inject: [NetworkRepository],
+      useFactory: (network: NetworkRepository) => new ListStations(network),
     },
     { provide: LiveNotifications, useClass: PostgresLiveNotifications },
     {
