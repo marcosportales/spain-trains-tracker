@@ -3,6 +3,7 @@ export * from './errors.js';
 export * from './live-position.js';
 export * from './run.js';
 export * from './run-id.js';
+export * from './run-stop-estimate.js';
 export * from './service-alert.js';
 export * from './service-date.js';
 export * from './sighting.js';

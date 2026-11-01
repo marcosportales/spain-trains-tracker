@@ -11,6 +11,11 @@ const envSchema = z
     DATABASE_URL: z.string().min(1).optional(),
     WORKER_HEARTBEAT_INTERVAL_MS: z.coerce.number().int().positive().default(20_000),
     FEED_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(20_000),
+    /** Poll Renfe's undocumented visor JSON to enrich the Official feeds (ADR 0005). Off by default. */
+    VISOR_FEED_ENABLED: z
+      .enum(['true', 'false'])
+      .default('false')
+      .transform((value) => value === 'true'),
   })
   .refine((env) => env.NODE_ENV !== 'production' || env.DATABASE_URL, {
     path: ['DATABASE_URL'],

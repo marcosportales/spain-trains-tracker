@@ -38,4 +38,14 @@ describe('createRun', () => {
       InvalidMovementValueError,
     );
   });
+
+  it('keeps the Rolling stock, trimmed, and rejects a blank one', () => {
+    expect(createRun({ id, serviceType: 'ave', rollingStock: ' 449013 ' }).rollingStock).toBe(
+      '449013',
+    );
+    expect(createRun({ id, serviceType: 'ave' })).not.toHaveProperty('rollingStock');
+    expect(() => createRun({ id, serviceType: 'ave', rollingStock: ' ' })).toThrow(
+      InvalidMovementValueError,
+    );
+  });
 });

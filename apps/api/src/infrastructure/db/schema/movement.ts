@@ -24,6 +24,7 @@ export const runs = pgTable(
     destinationStationCode: text('destination_station_code'),
     status: text('status'),
     wheelchairAccessible: boolean('wheelchair_accessible'),
+    rollingStock: text('rolling_stock'),
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull(),
   },
   (t) => [
@@ -80,6 +81,25 @@ export const delays = pgTable(
       t.observedAt,
     ),
   ],
+);
+
+/**
+ * When a Run is expected at each Station of its journey (timetable plus Delay). Only the latest
+ * estimates are kept: every update replaces the Run's rows. Not a hypertable.
+ */
+export const runStopEstimates = pgTable(
+  'run_stop_estimates',
+  {
+    trainNumber: text('train_number').notNull(),
+    serviceDate: date('service_date', { mode: 'string' }).notNull(),
+    sequence: integer('sequence').notNull(),
+    stationCode: text('station_code').notNull(),
+    scheduledArrival: timestamp('scheduled_arrival', { withTimezone: true }).notNull(),
+    scheduledDeparture: timestamp('scheduled_departure', { withTimezone: true }).notNull(),
+    estimatedArrival: timestamp('estimated_arrival', { withTimezone: true }).notNull(),
+    estimatedDeparture: timestamp('estimated_departure', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.trainNumber, t.serviceDate, t.sequence] })],
 );
 
 export const serviceAlerts = pgTable(

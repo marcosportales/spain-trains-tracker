@@ -103,7 +103,14 @@ export class RunIngestCycle {
       const known =
         this.runs.get(key) ?? (await this.repository.findRun(id.trainNumber, id.serviceDate));
       if (known) {
-        const { id: runId, serviceType, lineCode, status, wheelchairAccessible } = known;
+        const {
+          id: runId,
+          serviceType,
+          lineCode,
+          status,
+          wheelchairAccessible,
+          rollingStock,
+        } = known;
         resolved.set(
           key,
           createRun({
@@ -112,6 +119,7 @@ export class RunIngestCycle {
             ...(lineCode !== undefined && { lineCode }),
             ...(status !== undefined && { status }),
             ...(wheelchairAccessible !== undefined && { wheelchairAccessible }),
+            ...(rollingStock !== undefined && { rollingStock }),
           }),
         );
       }

@@ -10,6 +10,7 @@ describe('parseEnv', () => {
       DATABASE_URL: 'postgresql://stt:stt@localhost:5432/stt',
       WORKER_HEARTBEAT_INTERVAL_MS: 20_000,
       FEED_POLL_INTERVAL_MS: 20_000,
+      VISOR_FEED_ENABLED: false,
     });
   });
 
@@ -23,5 +24,11 @@ describe('parseEnv', () => {
     expect(() => parseEnv({ NODE_ENV: 'production' })).toThrow(/DATABASE_URL/);
     expect(() => parseEnv({ PORT: 'abc' })).toThrow(/PORT/);
     expect(() => parseEnv({ LOG_LEVEL: 'loud' })).toThrow(/LOG_LEVEL/);
+  });
+
+  it('enables the Visor feed only when VISOR_FEED_ENABLED is exactly "true"', () => {
+    expect(parseEnv({ VISOR_FEED_ENABLED: 'true' }).VISOR_FEED_ENABLED).toBe(true);
+    expect(parseEnv({ VISOR_FEED_ENABLED: 'false' }).VISOR_FEED_ENABLED).toBe(false);
+    expect(() => parseEnv({ VISOR_FEED_ENABLED: 'yes' })).toThrow(/VISOR_FEED_ENABLED/);
   });
 });

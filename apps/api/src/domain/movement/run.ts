@@ -20,6 +20,8 @@ export interface Run {
   readonly status?: RunStatus;
   /** Whether the Rolling stock can carry wheelchair users, when the Source says. */
   readonly wheelchairAccessible?: boolean;
+  /** The physical unit operating the Run (Rolling stock), as its Source names it. */
+  readonly rollingStock?: string;
 }
 
 export function createRun(input: Run): Run {
@@ -36,6 +38,9 @@ export function createRun(input: Run): Run {
     ...(input.status !== undefined && { status: input.status }),
     ...(input.wheelchairAccessible !== undefined && {
       wheelchairAccessible: input.wheelchairAccessible,
+    }),
+    ...(input.rollingStock !== undefined && {
+      rollingStock: requireNonEmpty('Rolling stock', input.rollingStock),
     }),
   };
 }
