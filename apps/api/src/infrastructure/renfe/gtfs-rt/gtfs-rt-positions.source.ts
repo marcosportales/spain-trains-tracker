@@ -4,17 +4,25 @@ import {
   RealtimePositionsSource,
 } from '../../../application/realtime/realtime-positions.source.js';
 import {
-  createRunId,
   createSighting,
   InvalidMovementValueError,
   parseVehicleLabel,
-  type RunId,
   type Sighting,
   type SightingStatus,
-  type Source,
-  serviceDateFor,
 } from '../../../domain/movement/index.js';
 import type { ScheduledRun } from '../../../domain/network/index.js';
+import {
+  fallbackObservedAt,
+  runIdAt,
+  type ScheduledRunLookup,
+  type SkippedEntity,
+  SOURCE_OF,
+  scheduledRunsByTripId,
+  secondsToDate,
+  trimmedOrUndefined,
+} from './gtfs-rt-common.js';
+
+export type { ScheduledRunLookup, SkippedEntity };
 
 const { transit_realtime: rt } = gtfsRealtime;
 
@@ -23,27 +31,11 @@ export const RENFE_POSITION_URLS: Readonly<Record<PositionFeed, string>> = {
   'larga-distancia': 'https://gtfsrt.renfe.com/vehicle_positions_LD.pb',
 };
 
-const SOURCE_OF: Readonly<Record<PositionFeed, Source>> = {
-  cercanias: 'gtfsrt_cercanias',
-  'larga-distancia': 'gtfsrt_ld',
-};
-
 const STATUS_OF: Readonly<Record<number, SightingStatus>> = {
   [rt.VehiclePosition.VehicleStopStatus.INCOMING_AT]: 'INCOMING_AT',
   [rt.VehiclePosition.VehicleStopStatus.STOPPED_AT]: 'STOPPED_AT',
   [rt.VehiclePosition.VehicleStopStatus.IN_TRANSIT_TO]: 'IN_TRANSIT_TO',
 };
-
-/** The part of the timetable needed to identify a Run. */
-export interface ScheduledRunLookup {
-  findScheduledRunsByTripIds(tripIds: readonly string[]): Promise<ScheduledRun[]>;
-  findScheduledRuns(trainNumber: string, serviceDate: string): Promise<ScheduledRun[]>;
-}
-
-export interface SkippedEntity {
-  readonly entityId: string;
-  readonly reason: string;
-}
 
 export interface GtfsRtPositionsSourceOptions {
   readonly timetable: ScheduledRunLookup;
@@ -84,16 +76,19 @@ export class GtfsRtPositionsSource extends RealtimePositionsSource {
     if (!response.ok) throw new Error(`GET ${url} failed: ${response.status}`);
     const message = rt.FeedMessage.decode(new Uint8Array(await response.arrayBuffer()));
 
-    const fallbackObservedAt = this.fallbackObservedAt(feed, message, response);
+    const fallback = fallbackObservedAt(feed, message, response, this.now);
     const vehicles = message.entity.flatMap((entity) =>
       entity.vehicle ? [{ id: entity.id, vehicle: entity.vehicle }] : [],
     );
-    const scheduled = await this.scheduledRunsByTripId(vehicles.map((v) => tripIdOf(v.vehicle)));
+    const scheduled = await scheduledRunsByTripId(
+      this.timetable,
+      vehicles.map((v) => tripIdOf(v.vehicle)),
+    );
 
     const sightings: Sighting[] = [];
     for (const { id, vehicle } of vehicles) {
       try {
-        const sighting = await this.toSighting(feed, vehicle, scheduled, fallbackObservedAt);
+        const sighting = await this.toSighting(feed, vehicle, scheduled, fallback);
         if (sighting) sightings.push(sighting);
         else this.onSkipped({ entityId: id, reason: 'Run could not be identified' });
       } catch (error) {
@@ -104,33 +99,11 @@ export class GtfsRtPositionsSource extends RealtimePositionsSource {
     return sightings;
   }
 
-  private fallbackObservedAt(
-    feed: PositionFeed,
-    message: gtfsRealtime.transit_realtime.FeedMessage,
-    response: Response,
-  ): Date {
-    if (feed === 'cercanias') {
-      const header = secondsToDate(message.header.timestamp);
-      if (header) return header;
-    }
-    const lastModified = Date.parse(response.headers.get('last-modified') ?? '');
-    return Number.isNaN(lastModified) ? this.now() : new Date(lastModified);
-  }
-
-  private async scheduledRunsByTripId(
-    tripIds: (string | undefined)[],
-  ): Promise<Map<string, ScheduledRun>> {
-    const wanted = [...new Set(tripIds.filter((id): id is string => id !== undefined))];
-    if (wanted.length === 0) return new Map();
-    const runs = await this.timetable.findScheduledRunsByTripIds(wanted);
-    return new Map(runs.map((run) => [run.tripId, run]));
-  }
-
   private async toSighting(
     feed: PositionFeed,
     vehicle: gtfsRealtime.transit_realtime.IVehiclePosition,
     scheduled: Map<string, ScheduledRun>,
-    fallbackObservedAt: Date,
+    fallback: Date,
   ): Promise<Sighting | undefined> {
     const tripId = tripIdOf(vehicle);
     const label = parseVehicleLabel(vehicle.vehicle?.label);
@@ -138,9 +111,9 @@ export class GtfsRtPositionsSource extends RealtimePositionsSource {
     const trainNumber = scheduledRun?.trainNumber ?? label.trainNumber;
     if (trainNumber === undefined) return undefined;
 
-    const observedAt = secondsToDate(vehicle.timestamp) ?? fallbackObservedAt;
-    const runId = await this.runIdFor(trainNumber, observedAt, scheduledRun);
-    const stationCode = vehicle.stopId?.trim();
+    const observedAt = secondsToDate(vehicle.timestamp) ?? fallback;
+    const runId = await runIdAt(this.timetable, trainNumber, observedAt, scheduledRun);
+    const stationCode = trimmedOrUndefined(vehicle.stopId);
     const position = vehicle.position;
 
     return createSighting({
@@ -155,35 +128,8 @@ export class GtfsRtPositionsSource extends RealtimePositionsSource {
       ...(label.platform && { platform: label.platform }),
     });
   }
-
-  /** Before 04:00 Madrid time a scheduled Run may still belong to the previous Service date. */
-  private async runIdFor(
-    trainNumber: string,
-    observedAt: Date,
-    scheduledRun: ScheduledRun | undefined,
-  ): Promise<RunId> {
-    const calendarDate = serviceDateFor(observedAt);
-    const previousDate = serviceDateFor(observedAt, { operatesOn: () => true });
-    if (previousDate === calendarDate) return createRunId(trainNumber, calendarDate);
-
-    const previousRuns = await this.timetable.findScheduledRuns(trainNumber, previousDate);
-    const operatesOnPrevious = previousRuns.some(
-      (run) => scheduledRun === undefined || run.tripId === scheduledRun.tripId,
-    );
-    return createRunId(
-      trainNumber,
-      serviceDateFor(observedAt, { operatesOn: (d) => d === previousDate && operatesOnPrevious }),
-    );
-  }
 }
 
 function tripIdOf(vehicle: gtfsRealtime.transit_realtime.IVehiclePosition): string | undefined {
-  const tripId = vehicle.trip?.tripId?.trim();
-  return tripId ? tripId : undefined;
-}
-
-function secondsToDate(seconds: number | Long | null | undefined): Date | undefined {
-  if (seconds === null || seconds === undefined) return undefined;
-  const value = Number(seconds);
-  return value > 0 ? new Date(value * 1000) : undefined;
+  return trimmedOrUndefined(vehicle.trip?.tripId);
 }
