@@ -9,7 +9,7 @@ import * as schema from './schema/index.js';
 export type Database = PostgresJsDatabase<typeof schema>;
 
 export const DB = Symbol('DB');
-const SQL_CLIENT = Symbol('SQL_CLIENT');
+export const SQL_CLIENT = Symbol('SQL_CLIENT');
 
 @Module({
   imports: [AppConfigModule],
@@ -26,7 +26,7 @@ const SQL_CLIENT = Symbol('SQL_CLIENT');
       useFactory: (sql: postgres.Sql): Database => drizzle(sql, { schema }),
     },
   ],
-  exports: [DB],
+  exports: [DB, SQL_CLIENT],
 })
 export class DbModule implements OnApplicationShutdown {
   constructor(@Inject(SQL_CLIENT) private readonly sql: postgres.Sql) {}

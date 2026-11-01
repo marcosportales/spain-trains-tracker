@@ -5,6 +5,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestDatabase, type TestDatabase } from '../../../test/support/test-database.js';
 import { GetLiveSnapshot } from '../../application/live/get-live-snapshot.use-case.js';
+import { LiveStream } from '../../application/live/live-stream.js';
 import {
   createDelay,
   createRun,
@@ -40,6 +41,7 @@ describe('GET /live', () => {
             () => NOW,
           ),
         },
+        { provide: LiveStream, useValue: {} },
       ],
     }).compile();
     app = moduleRef.createNestApplication();
