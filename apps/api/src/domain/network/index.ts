@@ -5,3 +5,4 @@ export * from './line.js';
 export * from './service-type.js';
 export * from './station.js';
 export * from './timetable.js';
+export * from './track-matching.js';
