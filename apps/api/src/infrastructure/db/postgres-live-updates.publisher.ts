@@ -12,11 +12,14 @@ export const LIVE_RUNS_CHANNEL = 'live_runs';
 /** Publishes with `NOTIFY live_runs, '<cycleId>'`; the payload stays small, the API reads the DB. */
 @Injectable()
 export class PostgresLiveUpdatesPublisher extends LiveUpdatesPublisher {
-  constructor(@Inject(DB) private readonly db: PostgresJsDatabase) {
+  constructor(
+    @Inject(DB) private readonly db: PostgresJsDatabase,
+    private readonly channel: string = LIVE_RUNS_CHANNEL,
+  ) {
     super();
   }
 
   async publish(update: LiveUpdate): Promise<void> {
-    await this.db.execute(sql`SELECT pg_notify(${LIVE_RUNS_CHANNEL}, ${String(update.cycleId)})`);
+    await this.db.execute(sql`SELECT pg_notify(${this.channel}, ${String(update.cycleId)})`);
   }
 }
