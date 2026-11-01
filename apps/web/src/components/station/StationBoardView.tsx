@@ -7,6 +7,7 @@ import { Link } from '@/i18n/navigation';
 import { fetchStationBoard } from '@/lib/station-board-api';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { type DelayBadge, delayMinutes, runDetailPath } from '../run/run-detail-view';
+import { ShareButton } from '../share/ShareButton';
 import { entryBadge, entryTimes } from './station-board-view';
 
 export const REFRESH_MS = 30_000;
@@ -45,8 +46,13 @@ export function StationBoardView({ initial }: { initial: StationBoard }) {
 
   return (
     <div className="mx-auto h-full w-full max-w-2xl overflow-y-auto p-4">
-      <h1 className="text-xl font-semibold">{board.stationName}</h1>
-      <p className="text-sm text-gray-600">{t('window')}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold">{board.stationName}</h1>
+          <p className="text-sm text-gray-600">{t('window')}</p>
+        </div>
+        <ShareButton title={t('title', { station: board.stationName })} />
+      </div>
       {stale && (
         <p role="status" className="mt-2 text-sm text-amber-800">
           {t('stale')}
