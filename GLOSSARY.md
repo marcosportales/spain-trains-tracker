@@ -45,6 +45,10 @@ _Avoid_: Train, vehicle, composition
 One reported position and status of a Run at an instant, from one Source. Sightings make up the history.
 _Avoid_: Position, ping, snapshot
 
+**Service status**:
+Whether a Run is going ahead as timetabled (`scheduled`) or has been called off (`cancelled`). Not to be confused with a Run's position status on the map.
+_Avoid_: State
+
 **Delay**:
 How far a Run is behind its schedule at a given moment, in seconds.
 _Avoid_: Lateness, retraso (in code)
