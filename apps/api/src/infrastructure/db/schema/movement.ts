@@ -118,3 +118,12 @@ export const serviceAlerts = pgTable(
   },
   (t) => [index('service_alerts_ended_at_idx').on(t.endedAt)],
 );
+
+/** Latest health of each polled feed: written by the worker, read by the API's `/health`. */
+export const feedHealth = pgTable('feed_health', {
+  feed: text('feed').primaryKey(),
+  lastSuccessAt: timestamp('last_success_at', { withTimezone: true }),
+  lastError: text('last_error'),
+  consecutiveFailures: integer('consecutive_failures').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+});

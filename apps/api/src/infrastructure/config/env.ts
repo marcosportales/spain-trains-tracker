@@ -9,6 +9,11 @@ const envSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
     DATABASE_URL: z.string().min(1).optional(),
+    /** The only origin allowed to call the API from a browser (CORS). */
+    WEB_ORIGIN: z
+      .url()
+      .default('http://localhost:3000')
+      .transform((url) => new URL(url).origin),
     WORKER_HEARTBEAT_INTERVAL_MS: z.coerce.number().int().positive().default(20_000),
     FEED_POLL_INTERVAL_MS: z.coerce.number().int().positive().default(20_000),
     /** Poll Renfe's undocumented visor JSON to enrich the Official feeds (ADR 0005). Off by default. */
