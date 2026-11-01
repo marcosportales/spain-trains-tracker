@@ -18,6 +18,8 @@ import { GetRunDetail } from '../../application/run/get-run-detail.use-case.js';
 import { RunDetailReader } from '../../application/run/run-detail.reader.js';
 import { SearchReader } from '../../application/search/search.reader.js';
 import { SearchCatalog } from '../../application/search/search-catalog.use-case.js';
+import { GetSightingWindow } from '../../application/sighting-window/get-sighting-window.use-case.js';
+import { SightingWindowReader } from '../../application/sighting-window/sighting-window.reader.js';
 import { GetStationBoard } from '../../application/station/get-station-board.use-case.js';
 import { ListStations } from '../../application/station/list-stations.use-case.js';
 import { StationBoardReader } from '../../application/station/station-board.reader.js';
@@ -32,6 +34,7 @@ import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { DrizzlePunctualityReader } from '../db/drizzle-punctuality.reader.js';
 import { DrizzleRunDetailReader } from '../db/drizzle-run-detail.reader.js';
 import { DrizzleSearchReader } from '../db/drizzle-search.reader.js';
+import { DrizzleSightingWindowReader } from '../db/drizzle-sighting-window.reader.js';
 import { DrizzleStationBoardReader } from '../db/drizzle-station-board.reader.js';
 import { DrizzleTrainHistoryReader } from '../db/drizzle-train-history.reader.js';
 import { PostgresLiveNotifications } from '../db/postgres-live-notifications.js';
@@ -43,6 +46,7 @@ import { LiveController } from './live.controller.js';
 import { PunctualityController } from './punctuality.controller.js';
 import { RunsController } from './runs.controller.js';
 import { SearchController } from './search.controller.js';
+import { SightingsController } from './sightings.controller.js';
 import { StationsController } from './stations.controller.js';
 import { TrainHistoryController } from './train-history.controller.js';
 
@@ -56,6 +60,7 @@ import { TrainHistoryController } from './train-history.controller.js';
     PunctualityController,
     RunsController,
     SearchController,
+    SightingsController,
     StationsController,
     TrainHistoryController,
   ],
@@ -100,6 +105,12 @@ import { TrainHistoryController } from './train-history.controller.js';
       provide: GetTrainHistory,
       inject: [TrainHistoryReader],
       useFactory: (reader: TrainHistoryReader) => new GetTrainHistory(reader),
+    },
+    { provide: SightingWindowReader, useClass: DrizzleSightingWindowReader },
+    {
+      provide: GetSightingWindow,
+      inject: [SightingWindowReader],
+      useFactory: (reader: SightingWindowReader) => new GetSightingWindow(reader),
     },
     { provide: SearchReader, useClass: DrizzleSearchReader },
     {
