@@ -5,7 +5,8 @@
   },
   "Header": {
     "appName": "Spain Trains Tracker",
-    "language": "Language"
+    "language": "Language",
+    "punctuality": "Punctuality"
   },
   "Home": {
     "title": "Live Renfe trains",
@@ -100,5 +101,25 @@
     "lines": "Lines: {lines}",
     "source": "Source: Renfe",
     "since": "since {when}"
+  },
+  "Punctuality": {
+    "title": "Punctuality",
+    "description": "Which Lines run on time, and when delays happen. Based on the Delays Renfe reports.",
+    "window": "Time window",
+    "lastDays": "Last {days} days",
+    "ranking": "Line ranking",
+    "empty": "Not enough data yet to rank Lines",
+    "line": "Line",
+    "onTime": "On time",
+    "avgDelay": "Avg delay",
+    "observations": "Observations",
+    "minutes": "{minutes} min",
+    "showHours": "Show by hour",
+    "byHour": "Delay by hour of day",
+    "forAllLines": "All Lines, average delay per hour (Madrid time)",
+    "forLine": "{line}, average delay per hour (Madrid time)",
+    "hourTitle": "{hour}:00, {minutes} min average delay",
+    "noData": "{hour}:00, no data",
+    "error": "Could not refresh; showing the last known figures"
   }
 }

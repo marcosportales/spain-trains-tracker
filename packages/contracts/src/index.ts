@@ -3,6 +3,7 @@ export * from './hub-code.js';
 export * from './line.js';
 export * from './live.js';
 export * from './live-run.js';
+export * from './punctuality.js';
 export * from './run-detail.js';
 export * from './run-id.js';
 export * from './search.js';

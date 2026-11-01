@@ -8,6 +8,11 @@ import { LiveRunsReader } from '../../application/live/live-runs.reader.js';
 import { LiveStream } from '../../application/live/live-stream.js';
 import { MovementRepository } from '../../application/movement/movement.repository.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
+import {
+  GetDelayByHour,
+  GetPunctualityRanking,
+} from '../../application/punctuality/get-punctuality.use-case.js';
+import { PunctualityReader } from '../../application/punctuality/punctuality.reader.js';
 import { FeedHealthStore } from '../../application/realtime/feed-health.store.js';
 import { GetRunDetail } from '../../application/run/get-run-detail.use-case.js';
 import { RunDetailReader } from '../../application/run/run-detail.reader.js';
@@ -22,6 +27,7 @@ import { DrizzleFeedHealthStore } from '../db/drizzle-feed-health.store.js';
 import { DrizzleLiveRunsReader } from '../db/drizzle-live-runs.reader.js';
 import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
+import { DrizzlePunctualityReader } from '../db/drizzle-punctuality.reader.js';
 import { DrizzleRunDetailReader } from '../db/drizzle-run-detail.reader.js';
 import { DrizzleSearchReader } from '../db/drizzle-search.reader.js';
 import { DrizzleStationBoardReader } from '../db/drizzle-station-board.reader.js';
@@ -31,6 +37,7 @@ import { AlertsController } from './alerts.controller.js';
 import { HealthController } from './health.controller.js';
 import { LinesController } from './lines.controller.js';
 import { LiveController } from './live.controller.js';
+import { PunctualityController } from './punctuality.controller.js';
 import { RunsController } from './runs.controller.js';
 import { SearchController } from './search.controller.js';
 import { StationsController } from './stations.controller.js';
@@ -42,6 +49,7 @@ import { StationsController } from './stations.controller.js';
     LinesController,
     HealthController,
     LiveController,
+    PunctualityController,
     RunsController,
     SearchController,
     StationsController,
@@ -70,6 +78,17 @@ import { StationsController } from './stations.controller.js';
       inject: [StationBoardReader, NetworkRepository],
       useFactory: (reader: StationBoardReader, network: NetworkRepository) =>
         new GetStationBoard(reader, network),
+    },
+    { provide: PunctualityReader, useClass: DrizzlePunctualityReader },
+    {
+      provide: GetPunctualityRanking,
+      inject: [PunctualityReader],
+      useFactory: (reader: PunctualityReader) => new GetPunctualityRanking(reader),
+    },
+    {
+      provide: GetDelayByHour,
+      inject: [PunctualityReader],
+      useFactory: (reader: PunctualityReader) => new GetDelayByHour(reader),
     },
     { provide: SearchReader, useClass: DrizzleSearchReader },
     {
