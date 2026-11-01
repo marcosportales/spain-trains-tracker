@@ -2,6 +2,7 @@ import type { RunDetail } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
+import { ShareButton } from '../share/ShareButton';
 import { type DelayBadge, delayBadge, delayMinutes, stopTimes } from './run-detail-view';
 
 const BADGE_CLASSES: Record<DelayBadge, string> = {
@@ -45,9 +46,12 @@ export function RunDetailPanel({ detail }: { detail: RunDetail }) {
               : null}
           </p>
         </div>
-        <Link href="/" className="rounded border px-2 py-1 text-sm">
-          {t('close')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <ShareButton title={t('title', { trainNumber: run.trainNumber })} />
+          <Link href="/" className="rounded border px-2 py-1 text-sm">
+            {t('close')}
+          </Link>
+        </div>
       </div>
 
       <p

@@ -16,7 +16,14 @@ async function loadBoard(params: Params) {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, board } = await loadBoard(params);
   const t = await getTranslations({ locale, namespace: 'StationBoard' });
-  return { title: t('title', { station: board.stationName }) };
+  const title = t('title', { station: board.stationName });
+  const description = t('description', { station: board.stationName });
+  return {
+    title,
+    description,
+    openGraph: { title, description },
+    twitter: { card: 'summary_large_image' },
+  };
 }
 
 export default async function StationPage({ params }: { params: Params }) {

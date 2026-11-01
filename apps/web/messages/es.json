@@ -54,7 +54,8 @@
       "larga_distancia": "Larga Distancia",
       "media_distancia": "Media Distancia",
       "ancho_metrico": "Ancho métrico"
-    }
+    },
+    "description": "{serviceType} {trainNumber}: {status}"
   },
   "StationBoard": {
     "title": "Panel de {station}",
@@ -71,6 +72,12 @@
       "late": "{minutes} min de retraso",
       "cancelled": "Cancelado",
       "unknown": "Retraso desconocido"
-    }
+    },
+    "description": "Próximas salidas y llegadas en {station}"
+  },
+  "Share": {
+    "label": "Compartir",
+    "copied": "Enlace copiado",
+    "failed": "No se pudo compartir el enlace"
   }
 }
