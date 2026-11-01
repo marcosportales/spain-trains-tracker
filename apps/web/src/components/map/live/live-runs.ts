@@ -39,7 +39,11 @@ export const SERVICE_TYPE_COLORS: Record<ServiceType, string> = {
   ancho_metrico: '#16a34a',
 };
 
-export type LiveRunProperties = { serviceType: ServiceType; label: string; snapped: boolean };
+export type LiveRunProperties = {
+  serviceType: ServiceType;
+  label: string;
+  snapped: boolean;
+} & RunId;
 
 export function toFeatureCollection(runs: LiveRuns): FeatureCollection<Point, LiveRunProperties> {
   const features: Feature<Point, LiveRunProperties>[] = [];
@@ -52,6 +56,8 @@ export function toFeatureCollection(runs: LiveRuns): FeatureCollection<Point, Li
         serviceType: run.serviceType,
         label: run.lineCode ?? run.trainNumber,
         snapped: isSnapped(run),
+        serviceDate: run.serviceDate,
+        trainNumber: run.trainNumber,
       },
     });
   }

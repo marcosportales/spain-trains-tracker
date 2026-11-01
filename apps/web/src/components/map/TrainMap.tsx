@@ -1,16 +1,31 @@
 'use client';
 
+import type { LiveRun, RunId } from '@stt/contracts';
 import { AttributionControl, Map as MapLibreMap, NavigationControl } from 'maplibre-gl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { runDetailPath } from '../run/run-detail-view';
 import { FilterPanel } from './filters/FilterPanel';
 import { matchesServiceTypes, toStreamFilters } from './filters/map-filters';
 import { useMapFilters } from './filters/use-map-filters';
 import { LiveRunsLayer } from './live/LiveRunsLayer';
+import { runKey } from './live/live-runs';
 import { useLiveRuns } from './live/use-live-runs';
-import { attributionHtml, MAP_STYLE_URL, SPAIN_VIEW } from './map-config';
+import { attributionHtml, MAP_STYLE_URL, SELECTED_ZOOM, SPAIN_VIEW } from './map-config';
 
-export function TrainMap({ label }: { label: string }) {
+type Props = {
+  label: string;
+  /** The Run whose detail is open: the map centres on it and follows it. */
+  selected?: RunId;
+  /** Server-known position of `selected`, used until the live stream delivers it. */
+  selectedFallback?: LiveRun;
+};
+
+export function TrainMap({ label, selected, selectedFallback }: Props) {
+  const router = useRouter();
+  const search = useSearchParams().toString();
   const container = useRef<HTMLElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [filters, setFilters] = useMapFilters();
@@ -51,11 +66,32 @@ export function TrainMap({ label }: { label: string }) {
     };
   }, []);
 
+  const selectedRun = selected ? (runs.get(runKey(selected)) ?? selectedFallback) : undefined;
+  const lon = selectedRun?.lon;
+  const lat = selectedRun?.lat;
+  const followed = selected && runKey(selected);
+  const centred = useRef<string>(undefined);
+
+  useEffect(() => {
+    if (!map || lon === undefined || lat === undefined) return;
+    // Fly in once per Run, then keep it centred as its position updates.
+    if (centred.current !== followed) {
+      centred.current = followed;
+      map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), SELECTED_ZOOM) });
+    } else {
+      map.easeTo({ center: [lon, lat] });
+    }
+  }, [map, followed, lon, lat]);
+
+  const openRun = (id: RunId) => router.push(`${runDetailPath(id)}${search ? `?${search}` : ''}`);
+
   return (
     <>
       <section ref={container} aria-label={label} className="h-full w-full" />
-      <LiveRunsLayer map={map} runs={runs} />
-      <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
+      <LiveRunsLayer map={map} runs={runs} onSelect={openRun} />
+      {!selected && (
+        <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
+      )}
     </>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import { useEffect } from 'react';
+import type { RunId } from '@stt/contracts';
+import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
+import { useEffect, useRef } from 'react';
 import { type LiveRuns, SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
@@ -51,7 +52,41 @@ function addLayers(map: MapLibreMap) {
 }
 
 /** Renders live Runs on `map`, updating the GeoJSON source in place on every diff. */
-export function LiveRunsLayer({ map, runs }: { map: MapLibreMap | null; runs: LiveRuns }) {
+export function LiveRunsLayer({
+  map,
+  runs,
+  onSelect,
+}: {
+  map: MapLibreMap | null;
+  runs: LiveRuns;
+  onSelect?: (id: RunId) => void;
+}) {
+  const select = useRef(onSelect);
+  select.current = onSelect;
+
+  useEffect(() => {
+    if (!map) return;
+    const onClick = (e: MapLayerMouseEvent) => {
+      const props = e.features?.[0]?.properties;
+      if (props)
+        select.current?.({ serviceDate: props.serviceDate, trainNumber: props.trainNumber });
+    };
+    const pointer = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const reset = () => {
+      map.getCanvas().style.cursor = '';
+    };
+    map.on('click', CIRCLE_LAYER_ID, onClick);
+    map.on('mouseenter', CIRCLE_LAYER_ID, pointer);
+    map.on('mouseleave', CIRCLE_LAYER_ID, reset);
+    return () => {
+      map.off('click', CIRCLE_LAYER_ID, onClick);
+      map.off('mouseenter', CIRCLE_LAYER_ID, pointer);
+      map.off('mouseleave', CIRCLE_LAYER_ID, reset);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (!map) return;
     const sync = () => {

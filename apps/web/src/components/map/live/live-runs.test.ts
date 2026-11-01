@@ -81,7 +81,13 @@ describe('toFeatureCollection', () => {
       type: 'Feature',
       id: runKey(run('1')),
       geometry: { type: 'Point', coordinates: [-3.7, 40.4] },
-      properties: { serviceType: 'cercanias', label: 'C1', snapped: true },
+      properties: {
+        serviceType: 'cercanias',
+        label: 'C1',
+        snapped: true,
+        serviceDate: '2026-10-31',
+        trainNumber: '1',
+      },
     });
   });
 

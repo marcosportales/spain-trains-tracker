@@ -5,6 +5,9 @@ export const SPAIN_VIEW = {
   zoom: 5.4,
 };
 
+/** Minimum zoom when the map centres on a selected Run. */
+export const SELECTED_ZOOM = 9;
+
 export const ATTRIBUTION: { label: string; href: string }[] = [
   { label: '© OpenStreetMap contributors', href: 'https://www.openstreetmap.org/copyright' },
   { label: 'OpenFreeMap', href: 'https://openfreemap.org' },
