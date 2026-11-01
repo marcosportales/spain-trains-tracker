@@ -8,6 +8,7 @@ import {
   RunDetail,
   SearchResult,
   ServiceAlertDto,
+  SightingWindow,
   StationBoard,
   TrainHistory,
 } from './index.js';
@@ -265,4 +266,34 @@ describe('TrainHistory', () => {
     rejects(TrainHistory, { ...ok, trainNumber: 'AVE' }));
   it('rejects an on-time share above 100', () =>
     rejects(TrainHistory, { ...ok, summary: { ...ok.summary, onTimePct: 101 } }));
+});
+
+describe('SightingWindow', () => {
+  const ok = {
+    from: '2026-10-31T08:00:00Z',
+    to: '2026-10-31T09:00:00Z',
+    stepSeconds: 60,
+    sightings: [
+      {
+        trainNumber: '03063',
+        serviceDate: '2026-10-31',
+        source: 'official',
+        observedAt: '2026-10-31T08:00:10Z',
+        lat: 40.4,
+        lon: -3.7,
+        status: 'in_transit_to',
+        stationCode: '60000',
+        positionIsSnapped: false,
+      },
+    ],
+  };
+  it('accepts an example payload', () => expect(SightingWindow.parse(ok)).toEqual(ok));
+  it('accepts an empty window', () =>
+    expect(SightingWindow.safeParse({ ...ok, sightings: [] }).success).toBe(true));
+  it('rejects a Sighting without a position', () =>
+    rejects(SightingWindow, {
+      ...ok,
+      sightings: [{ ...ok.sightings[0], lat: undefined }],
+    }));
+  it('rejects a non-positive step', () => rejects(SightingWindow, { ...ok, stepSeconds: 0 }));
 });

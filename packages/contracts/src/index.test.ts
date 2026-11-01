@@ -28,6 +28,7 @@ describe('@stt/contracts public entry', () => {
       'ServiceDate',
       'ServiceStatus',
       'ServiceType',
+      'SightingWindow',
       'Source',
       'StationBoard',
       'StationBoardEntry',
@@ -42,6 +43,7 @@ describe('@stt/contracts public entry', () => {
       'TrainHistoryRun',
       'TrainHistorySummary',
       'TrainNumber',
+      'WindowSighting',
     ]);
   });
 });
