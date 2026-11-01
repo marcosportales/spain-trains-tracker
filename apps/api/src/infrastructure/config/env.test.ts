@@ -9,6 +9,7 @@ describe('parseEnv', () => {
       LOG_LEVEL: 'info',
       DATABASE_URL: 'postgresql://stt:stt@localhost:5432/stt',
       WORKER_HEARTBEAT_INTERVAL_MS: 20_000,
+      FEED_POLL_INTERVAL_MS: 20_000,
     });
   });
 
