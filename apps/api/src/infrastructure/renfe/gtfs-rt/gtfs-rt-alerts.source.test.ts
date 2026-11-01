@@ -34,7 +34,8 @@ describe('GtfsRtAlertsSource', () => {
     const source = new GtfsRtAlertsSource({ lines: fixtureLines(), fetch: respond(fixture) });
     const alerts = await source.fetchServiceAlerts();
 
-    expect(alerts).toHaveLength(69);
+    // 69 entities, one of them repeating an id.
+    expect(alerts).toHaveLength(68);
     expect(alerts.every((a) => a.source === 'gtfsrt_cercanias')).toBe(true);
     const first = alerts.find((a) => a.id === 'AVISO_518335');
     expect(first?.lineCodes).toContain('10-C4');
@@ -56,7 +57,9 @@ describe('GtfsRtAlertsSource', () => {
       fetch: respond(fixture),
     }).fetchServiceAlerts();
     const decoded = rt.FeedMessage.decode(fixture).entity;
-    const expected = decoded.filter((e) => e.alert?.informedEntity?.some((i) => i.routeId)).length;
+    const expected = new Set(
+      decoded.filter((e) => e.alert?.informedEntity?.some((i) => i.routeId)).map((e) => e.id),
+    ).size;
     expect(alerts.filter((a) => a.lineCodes.length > 0)).toHaveLength(expected);
     expect(expected).toBeGreaterThan(0);
   });
@@ -92,6 +95,25 @@ describe('GtfsRtAlertsSource', () => {
       stationCodes: ['60000'],
       activePeriods: [{ start: new Date(1_000_000), end: new Date(2_000_000) }],
     });
+  });
+
+  it('keeps one alert per id when the feed repeats an entity (last one wins)', async () => {
+    const entity = (description: string) => ({
+      id: 'AVISO_1',
+      alert: { descriptionText: { translation: [{ text: description, language: 'es' }] } },
+    });
+    const body = rt.FeedMessage.encode(
+      rt.FeedMessage.create({
+        header: { gtfsRealtimeVersion: '2.0' },
+        entity: [entity('Primera.'), entity('Segunda.')],
+      }),
+    ).finish();
+    const lines: LineCodeLookup = { lineCodesForRouteIds: async () => new Map() };
+    const alerts = await new GtfsRtAlertsSource({
+      lines,
+      fetch: respond(body),
+    }).fetchServiceAlerts();
+    expect(alerts.map((a) => [a.id, a.description])).toEqual([['AVISO_1', 'Segunda.']]);
   });
 
   it('skips an alert without description and reports it', async () => {
