@@ -90,5 +90,15 @@
     "noResults": "No results",
     "error": "Search is unavailable right now",
     "count": "{count, plural, one {# result} other {# results}}"
+  },
+  "Alerts": {
+    "title": "Alerts",
+    "count": "{count, plural, one {# active alert} other {# active alerts}}",
+    "line": "Line",
+    "allLines": "All lines",
+    "empty": "No active alerts",
+    "lines": "Lines: {lines}",
+    "source": "Source: Renfe",
+    "since": "since {when}"
   }
 }
