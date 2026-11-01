@@ -20,6 +20,7 @@ describe('@stt/contracts public entry', () => {
       'SearchResult',
       'ServiceAlertDto',
       'ServiceDate',
+      'ServiceStatus',
       'ServiceType',
       'Source',
       'StationBoard',

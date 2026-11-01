@@ -72,6 +72,18 @@ describe('RunDetail', () => {
       stops: [{ stationCode: '1', sequence: 0, scheduledArrival: '2026-10-31T11:30:00' }],
     }));
   it('rejects empty Rolling stock', () => rejects(RunDetail, { ...ok, rollingStock: '' }));
+  it('accepts origin, destination, service status and accessibility', () => {
+    const full = {
+      ...ok,
+      originStationCode: '60000',
+      destinationStationCode: '51003',
+      serviceStatus: 'cancelled',
+      wheelchairAccessible: false,
+    };
+    expect(RunDetail.parse(full)).toEqual(full);
+  });
+  it('rejects an unknown service status', () =>
+    rejects(RunDetail, { ...ok, serviceStatus: 'late' }));
 });
 
 describe('StationBoard', () => {

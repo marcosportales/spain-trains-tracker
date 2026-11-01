@@ -1,4 +1,4 @@
-import { SERVICE_TIME_ZONE } from '../../../domain/movement/index.js';
+import { SERVICE_TIME_ZONE } from './service-date.js';
 
 const formatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: SERVICE_TIME_ZONE,
