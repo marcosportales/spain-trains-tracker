@@ -44,6 +44,8 @@ packages/   # shared libraries (@stt/contracts, ...)
 | `pnpm --filter api db:migrate` | Apply Drizzle migrations to `DATABASE_URL` |
 | `pnpm --filter api db:generate` | Generate a migration from schema changes (`db:generate:custom` for raw SQL: hypertables, PostGIS) |
 
+Drizzle has no down migrations. To roll back a migration, run its script in `apps/api/drizzle/rollback/` by hand and delete its row from `drizzle.__drizzle_migrations`.
+
 ### Adding a workspace
 
 Each workspace under `apps/` or `packages/` should:
