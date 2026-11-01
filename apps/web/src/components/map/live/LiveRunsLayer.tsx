@@ -2,8 +2,7 @@
 
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
 import { useEffect } from 'react';
-import { SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
-import { type LiveRunFilters, useLiveRuns } from './use-live-runs';
+import { type LiveRuns, SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
 const CIRCLE_LAYER_ID = 'live-runs-circles';
@@ -52,15 +51,7 @@ function addLayers(map: MapLibreMap) {
 }
 
 /** Renders live Runs on `map`, updating the GeoJSON source in place on every diff. */
-export function LiveRunsLayer({
-  map,
-  filters,
-}: {
-  map: MapLibreMap | null;
-  filters?: LiveRunFilters;
-}) {
-  const runs = useLiveRuns(filters);
-
+export function LiveRunsLayer({ map, runs }: { map: MapLibreMap | null; runs: LiveRuns }) {
   useEffect(() => {
     if (!map) return;
     const sync = () => {
