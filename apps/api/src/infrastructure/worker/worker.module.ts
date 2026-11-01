@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
+import { MovementRepository } from '../../application/movement/movement.repository.js';
 import { ImportStaticNetwork } from '../../application/network/import-static-network.use-case.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
 import { StaticFeeds } from '../../application/network/static-feeds.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import type { Env } from '../config/env.js';
 import { DbModule } from '../db/db.module.js';
+import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { LoggingModule } from '../logging/logging.module.js';
 import { HttpStaticFeeds } from '../renfe/http-static-feeds.js';
@@ -23,6 +25,7 @@ import {
     HeartbeatService,
     StaticImportScheduler,
     { provide: NetworkRepository, useClass: DrizzleNetworkRepository },
+    { provide: MovementRepository, useClass: DrizzleMovementRepository },
     {
       provide: StaticFeeds,
       inject: [Logger],

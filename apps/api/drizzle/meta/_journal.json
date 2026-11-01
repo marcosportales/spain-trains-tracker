@@ -15,6 +15,13 @@
       "when": 1793535600790,
       "tag": "0001_static_network",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793553385874,
+      "tag": "0002_movement",
+      "breakpoints": true
     }
   ]
 }
