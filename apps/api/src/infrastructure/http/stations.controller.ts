@@ -7,12 +7,13 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
-import { type StationBoard, StationCode } from '@stt/contracts';
+import { type StationBoard, StationCode, type StationSummary } from '@stt/contracts';
 import { z } from 'zod';
 import {
   GetStationBoard,
   StationNotFoundError,
 } from '../../application/station/get-station-board.use-case.js';
+import { ListStations } from '../../application/station/list-stations.use-case.js';
 
 const StationParams = z.strictObject({ code: StationCode });
 const BoardQuery = z.strictObject({
@@ -22,7 +23,15 @@ const BoardQuery = z.strictObject({
 
 @Controller('stations')
 export class StationsController {
-  constructor(@Inject(GetStationBoard) private readonly getStationBoard: GetStationBoard) {}
+  constructor(
+    @Inject(GetStationBoard) private readonly getStationBoard: GetStationBoard,
+    @Inject(ListStations) private readonly listStations: ListStations,
+  ) {}
+
+  @Get()
+  list(): Promise<StationSummary[]> {
+    return this.listStations.execute();
+  }
 
   @Get(':code/board')
   async board(@Param() rawParams: unknown, @Query() rawQuery: unknown): Promise<StationBoard> {
