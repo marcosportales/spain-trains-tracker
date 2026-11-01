@@ -9,6 +9,7 @@ import {
   SearchResult,
   ServiceAlertDto,
   StationBoard,
+  TrainHistory,
 } from './index.js';
 
 const run = {
@@ -243,4 +244,25 @@ describe('DelayByHour', () => {
       hours,
     }));
   it('rejects fewer than 24 hours', () => rejects(DelayByHour, { days: 7, hours: hours.slice(1) }));
+});
+
+describe('TrainHistory', () => {
+  const ok = {
+    trainNumber: '03063',
+    days: 30,
+    summary: { runs: 2, typicalSeconds: 420, onTimePct: 50 },
+    runs: [
+      { serviceDate: '2026-10-31', observations: 12, avgSeconds: 600, maxSeconds: 900 },
+      { serviceDate: '2026-10-30', observations: 9, avgSeconds: 240, maxSeconds: 300 },
+    ],
+  };
+  it('accepts an example payload', () => expect(TrainHistory.parse(ok)).toEqual(ok));
+  it('accepts no history', () =>
+    expect(TrainHistory.safeParse({ trainNumber: '03063', days: 30, runs: [] }).success).toBe(
+      true,
+    ));
+  it('rejects a malformed Train number', () =>
+    rejects(TrainHistory, { ...ok, trainNumber: 'AVE' }));
+  it('rejects an on-time share above 100', () =>
+    rejects(TrainHistory, { ...ok, summary: { ...ok.summary, onTimePct: 101 } }));
 });

@@ -38,6 +38,9 @@ describe('@stt/contracts public entry', () => {
       'Timestamp',
       'TrackFeature',
       'TrackFeatureCollection',
+      'TrainHistory',
+      'TrainHistoryRun',
+      'TrainHistorySummary',
       'TrainNumber',
     ]);
   });
