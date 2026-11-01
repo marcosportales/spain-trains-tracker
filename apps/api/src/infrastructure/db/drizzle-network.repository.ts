@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, desc, eq, sql } from 'drizzle-orm';
+import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
@@ -252,6 +252,22 @@ export class DrizzleNetworkRepository extends NetworkRepository {
         ...(r.wheelchair_boarding !== null && { wheelchairBoarding: r.wheelchair_boarding }),
       }),
     );
+  }
+
+  async findScheduledRunsByTripIds(tripIds: readonly string[]): Promise<ScheduledRun[]> {
+    if (tripIds.length === 0) return [];
+    const rows = await this.db
+      .select()
+      .from(t.scheduledRuns)
+      .where(inArray(t.scheduledRuns.tripId, [...tripIds]));
+    return rows.map((r) => ({
+      tripId: r.tripId,
+      trainNumber: r.trainNumber,
+      lineCode: r.lineCode,
+      serviceType: r.serviceType as ServiceType,
+      serviceId: r.serviceId,
+      ...(r.shapeId !== null && { shapeId: r.shapeId }),
+    }));
   }
 
   async findScheduledRuns(trainNumber: string, serviceDate: string): Promise<ScheduledRun[]> {

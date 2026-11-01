@@ -157,6 +157,15 @@ describe('DrizzleNetworkRepository', () => {
     expect(await repo.findScheduledRuns('99999', '2026-11-02')).toEqual([]);
   });
 
+  it('finds scheduled Runs by trip id, ignoring unknown ids', async () => {
+    await repo.saveStaticNetwork(network(), record);
+
+    const runs = await repo.findScheduledRunsByTripIds(['T1', 'nope']);
+
+    expect(runs.map((r) => [r.tripId, r.trainNumber])).toEqual([['T1', '03063']]);
+    expect(await repo.findScheduledRunsByTripIds([])).toEqual([]);
+  });
+
   it('round-trips the Track geometry', async () => {
     await repo.saveStaticNetwork(network(), record);
 

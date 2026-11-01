@@ -36,6 +36,8 @@ export abstract class NetworkRepository {
 
   /** Scheduled Runs of a Train number that operate on `serviceDate` (`YYYY-MM-DD`). */
   abstract findScheduledRuns(trainNumber: string, serviceDate: string): Promise<ScheduledRun[]>;
+  /** Scheduled Runs with any of the given trip ids (unknown ids are ignored). */
+  abstract findScheduledRunsByTripIds(tripIds: readonly string[]): Promise<ScheduledRun[]>;
   /** Stops of a scheduled Run, in sequence order. */
   abstract getScheduledStops(tripId: string): Promise<ScheduledStop[]>;
   abstract getTrackGeometry(shapeId: string): Promise<TrackGeometry | undefined>;
