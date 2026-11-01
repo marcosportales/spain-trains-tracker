@@ -6,7 +6,8 @@
   "Header": {
     "appName": "Spain Trains Tracker",
     "language": "Language",
-    "punctuality": "Punctuality"
+    "punctuality": "Punctuality",
+    "replay": "Replay"
   },
   "Home": {
     "title": "Live Renfe trains",
@@ -127,5 +128,21 @@
     "hourTitle": "{hour}:00, {minutes} min average delay",
     "noData": "{hour}:00, no data",
     "error": "Could not refresh; showing the last known figures"
+  },
+  "Replay": {
+    "title": "Replay",
+    "description": "Replay where Renfe trains were during a past hour.",
+    "mapLabel": "Map replaying past train positions",
+    "controls": "Replay controls",
+    "start": "Start",
+    "speed": "Speed",
+    "speedOption": "{speed}×",
+    "play": "Play",
+    "pause": "Pause",
+    "scrubber": "Replay time",
+    "loading": "Loading Sightings…",
+    "error": "Could not load Sightings for this hour.",
+    "empty": "No Sightings recorded for this hour.",
+    "runs": "{count, plural, one {# train} other {# trains}}"
   }
 }
