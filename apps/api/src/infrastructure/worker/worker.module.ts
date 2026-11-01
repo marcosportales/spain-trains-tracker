@@ -4,8 +4,10 @@ import { Logger } from 'nestjs-pino';
 import { LiveUpdatesPublisher } from '../../application/live/live-updates.publisher.js';
 import { RunIngestCycle } from '../../application/live/run-ingest-cycle.use-case.js';
 import { MovementRepository } from '../../application/movement/movement.repository.js';
+import { ImportOsmTrackGeometry } from '../../application/network/import-osm-track-geometry.use-case.js';
 import { ImportStaticNetwork } from '../../application/network/import-static-network.use-case.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
+import { OsmRailways } from '../../application/network/osm-railways.js';
 import { StaticFeeds } from '../../application/network/static-feeds.js';
 import { FeedHealthSource } from '../../application/realtime/feed-health.source.js';
 import { FeedHealthStore } from '../../application/realtime/feed-health.store.js';
@@ -17,6 +19,7 @@ import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js'
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { PostgresLiveUpdatesPublisher } from '../db/postgres-live-updates.publisher.js';
 import { LoggingModule } from '../logging/logging.module.js';
+import { OverpassRailways } from '../osm/overpass-railways.js';
 import { LineCodesByRouteId } from '../renfe/gtfs-rt/line-codes-by-route-id.js';
 import { HttpStaticFeeds } from '../renfe/http-static-feeds.js';
 import { RenfeVisorFeed } from '../renfe/visor/visor-feed.js';
@@ -54,11 +57,35 @@ import { createVisorPollers } from './visor-pollers.js';
             logger.warn(`estaciones.csv line ${line} skipped: ${reason}`),
         }),
     },
+    { provide: OsmRailways, useFactory: () => new OverpassRailways() },
     {
+      // Renfe's static data first, then the Track geometry that AV/LD/MD GTFS lacks (from OSM).
       provide: STATIC_IMPORT,
-      inject: [StaticFeeds, NetworkRepository, Logger],
-      useFactory: (feeds: StaticFeeds, repository: NetworkRepository, logger: Logger) =>
-        new ImportStaticNetwork(feeds, repository, logger),
+      inject: [StaticFeeds, NetworkRepository, OsmRailways, Logger],
+      useFactory: (
+        feeds: StaticFeeds,
+        repository: NetworkRepository,
+        railways: OsmRailways,
+        logger: Logger,
+      ) => {
+        const staticImport = new ImportStaticNetwork(feeds, repository, logger);
+        const osmGeometry = new ImportOsmTrackGeometry(repository, railways, logger);
+        return {
+          isMissingData: () => staticImport.isMissingData(),
+          async execute() {
+            const reports = await staticImport.execute();
+            try {
+              await osmGeometry.execute();
+            } catch (error) {
+              // Track geometry is an enrichment: it must not mask the static import's reports.
+              logger.error(
+                `osm track geometry failed: ${error instanceof Error ? error.message : String(error)}`,
+              );
+            }
+            return reports;
+          },
+        };
+      },
     },
     {
       provide: FeedPollers,

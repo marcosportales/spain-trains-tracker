@@ -35,6 +35,24 @@ the web map. `track-geometry-import.test.ts` imports a consistent synthetic feed
 fixtures are cut to 50 rows per file, so their trips and shapes do not join) and checks that every
 Cercanías Line has a geometry whose ends are within 300 m of the Line's first and last Station.
 
+### AV / Larga Distancia / Media Distancia (OpenStreetMap)
+
+Their GTFS has no `shapes.txt`, so `ImportOsmTrackGeometry` draws it. It runs in the worker right
+after every static import:
+
+1. Groups the scheduled Runs of every non-Cercanías Line by stop pattern (the ordered Stations).
+2. For each pattern not drawn yet, asks Overpass for `railway=rail` ways without a `service` tag
+   (no sidings, yards or spurs) in the Stations' bounding box plus ~5 km, one request per pattern,
+   one second apart.
+3. Map-matches (`matchTrackGeometry`): each Station snaps to the nearest track vertex within 500 m;
+   consecutive Stations are joined by the shortest route along the track. Stations that are too far
+   or not connected are left out; fewer than two matched Stations means no geometry.
+4. Stores it as shape `osm:<line>:<first>-<last>-<hash>` and points the pattern's Runs at it.
+
+Patterns already drawn are not downloaded again (only new Runs are linked). Patterns that failed
+(no track, Overpass error) are retried on the next import. The Run upsert keeps an existing
+`shape_id` when the feed carries none, so the daily AV/LD/MD re-import does not unlink geometry.
+
 ## Service type rule
 
 `route_type` is 2 (rail) on every route in both feeds, so the type comes from the route name

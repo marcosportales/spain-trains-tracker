@@ -20,6 +20,13 @@ export interface StaticNetwork {
   readonly geometries: readonly TrackGeometry[];
 }
 
+/** The ordered Stations one group of scheduled Runs of a Line stop at. */
+export interface StopPattern {
+  readonly lineCode: string;
+  readonly stationCodes: readonly string[];
+  readonly tripIds: readonly string[];
+}
+
 /** Storage for the static network: Stations, Lines, Hubs, the timetable and Track geometry. */
 export abstract class NetworkRepository {
   /** Upserts the whole network and records the import, all in one transaction. */
@@ -51,4 +58,13 @@ export abstract class NetworkRepository {
     lineCode: string,
     toleranceMeters?: number,
   ): Promise<TrackGeometry[]>;
+
+  /** Stop patterns of the scheduled Runs of every Line that is not Cercanías, longest first. */
+  abstract listLongDistanceStopPatterns(): Promise<StopPattern[]>;
+  /** The subset of `shapeIds` that already has a Track geometry. */
+  abstract existingShapeIds(shapeIds: readonly string[]): Promise<Set<string>>;
+  /** Stores one Track geometry and points the given Runs at it (Runs that already have a shape keep it). */
+  abstract saveTrackGeometry(geometry: TrackGeometry, tripIds: readonly string[]): Promise<void>;
+  /** Points the given Runs that have no shape yet at `shapeId`. */
+  abstract linkRunsToShape(shapeId: string, tripIds: readonly string[]): Promise<void>;
 }

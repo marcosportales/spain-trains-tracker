@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
   NetworkRepository,
   type StaticNetwork,
+  type StopPattern,
 } from '../../application/network/network.repository.js';
 import type {
   Hub,
@@ -158,7 +159,8 @@ export class DrizzleNetworkRepository extends NetworkRepository {
           lineCode: sql`excluded.line_code`,
           serviceType: sql`excluded.service_type`,
           serviceId: sql`excluded.service_id`,
-          shapeId: sql`excluded.shape_id`,
+          // A re-import without shapes (AV/LD/MD) must not unlink geometry derived from OpenStreetMap.
+          shapeId: sql`COALESCE(excluded.shape_id, ${t.scheduledRuns.shapeId})`,
         },
       );
       await upsert(
@@ -312,6 +314,61 @@ export class DrizzleNetworkRepository extends NetworkRepository {
       .orderBy(asc(t.scheduledStops.sequence));
   }
 
+  async listLongDistanceStopPatterns(): Promise<StopPattern[]> {
+    const rows = await this.db.execute<{
+      line_code: string;
+      stations: string[];
+      trip_ids: string[];
+    }>(sql`
+      SELECT line_code, stations, array_agg(trip_id ORDER BY trip_id) AS trip_ids
+      FROM (
+        SELECT r.line_code, r.trip_id,
+               array_agg(s.station_code ORDER BY s.seq) AS stations
+        FROM ${t.scheduledRuns} r
+        JOIN ${t.scheduledStops} s ON s.trip_id = r.trip_id
+        WHERE r.service_type <> 'cercanias'
+        GROUP BY r.line_code, r.trip_id
+      ) trips
+      GROUP BY line_code, stations
+      ORDER BY cardinality(stations) DESC, line_code, stations`);
+    return rows.map((r) => ({
+      lineCode: r.line_code,
+      stationCodes: r.stations,
+      tripIds: r.trip_ids,
+    }));
+  }
+
+  async existingShapeIds(shapeIds: readonly string[]): Promise<Set<string>> {
+    if (shapeIds.length === 0) return new Set();
+    const rows = await this.db
+      .select({ shapeId: t.trackGeometries.shapeId })
+      .from(t.trackGeometries)
+      .where(inArray(t.trackGeometries.shapeId, [...shapeIds]));
+    return new Set(rows.map((r) => r.shapeId));
+  }
+
+  async saveTrackGeometry(geometry: TrackGeometry, tripIds: readonly string[]): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await upsert(
+        tx,
+        t.trackGeometries,
+        [geometry],
+        t.trackGeometries.shapeId,
+        (g) => ({
+          shapeId: g.shapeId,
+          lineCode: g.lineCode ?? null,
+          geometry: geog(lineString(g.path)) as unknown as string,
+        }),
+        { lineCode: sql`excluded.line_code`, geometry: sql`excluded.geometry` },
+      );
+      await linkRuns(tx, geometry.shapeId, tripIds);
+    });
+  }
+
+  async linkRunsToShape(shapeId: string, tripIds: readonly string[]): Promise<void> {
+    await linkRuns(this.db, shapeId, tripIds);
+  }
+
   async getTrackGeometry(shapeId: string): Promise<TrackGeometry | undefined> {
     const [row] = await this.db.execute<{ line_code: string | null; geojson: string }>(sql`
       SELECT line_code, ST_AsGeoJSON(geometry::geometry) AS geojson
@@ -355,6 +412,19 @@ export class DrizzleNetworkRepository extends NetworkRepository {
       lineCode,
       path: (JSON.parse(row.geojson) as { coordinates: [number, number][] }).coordinates,
     }));
+  }
+}
+
+async function linkRuns(
+  db: Tx | PostgresJsDatabase,
+  shapeId: string,
+  tripIds: readonly string[],
+): Promise<void> {
+  for (const batch of chunks(tripIds)) {
+    await db
+      .update(t.scheduledRuns)
+      .set({ shapeId })
+      .where(and(inArray(t.scheduledRuns.tripId, batch), isNull(t.scheduledRuns.shapeId)));
   }
 }
 
