@@ -1,6 +1,8 @@
 import {
+  chooseLivePosition,
   createRun,
   type Delay,
+  type LivePosition,
   type Run,
   reconcileServiceAlerts,
   runIdKey,
@@ -30,7 +32,11 @@ export interface IngestReport {
 
 export interface RunIngestCycleOptions {
   readonly now?: () => Date;
+  /** A Source's Sighting this much older than the Run's newest one no longer counts. */
+  readonly sightingMaxAgeMs?: number;
 }
+
+const DEFAULT_SIGHTING_MAX_AGE_MS = 5 * 60 * 1000;
 
 const STATUS_OF: Readonly<Record<SightingStatus, LiveRunStatus>> = {
   STOPPED_AT: 'stopped_at',
@@ -45,11 +51,14 @@ const STATUS_OF: Readonly<Record<SightingStatus, LiveRunStatus>> = {
  */
 export class RunIngestCycle {
   private readonly now: () => Date;
+  private readonly sightingMaxAgeMs: number;
   private lastCycleId = 0;
   /** Last published state of each Run, to publish only what changed and to carry Delays over. */
   private readonly live = new Map<string, LiveRun>();
   /** Run facts learned so far, so stored Runs are looked up only once. */
   private readonly runs = new Map<string, Run>();
+  /** Latest Sighting of each Run per Source: a Run in several feeds merges into one live Run. */
+  private readonly sightings = new Map<string, Map<Source, Sighting>>();
 
   constructor(
     private readonly repository: MovementRepository,
@@ -57,6 +66,7 @@ export class RunIngestCycle {
     options: RunIngestCycleOptions = {},
   ) {
     this.now = options.now ?? (() => new Date());
+    this.sightingMaxAgeMs = options.sightingMaxAgeMs ?? DEFAULT_SIGHTING_MAX_AGE_MS;
   }
 
   async execute(poll: PollResult): Promise<IngestReport> {
@@ -120,11 +130,14 @@ export class RunIngestCycle {
   }
 
   private changedRuns(poll: PollResult, known: Map<string, Run>): LiveRun[] {
-    const latestSighting = new Map<string, Sighting>();
+    const touched = new Set<string>();
     for (const s of poll.sightings) {
       const key = runIdKey(s.runId);
-      const current = latestSighting.get(key);
-      if (!current || s.observedAt >= current.observedAt) latestSighting.set(key, s);
+      const perSource = this.sightings.get(key) ?? new Map<Source, Sighting>();
+      const current = perSource.get(s.source);
+      if (!current || s.observedAt >= current.observedAt) perSource.set(s.source, s);
+      this.sightings.set(key, perSource);
+      touched.add(key);
     }
     const latestDelay = new Map<string, Delay>();
     for (const d of poll.delays) {
@@ -134,15 +147,23 @@ export class RunIngestCycle {
     }
 
     const changed: LiveRun[] = [];
-    for (const key of new Set([...latestSighting.keys(), ...latestDelay.keys()])) {
+    for (const key of new Set([...touched, ...latestDelay.keys()])) {
       const run = known.get(key);
       const previous = this.live.get(key);
-      const sighting = latestSighting.get(key);
       const delay = latestDelay.get(key);
-      const next = buildLiveRun(run, previous, sighting, delay);
+      const position = chooseLivePosition(this.currentSightings(key));
+      const next = buildLiveRun(run, previous, position, delay);
       if (next && !sameLiveRun(previous, next)) changed.push(next);
     }
     return changed;
+  }
+
+  /** The Run's latest Sighting per Source, without Sources that went quiet for too long. */
+  private currentSightings(key: string): Sighting[] {
+    const all = [...(this.sightings.get(key)?.values() ?? [])];
+    if (all.length === 0) return [];
+    const newest = Math.max(...all.map((s) => s.observedAt.getTime()));
+    return all.filter((s) => s.observedAt.getTime() >= newest - this.sightingMaxAgeMs);
   }
 }
 
@@ -153,9 +174,10 @@ function mergeRun(previous: Run, update: Run): Run {
 function buildLiveRun(
   run: Run | undefined,
   previous: LiveRun | undefined,
-  sighting: Sighting | undefined,
+  livePosition: LivePosition | undefined,
   delay: Delay | undefined,
 ): LiveRun | undefined {
+  const sighting = livePosition?.sighting;
   const serviceType: ServiceType | undefined = run?.serviceType ?? previous?.serviceType;
   if (!serviceType) return undefined;
   const runId = sighting?.runId ?? delay?.runId ?? previous?.runId;
@@ -164,13 +186,13 @@ function buildLiveRun(
   const delaySeconds = delay?.seconds ?? previous?.delaySeconds;
 
   const position =
-    sighting?.lat !== undefined && sighting.lon !== undefined
+    livePosition && sighting?.lat !== undefined && sighting.lon !== undefined
       ? {
           lat: sighting.lat,
           lon: sighting.lon,
           status: STATUS_OF[sighting.status],
           nextStationCode: sighting.stationCode,
-          sources: [sighting.source],
+          sources: livePosition.sources,
           observedAt: sighting.observedAt,
         }
       : previous && {
