@@ -9,7 +9,8 @@
   },
   "Home": {
     "title": "Live Renfe trains",
-    "mapLabel": "Map of live trains in Spain"
+    "mapLabel": "Map of live trains in Spain",
+    "stationsHint": "Zoom in to see stations on the map. Select a station to open its departures and arrivals board."
   },
   "Footer": {
     "attribution": "Datos: Renfe (data.renfe.com), CC BY 4.0"

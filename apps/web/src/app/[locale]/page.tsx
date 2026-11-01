@@ -11,7 +11,7 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
     <>
       <h1 className="sr-only">{t('title')}</h1>
       <Suspense>
-        <TrainMap label={t('mapLabel')} />
+        <TrainMap label={t('mapLabel')} stationsHint={t('stationsHint')} />
       </Suspense>
     </>
   );
