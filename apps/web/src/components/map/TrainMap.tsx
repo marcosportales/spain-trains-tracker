@@ -17,6 +17,8 @@ import { useLiveRuns } from './live/use-live-runs';
 import { attributionHtml, MAP_STYLE_URL, SELECTED_ZOOM, SPAIN_VIEW } from './map-config';
 import { StationsLayer } from './stations/StationsLayer';
 import { useStations } from './stations/use-stations';
+import { TrackGeometryLayer } from './track/TrackGeometryLayer';
+import { useTrackGeometry } from './track/use-track-geometry';
 
 type Props = {
   label: string;
@@ -35,6 +37,7 @@ export function TrainMap({ label, stationsHint, selected, selectedFallback }: Pr
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [filters, setFilters] = useMapFilters();
   const stations = useStations();
+  const track = useTrackGeometry();
   const streamed = useLiveRuns(toStreamFilters(filters));
   const runs = useMemo(
     () =>
@@ -104,8 +107,9 @@ export function TrainMap({ label, stationsHint, selected, selectedFallback }: Pr
       <p id="stations-hint" className="sr-only">
         {stationsHint}
       </p>
+      <TrackGeometryLayer map={map} track={track.collection} />
       <StationsLayer map={map} stations={stations} onSelect={openStation} />
-      <LiveRunsLayer map={map} runs={runs} onSelect={openRun} />
+      <LiveRunsLayer map={map} runs={runs} paths={track.paths} onSelect={openRun} />
       {!selected && (
         <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
       )}
