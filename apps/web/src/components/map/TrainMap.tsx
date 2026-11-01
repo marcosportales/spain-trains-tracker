@@ -8,6 +8,9 @@ import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { runDetailPath } from '../run/run-detail-view';
 import { stationBoardPath } from '../station/station-board-view';
+import { AlertsPanel } from './alerts/AlertsPanel';
+import { affectedLineCodes, alertsForLine } from './alerts/alerts-view';
+import { useServiceAlerts } from './alerts/use-service-alerts';
 import { FilterPanel } from './filters/FilterPanel';
 import { matchesServiceTypes, toStreamFilters } from './filters/map-filters';
 import { useMapFilters } from './filters/use-map-filters';
@@ -38,6 +41,12 @@ export function TrainMap({ label, stationsHint, selected, selectedFallback }: Pr
   const [filters, setFilters] = useMapFilters();
   const stations = useStations();
   const track = useTrackGeometry();
+  const alerts = useServiceAlerts();
+  const [alertLine, setAlertLine] = useState<string>();
+  const highlighted = useMemo(
+    () => affectedLineCodes(alertsForLine(alerts, alertLine)),
+    [alerts, alertLine],
+  );
   const streamed = useLiveRuns(toStreamFilters(filters));
   const runs = useMemo(
     () =>
@@ -107,11 +116,14 @@ export function TrainMap({ label, stationsHint, selected, selectedFallback }: Pr
       <p id="stations-hint" className="sr-only">
         {stationsHint}
       </p>
-      <TrackGeometryLayer map={map} track={track.collection} />
+      <TrackGeometryLayer map={map} track={track.collection} highlighted={highlighted} />
       <StationsLayer map={map} stations={stations} onSelect={openStation} />
       <LiveRunsLayer map={map} runs={runs} paths={track.paths} onSelect={openRun} />
       {!selected && (
-        <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
+        <>
+          <AlertsPanel alerts={alerts} line={alertLine} onLineChange={setAlertLine} />
+          <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
+        </>
       )}
     </>
   );

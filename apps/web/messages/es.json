@@ -90,5 +90,15 @@
     "noResults": "Sin resultados",
     "error": "La búsqueda no está disponible ahora",
     "count": "{count, plural, one {# resultado} other {# resultados}}"
+  },
+  "Alerts": {
+    "title": "Avisos",
+    "count": "{count, plural, one {# aviso activo} other {# avisos activos}}",
+    "line": "Línea",
+    "allLines": "Todas las líneas",
+    "empty": "No hay avisos activos",
+    "lines": "Líneas: {lines}",
+    "source": "Fuente: Renfe",
+    "since": "desde {when}"
   }
 }
