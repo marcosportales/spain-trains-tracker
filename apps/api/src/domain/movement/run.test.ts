@@ -23,4 +23,19 @@ describe('createRun', () => {
       InvalidMovementValueError,
     );
   });
+
+  it('keeps an optional status and wheelchair flag', () => {
+    expect(
+      createRun({ id, serviceType: 'cercanias', status: 'cancelled', wheelchairAccessible: false }),
+    ).toEqual({ id, serviceType: 'cercanias', status: 'cancelled', wheelchairAccessible: false });
+    const bare = createRun({ id, serviceType: 'ave' });
+    expect(bare).not.toHaveProperty('status');
+    expect(bare).not.toHaveProperty('wheelchairAccessible');
+  });
+
+  it('rejects an unknown status', () => {
+    expect(() => createRun({ id, serviceType: 'ave', status: 'late' as never })).toThrow(
+      InvalidMovementValueError,
+    );
+  });
 });
