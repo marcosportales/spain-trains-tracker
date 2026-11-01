@@ -17,11 +17,13 @@ import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js'
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { PostgresLiveUpdatesPublisher } from '../db/postgres-live-updates.publisher.js';
 import { LoggingModule } from '../logging/logging.module.js';
+import { LineCodesByRouteId } from '../renfe/gtfs-rt/line-codes-by-route-id.js';
 import { HttpStaticFeeds } from '../renfe/http-static-feeds.js';
 import { RenfeVisorFeed } from '../renfe/visor/visor-feed.js';
 import { FeedHealthReporter } from './feed-health.reporter.js';
 import { FeedPollers } from './feed-pollers.js';
 import { HEARTBEAT_INTERVAL_MS, HEARTBEAT_LOGGER, HeartbeatService } from './heartbeat.service.js';
+import { createOfficialPollers } from './official-pollers.js';
 import {
   STATIC_IMPORT,
   STATIC_IMPORT_LOGGER,
@@ -68,8 +70,16 @@ import { createVisorPollers } from './visor-pollers.js';
         cycle: RunIngestCycle,
         logger: Logger,
       ) =>
-        new FeedPollers(
-          createVisorPollers({
+        new FeedPollers([
+          ...createOfficialPollers({
+            intervalMs: config.get('FEED_POLL_INTERVAL_MS', { infer: true }),
+            fetch,
+            logger,
+            cycle,
+            timetable: network,
+            lines: new LineCodesByRouteId(network),
+          }),
+          ...createVisorPollers({
             enabled: config.get('VISOR_FEED_ENABLED', { infer: true }),
             intervalMs: config.get('FEED_POLL_INTERVAL_MS', { infer: true }),
             fetch,
@@ -82,7 +92,7 @@ import { createVisorPollers } from './visor-pollers.js';
             cycle,
             repository: movement,
           }),
-        ),
+        ]),
     },
     { provide: FeedHealthSource, useExisting: FeedPollers },
     { provide: FeedHealthStore, useClass: DrizzleFeedHealthStore },
