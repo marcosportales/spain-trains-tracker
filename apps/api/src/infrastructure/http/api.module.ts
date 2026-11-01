@@ -21,6 +21,8 @@ import { SearchCatalog } from '../../application/search/search-catalog.use-case.
 import { GetStationBoard } from '../../application/station/get-station-board.use-case.js';
 import { ListStations } from '../../application/station/list-stations.use-case.js';
 import { StationBoardReader } from '../../application/station/station-board.reader.js';
+import { GetTrainHistory } from '../../application/train-history/get-train-history.use-case.js';
+import { TrainHistoryReader } from '../../application/train-history/train-history.reader.js';
 import { AppConfigModule } from '../config/app-config.module.js';
 import { DbModule } from '../db/db.module.js';
 import { DrizzleFeedHealthStore } from '../db/drizzle-feed-health.store.js';
@@ -31,6 +33,7 @@ import { DrizzlePunctualityReader } from '../db/drizzle-punctuality.reader.js';
 import { DrizzleRunDetailReader } from '../db/drizzle-run-detail.reader.js';
 import { DrizzleSearchReader } from '../db/drizzle-search.reader.js';
 import { DrizzleStationBoardReader } from '../db/drizzle-station-board.reader.js';
+import { DrizzleTrainHistoryReader } from '../db/drizzle-train-history.reader.js';
 import { PostgresLiveNotifications } from '../db/postgres-live-notifications.js';
 import { LoggingModule } from '../logging/logging.module.js';
 import { AlertsController } from './alerts.controller.js';
@@ -41,6 +44,7 @@ import { PunctualityController } from './punctuality.controller.js';
 import { RunsController } from './runs.controller.js';
 import { SearchController } from './search.controller.js';
 import { StationsController } from './stations.controller.js';
+import { TrainHistoryController } from './train-history.controller.js';
 
 @Module({
   imports: [AppConfigModule, LoggingModule, DbModule],
@@ -53,6 +57,7 @@ import { StationsController } from './stations.controller.js';
     RunsController,
     SearchController,
     StationsController,
+    TrainHistoryController,
   ],
   providers: [
     GetHealth,
@@ -89,6 +94,12 @@ import { StationsController } from './stations.controller.js';
       provide: GetDelayByHour,
       inject: [PunctualityReader],
       useFactory: (reader: PunctualityReader) => new GetDelayByHour(reader),
+    },
+    { provide: TrainHistoryReader, useClass: DrizzleTrainHistoryReader },
+    {
+      provide: GetTrainHistory,
+      inject: [TrainHistoryReader],
+      useFactory: (reader: TrainHistoryReader) => new GetTrainHistory(reader),
     },
     { provide: SearchReader, useClass: DrizzleSearchReader },
     {

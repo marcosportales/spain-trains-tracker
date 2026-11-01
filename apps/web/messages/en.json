@@ -43,6 +43,12 @@
     "rollingStock": "Rolling stock",
     "stops": "Stops",
     "noStops": "No timetable available",
+    "history": "Delay history",
+    "historyOnTime": "Usually on time (last {runs} runs)",
+    "historyLate": "Usually {minutes} min late (last {runs} runs)",
+    "historyEarly": "Usually {minutes} min early (last {runs} runs)",
+    "historyNone": "No history for this train yet",
+    "historyRun": "{date}: {minutes} min on average, up to {maxMinutes} min",
     "badge": {
       "on_time": "On time",
       "late": "{minutes} min late",

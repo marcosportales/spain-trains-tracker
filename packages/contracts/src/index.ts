@@ -12,4 +12,5 @@ export * from './service-date.js';
 export * from './service-type.js';
 export * from './station.js';
 export * from './station-board.js';
+export * from './train-history.js';
 export * from './train-number.js';
