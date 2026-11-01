@@ -69,7 +69,7 @@ function bestPath(paths: TrackPaths, from: LngLat, to: LngLat) {
 type MotionInput = {
   from: LngLat;
   to: LngLat;
-  serviceType: ServiceType;
+  serviceType: ServiceType | undefined;
   /** Track geometry of the Run's Line, if known. */
   paths?: TrackPaths | undefined;
 };

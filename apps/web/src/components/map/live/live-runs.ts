@@ -1,8 +1,14 @@
 import type { LiveRun, RunId, ServiceType } from '@stt/contracts';
 import type { Feature, FeatureCollection, Point } from 'geojson';
 
+/** A Run as drawn on the map. Replayed Sightings carry no Service type, so it is optional. */
+export type MapRun = Omit<LiveRun, 'serviceType'> & { serviceType?: ServiceType | undefined };
+
 /** Live Runs keyed by `runKey`, so a diff touches only the Runs it names. */
 export type LiveRuns = ReadonlyMap<string, LiveRun>;
+
+/** Runs to draw, keyed by `runKey`: live ones or a replayed instant. */
+export type MapRuns = ReadonlyMap<string, MapRun>;
 
 export const initialLiveRuns: LiveRuns = new Map();
 
@@ -29,7 +35,7 @@ export function liveRunsReducer(state: LiveRuns, action: LiveRunsAction): LiveRu
 }
 
 /** Cercanías positions at or approaching a Station are snapped to it; only `in_transit_to` is real GPS. */
-export const isSnapped = (run: LiveRun): boolean => run.status !== 'in_transit_to';
+export const isSnapped = (run: Pick<LiveRun, 'status'>): boolean => run.status !== 'in_transit_to';
 
 export const SERVICE_TYPE_COLORS: Record<ServiceType, string> = {
   cercanias: '#e11d48',
@@ -40,14 +46,14 @@ export const SERVICE_TYPE_COLORS: Record<ServiceType, string> = {
 };
 
 export type LiveRunProperties = {
-  serviceType: ServiceType;
+  serviceType?: ServiceType | undefined;
   label: string;
   snapped: boolean;
 } & RunId;
 
 /** `positions` overrides where a Run is drawn (its animated position); the reported one is the default. */
 export function toFeatureCollection(
-  runs: LiveRuns,
+  runs: MapRuns,
   positions?: ReadonlyMap<string, readonly [number, number]>,
 ): FeatureCollection<Point, LiveRunProperties> {
   const features: Feature<Point, LiveRunProperties>[] = [];
