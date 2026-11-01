@@ -6,7 +6,8 @@
   "Header": {
     "appName": "Spain Trains Tracker",
     "language": "Idioma",
-    "punctuality": "Puntualidad"
+    "punctuality": "Puntualidad",
+    "replay": "Reproducción"
   },
   "Home": {
     "title": "Trenes de Renfe en directo",
@@ -127,5 +128,21 @@
     "hourTitle": "{hour}:00, retraso medio de {minutes} min",
     "noData": "{hour}:00, sin datos",
     "error": "No se pudo actualizar; se muestran las últimas cifras conocidas"
+  },
+  "Replay": {
+    "title": "Reproducción",
+    "description": "Reproduce dónde estuvieron los trenes de Renfe durante una hora pasada.",
+    "mapLabel": "Mapa que reproduce posiciones pasadas de trenes",
+    "controls": "Controles de reproducción",
+    "start": "Inicio",
+    "speed": "Velocidad",
+    "speedOption": "{speed}×",
+    "play": "Reproducir",
+    "pause": "Pausa",
+    "scrubber": "Hora de la reproducción",
+    "loading": "Cargando avistamientos…",
+    "error": "No se pudieron cargar los avistamientos de esta hora.",
+    "empty": "No hay avistamientos registrados para esta hora.",
+    "runs": "{count, plural, one {# tren} other {# trenes}}"
   }
 }

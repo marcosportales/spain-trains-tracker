@@ -13,6 +13,9 @@ export function Header() {
       <Link href="/punctuality" className="shrink-0 text-sm">
         {t('punctuality')}
       </Link>
+      <Link href="/replay" className="shrink-0 text-sm">
+        {t('replay')}
+      </Link>
       <SearchBox />
       <LocaleSwitcher />
     </header>

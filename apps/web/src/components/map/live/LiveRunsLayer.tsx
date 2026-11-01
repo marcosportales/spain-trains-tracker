@@ -5,7 +5,7 @@ import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'mapl
 import { useEffect, useMemo, useRef } from 'react';
 import type { TrackPaths } from '../motion/interpolation';
 import { RunMotions } from '../motion/run-motions';
-import { type LiveRuns, SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
+import { type MapRuns, SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
 const CIRCLE_LAYER_ID = 'live-runs-circles';
@@ -68,7 +68,7 @@ export function LiveRunsLayer({
   onSelect,
 }: {
   map: MapLibreMap | null;
-  runs: LiveRuns;
+  runs: MapRuns;
   paths?: ReadonlyMap<string, TrackPaths>;
   onSelect?: (id: RunId) => void;
 }) {

@@ -1,4 +1,4 @@
-import type { LiveRun } from '@stt/contracts';
+import type { MapRun } from '../live/live-runs';
 import { type LngLat, type Motion, makeMotion, type TrackPaths } from './interpolation';
 
 /** Matches the ingest poll interval (`FEED_POLL_INTERVAL_MS`): a Run reaches its position as the next arrives. */
@@ -34,7 +34,7 @@ export class RunMotions {
     this.reducedMotion = reducedMotion;
   }
 
-  update(runs: ReadonlyMap<string, LiveRun>, now: number): void {
+  update(runs: ReadonlyMap<string, MapRun>, now: number): void {
     for (const key of this.entries.keys()) if (!runs.has(key)) this.entries.delete(key);
     for (const [key, run] of runs) {
       const target: LngLat = [run.lon, run.lat];
