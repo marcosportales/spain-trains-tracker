@@ -4,6 +4,7 @@ import {
   createDelay,
   createRun,
   createRunId,
+  createRunStopEstimate,
   createServiceAlert,
   createSighting,
 } from '../../domain/movement/index.js';
@@ -40,7 +41,7 @@ describe('DrizzleMovementRepository', () => {
     await testDb.close();
   });
   beforeEach(async () => {
-    await testDb.sql.unsafe('TRUNCATE sightings, delays, runs, service_alerts');
+    await testDb.sql.unsafe('TRUNCATE sightings, delays, runs, service_alerts, run_stop_estimates');
   });
 
   describe('migration', () => {
@@ -200,8 +201,58 @@ describe('DrizzleMovementRepository', () => {
       expect(run?.lastSeenAt).toEqual(at('2026-10-31T10:05:00Z'));
     });
 
+    it('stores the Rolling stock and keeps it when a later Run lacks it', async () => {
+      await repo.touchRuns(
+        [createRun({ id: runId, serviceType: 'ave', rollingStock: '449013' })],
+        at('2026-10-31T10:00:00Z'),
+      );
+      await repo.touchRuns(
+        [createRun({ id: runId, serviceType: 'ave' })],
+        at('2026-10-31T10:05:00Z'),
+      );
+      expect((await repo.findRun('03063', '2026-10-31'))?.rollingStock).toBe('449013');
+    });
+
     it('returns undefined for an unknown Run', async () => {
       expect(await repo.findRun('99999', '2026-10-31')).toBeUndefined();
+    });
+  });
+
+  describe('replaceStopEstimates', () => {
+    const estimate = (sequence: number, stationCode: string, estimatedArrival: string) =>
+      createRunStopEstimate({
+        runId,
+        sequence,
+        stationCode,
+        scheduledArrival: at('2026-10-31T21:00:00Z'),
+        scheduledDeparture: at('2026-10-31T21:01:00Z'),
+        estimatedArrival: at(estimatedArrival),
+        estimatedDeparture: at('2026-10-31T21:20:00Z'),
+      });
+
+    it('stores the estimates of a Run in journey order', async () => {
+      await repo.replaceStopEstimates([
+        estimate(1, '51100', '2026-10-31T21:10:00Z'),
+        estimate(0, '51003', '2026-10-31T21:05:00Z'),
+      ]);
+      expect(
+        (await repo.listStopEstimates('03063', '2026-10-31')).map((e) => e.stationCode),
+      ).toEqual(['51003', '51100']);
+    });
+
+    it('replaces the previous estimates of the Runs it is given and leaves other Runs alone', async () => {
+      const other = createRunId('4000', '2026-10-31');
+      await repo.replaceStopEstimates([
+        estimate(0, '51003', '2026-10-31T21:05:00Z'),
+        estimate(1, '51100', '2026-10-31T21:10:00Z'),
+        { ...estimate(0, '60000', '2026-10-31T21:05:00Z'), runId: other },
+      ]);
+      await repo.replaceStopEstimates([estimate(0, '51003', '2026-10-31T21:30:00Z')]);
+
+      const replaced = await repo.listStopEstimates('03063', '2026-10-31');
+      expect(replaced).toHaveLength(1);
+      expect(replaced[0]?.estimatedArrival).toEqual(at('2026-10-31T21:30:00Z'));
+      expect(await repo.listStopEstimates('04000', '2026-10-31')).toHaveLength(1);
     });
   });
 

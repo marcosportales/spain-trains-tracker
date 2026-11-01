@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import {
@@ -10,9 +10,11 @@ import {
   type ActivePeriod,
   createRun,
   createRunId,
+  createRunStopEstimate,
   createServiceAlert,
   type Delay,
   type Run,
+  type RunStopEstimate,
   type ServiceAlert,
   type Sighting,
   type Source,
@@ -77,6 +79,7 @@ export class DrizzleMovementRepository extends MovementRepository {
           lineCode: r.lineCode ?? null,
           status: r.status ?? null,
           wheelchairAccessible: r.wheelchairAccessible ?? null,
+          rollingStock: r.rollingStock ?? null,
           lastSeenAt: seenAt,
         })),
       )
@@ -87,6 +90,7 @@ export class DrizzleMovementRepository extends MovementRepository {
           lineCode: sql`coalesce(excluded.line_code, ${t.runs.lineCode})`,
           status: sql`coalesce(excluded.status, ${t.runs.status})`,
           wheelchairAccessible: sql`coalesce(excluded.wheelchair_accessible, ${t.runs.wheelchairAccessible})`,
+          rollingStock: sql`coalesce(excluded.rolling_stock, ${t.runs.rollingStock})`,
           lastSeenAt: sql`greatest(excluded.last_seen_at, ${t.runs.lastSeenAt})`,
         },
       });
@@ -107,9 +111,67 @@ export class DrizzleMovementRepository extends MovementRepository {
         ...(row.wheelchairAccessible !== null && {
           wheelchairAccessible: row.wheelchairAccessible,
         }),
+        ...(row.rollingStock !== null && { rollingStock: row.rollingStock }),
       }),
       lastSeenAt: row.lastSeenAt,
     };
+  }
+
+  async replaceStopEstimates(estimates: readonly RunStopEstimate[]): Promise<void> {
+    if (estimates.length === 0) return;
+    const runs = new Map(
+      estimates.map((e) => [`${e.runId.trainNumber}@${e.runId.serviceDate}`, e.runId]),
+    );
+    await this.db.transaction(async (tx) => {
+      for (const id of runs.values()) {
+        await tx
+          .delete(t.runStopEstimates)
+          .where(
+            and(
+              eq(t.runStopEstimates.trainNumber, id.trainNumber),
+              eq(t.runStopEstimates.serviceDate, id.serviceDate),
+            ),
+          );
+      }
+      for (let i = 0; i < estimates.length; i += BATCH_SIZE) {
+        await tx.insert(t.runStopEstimates).values(
+          estimates.slice(i, i + BATCH_SIZE).map((e) => ({
+            trainNumber: e.runId.trainNumber,
+            serviceDate: e.runId.serviceDate,
+            sequence: e.sequence,
+            stationCode: e.stationCode,
+            scheduledArrival: e.scheduledArrival,
+            scheduledDeparture: e.scheduledDeparture,
+            estimatedArrival: e.estimatedArrival,
+            estimatedDeparture: e.estimatedDeparture,
+          })),
+        );
+      }
+    });
+  }
+
+  async listStopEstimates(trainNumber: string, serviceDate: string): Promise<RunStopEstimate[]> {
+    const rows = await this.db
+      .select()
+      .from(t.runStopEstimates)
+      .where(
+        and(
+          eq(t.runStopEstimates.trainNumber, trainNumber),
+          eq(t.runStopEstimates.serviceDate, serviceDate),
+        ),
+      )
+      .orderBy(asc(t.runStopEstimates.sequence));
+    return rows.map((row) =>
+      createRunStopEstimate({
+        runId: createRunId(row.trainNumber, row.serviceDate),
+        sequence: row.sequence,
+        stationCode: row.stationCode,
+        scheduledArrival: row.scheduledArrival,
+        scheduledDeparture: row.scheduledDeparture,
+        estimatedArrival: row.estimatedArrival,
+        estimatedDeparture: row.estimatedDeparture,
+      }),
+    );
   }
 
   async saveServiceAlerts(alerts: readonly ServiceAlert[]): Promise<void> {

@@ -1,4 +1,11 @@
-import type { Delay, Run, ServiceAlert, Sighting, Source } from '../../domain/movement/index.js';
+import type {
+  Delay,
+  Run,
+  RunStopEstimate,
+  ServiceAlert,
+  Sighting,
+  Source,
+} from '../../domain/movement/index.js';
 
 /** Storage for the history of Runs: Sightings, Delays and Service alerts. */
 export abstract class MovementRepository {
@@ -15,6 +22,14 @@ export abstract class MovementRepository {
    */
   abstract touchRuns(runs: readonly Run[], seenAt: Date): Promise<void>;
   abstract findRun(trainNumber: string, serviceDate: string): Promise<StoredRun | undefined>;
+
+  /**
+   * For every Run that appears in `estimates`, replaces all its stored estimates with the given
+   * ones. Runs not in `estimates` are untouched.
+   */
+  abstract replaceStopEstimates(estimates: readonly RunStopEstimate[]): Promise<void>;
+  /** The stored estimates of a Run, in journey order. */
+  abstract listStopEstimates(trainNumber: string, serviceDate: string): Promise<RunStopEstimate[]>;
 
   /** Inserts or replaces Service alerts by id. */
   abstract saveServiceAlerts(alerts: readonly ServiceAlert[]): Promise<void>;
