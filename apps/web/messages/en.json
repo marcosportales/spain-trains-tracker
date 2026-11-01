@@ -53,7 +53,8 @@
       "larga_distancia": "Long distance",
       "media_distancia": "Medium distance",
       "ancho_metrico": "Metre gauge"
-    }
+    },
+    "description": "{serviceType} {trainNumber}: {status}"
   },
   "StationBoard": {
     "title": "{station} board",
@@ -70,6 +71,12 @@
       "late": "{minutes} min late",
       "cancelled": "Cancelled",
       "unknown": "Delay unknown"
-    }
+    },
+    "description": "Next departures and arrivals at {station}"
+  },
+  "Share": {
+    "label": "Share",
+    "copied": "Link copied",
+    "failed": "Could not share the link"
   }
 }
