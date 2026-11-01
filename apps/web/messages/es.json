@@ -13,5 +13,21 @@
   },
   "Footer": {
     "attribution": "Datos: Renfe (data.renfe.com), CC BY 4.0"
+  },
+  "Filters": {
+    "title": "Filtros",
+    "serviceType": "Tipo de servicio",
+    "hub": "Núcleo",
+    "line": "Línea",
+    "allHubs": "Todos los núcleos",
+    "allLines": "Todas las líneas",
+    "clear": "Quitar filtros",
+    "serviceTypes": {
+      "cercanias": "Cercanías",
+      "ave": "AVE",
+      "larga_distancia": "Larga Distancia",
+      "media_distancia": "Media Distancia",
+      "ancho_metrico": "Ancho métrico"
+    }
   }
 }
