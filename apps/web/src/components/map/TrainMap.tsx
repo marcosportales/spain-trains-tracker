@@ -1,16 +1,18 @@
 'use client';
 
 import { AttributionControl, Map as MapLibreMap, NavigationControl } from 'maplibre-gl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { LiveRunsLayer } from './live/LiveRunsLayer';
 import { attributionHtml, MAP_STYLE_URL, SPAIN_VIEW } from './map-config';
 
 export function TrainMap({ label }: { label: string }) {
   const container = useRef<HTMLElement>(null);
+  const [map, setMap] = useState<MapLibreMap | null>(null);
 
   useEffect(() => {
     if (!container.current) return;
-    const map = new MapLibreMap({
+    const instance = new MapLibreMap({
       container: container.current,
       style: MAP_STYLE_URL,
       center: SPAIN_VIEW.center,
@@ -18,13 +20,21 @@ export function TrainMap({ label }: { label: string }) {
       attributionControl: false,
       dragRotate: false,
     });
-    map.touchZoomRotate.disableRotation();
-    map.addControl(
+    instance.touchZoomRotate.disableRotation();
+    instance.addControl(
       new AttributionControl({ compact: false, customAttribution: attributionHtml() }),
     );
-    map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
-    return () => map.remove();
+    instance.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+    setMap(instance);
+    return () => {
+      setMap(null);
+      instance.remove();
+    };
   }, []);
 
-  return <section ref={container} aria-label={label} className="h-full w-full" />;
+  return (
+    <section ref={container} aria-label={label} className="h-full w-full">
+      <LiveRunsLayer map={map} />
+    </section>
+  );
 }
