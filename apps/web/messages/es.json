@@ -79,5 +79,16 @@
     "label": "Compartir",
     "copied": "Enlace copiado",
     "failed": "No se pudo compartir el enlace"
+  },
+  "Search": {
+    "label": "Buscar",
+    "placeholder": "Buscar trenes, estaciones, líneas",
+    "lines": "Líneas",
+    "stations": "Estaciones",
+    "runs": "Trenes",
+    "run": "Tren {trainNumber}",
+    "noResults": "Sin resultados",
+    "error": "La búsqueda no está disponible ahora",
+    "count": "{count, plural, one {# resultado} other {# resultados}}"
   }
 }
