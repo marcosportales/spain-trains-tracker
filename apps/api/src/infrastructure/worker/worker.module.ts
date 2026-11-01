@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
+import { LiveUpdatesPublisher } from '../../application/live/live-updates.publisher.js';
+import { RunIngestCycle } from '../../application/live/run-ingest-cycle.use-case.js';
 import { MovementRepository } from '../../application/movement/movement.repository.js';
 import { ImportStaticNetwork } from '../../application/network/import-static-network.use-case.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
@@ -10,6 +12,7 @@ import type { Env } from '../config/env.js';
 import { DbModule } from '../db/db.module.js';
 import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
+import { PostgresLiveUpdatesPublisher } from '../db/postgres-live-updates.publisher.js';
 import { LoggingModule } from '../logging/logging.module.js';
 import { HttpStaticFeeds } from '../renfe/http-static-feeds.js';
 import { HEARTBEAT_INTERVAL_MS, HEARTBEAT_LOGGER, HeartbeatService } from './heartbeat.service.js';
@@ -26,6 +29,13 @@ import {
     StaticImportScheduler,
     { provide: NetworkRepository, useClass: DrizzleNetworkRepository },
     { provide: MovementRepository, useClass: DrizzleMovementRepository },
+    { provide: LiveUpdatesPublisher, useClass: PostgresLiveUpdatesPublisher },
+    {
+      provide: RunIngestCycle,
+      inject: [MovementRepository, LiveUpdatesPublisher],
+      useFactory: (repository: MovementRepository, publisher: LiveUpdatesPublisher) =>
+        new RunIngestCycle(repository, publisher),
+    },
     {
       provide: StaticFeeds,
       inject: [Logger],
