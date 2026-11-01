@@ -1,9 +1,10 @@
-import type { RunDetail } from '@stt/contracts';
+import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { ShareButton } from '../share/ShareButton';
 import { type DelayBadge, delayBadge, delayMinutes, stopTimes } from './run-detail-view';
+import { recentRuns, typicalDelay } from './train-history-view';
 
 const BADGE_CLASSES: Record<DelayBadge, string> = {
   on_time: 'bg-green-100 text-green-800',
@@ -14,12 +15,20 @@ const BADGE_CLASSES: Record<DelayBadge, string> = {
 };
 
 /** Run detail: a side panel on larger screens, a bottom sheet on mobile. Server-renderable. */
-export function RunDetailPanel({ detail }: { detail: RunDetail }) {
+export function RunDetailPanel({
+  detail,
+  history,
+}: {
+  detail: RunDetail;
+  /** Delay history of the Train number; leave out when it could not be loaded. */
+  history?: TrainHistory | undefined;
+}) {
   const t = useTranslations('RunDetail');
   const { run } = detail;
   const badge = delayBadge(detail);
   const delay = detail.delaySeconds ?? run.delaySeconds;
   const nextStop = run.nextStationCode;
+  const typical = history && typicalDelay(history);
 
   return (
     <aside
@@ -114,6 +123,39 @@ export function RunDetailPanel({ detail }: { detail: RunDetail }) {
             );
           })}
         </ol>
+      )}
+
+      {history && (
+        <section data-testid="train-history" aria-labelledby="train-history-title">
+          <h2 id="train-history-title" className="mt-4 text-sm font-semibold">
+            {t('history')}
+          </h2>
+          {typical ? (
+            <>
+              <p className="text-sm">
+                {typical.kind === 'on_time'
+                  ? t('historyOnTime', { runs: typical.runs })
+                  : t(typical.kind === 'late' ? 'historyLate' : 'historyEarly', {
+                      minutes: typical.minutes,
+                      runs: typical.runs,
+                    })}
+              </p>
+              <ul className="mt-1 space-y-1 text-sm text-gray-600">
+                {recentRuns(history).map((row) => (
+                  <li key={row.serviceDate} className="tabular-nums">
+                    {t('historyRun', {
+                      date: row.serviceDate,
+                      minutes: row.minutes,
+                      maxMinutes: row.maxMinutes,
+                    })}
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-sm text-gray-600">{t('historyNone')}</p>
+          )}
+        </section>
       )}
     </aside>
   );
