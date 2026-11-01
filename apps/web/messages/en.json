@@ -79,5 +79,16 @@
     "label": "Share",
     "copied": "Link copied",
     "failed": "Could not share the link"
+  },
+  "Search": {
+    "label": "Search",
+    "placeholder": "Search Runs, Stations, Lines",
+    "lines": "Lines",
+    "stations": "Stations",
+    "runs": "Runs",
+    "run": "Run {trainNumber}",
+    "noResults": "No results",
+    "error": "Search is unavailable right now",
+    "count": "{count, plural, one {# result} other {# results}}"
   }
 }
