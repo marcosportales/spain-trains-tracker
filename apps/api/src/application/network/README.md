@@ -25,6 +25,16 @@ runs it at 03:30 Europe/Madrid, and on startup when any source was never importe
 - **Train number**: AV/LD/MD `trip_short_name`; Cercanías the 5 digits in the trip id
   (`3003S23578C1` → `23578`). One Train number can have several trip variants on a date.
 
+## Track geometry
+
+Each `shapes.txt` shape becomes one LineString in `track_geometries`, tagged with the Line of the
+first trip that uses it; Runs point at their shape. Read it per Line with
+`NetworkRepository.trackGeometryFor(lineCode)` (all shapes of the Line, by shape id) or
+`simplifiedTrackGeometryFor(lineCode, toleranceMeters = 5)` (Douglas–Peucker, endpoints kept) for
+the web map. `track-geometry-import.test.ts` imports a consistent synthetic feed (the recorded
+fixtures are cut to 50 rows per file, so their trips and shapes do not join) and checks that every
+Cercanías Line has a geometry whose ends are within 300 m of the Line's first and last Station.
+
 ## Service type rule
 
 `route_type` is 2 (rail) on every route in both feeds, so the type comes from the route name

@@ -39,4 +39,14 @@ export abstract class NetworkRepository {
   /** Stops of a scheduled Run, in sequence order. */
   abstract getScheduledStops(tripId: string): Promise<ScheduledStop[]>;
   abstract getTrackGeometry(shapeId: string): Promise<TrackGeometry | undefined>;
+  /** Every Track geometry drawn for a Line (one per shape), ordered by shape id. */
+  abstract trackGeometryFor(lineCode: string): Promise<TrackGeometry[]>;
+  /**
+   * Like `trackGeometryFor`, but with vertices removed (Douglas–Peucker) so the path stays within
+   * `toleranceMeters` (default 5 m) of the original. Meant for the web map.
+   */
+  abstract simplifiedTrackGeometryFor(
+    lineCode: string,
+    toleranceMeters?: number,
+  ): Promise<TrackGeometry[]>;
 }

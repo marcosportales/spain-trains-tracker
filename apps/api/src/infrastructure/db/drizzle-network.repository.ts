@@ -22,6 +22,9 @@ import * as t from './schema/index.js';
 /** Keeps each INSERT well under Postgres' 65 535 bind-parameter limit. */
 const BATCH_SIZE = 2_000;
 
+const DEFAULT_SIMPLIFY_METERS = 5;
+const METERS_PER_DEGREE = 111_320;
+
 type Tx = Parameters<Parameters<PostgresJsDatabase['transaction']>[0]>[0];
 
 const point = (lat: number, lon: number) => `SRID=4326;POINT(${lon} ${lat})`;
@@ -304,6 +307,38 @@ export class DrizzleNetworkRepository extends NetworkRepository {
       path: coordinates,
       ...(row.line_code !== null && { lineCode: row.line_code }),
     };
+  }
+
+  trackGeometryFor(lineCode: string): Promise<TrackGeometry[]> {
+    return this.selectLineGeometries(lineCode, sql`geometry::geometry`);
+  }
+
+  simplifiedTrackGeometryFor(
+    lineCode: string,
+    toleranceMeters = DEFAULT_SIMPLIFY_METERS,
+  ): Promise<TrackGeometry[]> {
+    // ST_Simplify works in the units of the geometry (degrees for SRID 4326), so the tolerance is
+    // converted from metres at the equatorial scale. That is exact for latitude and
+    // conservative for longitude (never removes more than asked).
+    const degrees = toleranceMeters / METERS_PER_DEGREE;
+    return this.selectLineGeometries(
+      lineCode,
+      sql`ST_Simplify(geometry::geometry, ${degrees}, true)`,
+    );
+  }
+
+  private async selectLineGeometries(
+    lineCode: string,
+    geometry: ReturnType<typeof sql>,
+  ): Promise<TrackGeometry[]> {
+    const rows = await this.db.execute<{ shape_id: string; geojson: string }>(sql`
+      SELECT shape_id, ST_AsGeoJSON(${geometry}) AS geojson
+      FROM ${t.trackGeometries} WHERE line_code = ${lineCode} ORDER BY shape_id`);
+    return rows.map((row) => ({
+      shapeId: row.shape_id,
+      lineCode,
+      path: (JSON.parse(row.geojson) as { coordinates: [number, number][] }).coordinates,
+    }));
   }
 }
 

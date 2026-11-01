@@ -168,6 +168,91 @@ describe('DrizzleNetworkRepository', () => {
     expect(await repo.getTrackGeometry('missing')).toBeUndefined();
   });
 
+  describe('Track geometry of a Line', () => {
+    // 300 vertices along a straight line (~0.5 m of wobble) between Atocha and a point 30 km north.
+    const dense: [number, number][] = Array.from({ length: 300 }, (_, i) => [
+      -3.6892 + i * 0.0001,
+      40.4065 + i * 0.0009 + (i % 2 === 0 ? 0 : 0.000004),
+    ]);
+
+    it('returns every geometry of a Line, and none for other Lines or unknown codes', async () => {
+      await repo.saveStaticNetwork(
+        network({
+          lines: [
+            ...network().lines,
+            { code: 'C2', name: 'C2', serviceType: 'cercanias', hubCode: '10' },
+          ],
+          geometries: [
+            {
+              shapeId: '10_C1b',
+              lineCode: 'C1',
+              path: [
+                [-3.7, 40.42],
+                [-3.8, 40.5],
+              ],
+            },
+            ...network().geometries,
+            { shapeId: '10_C2', lineCode: 'C2', path: dense },
+          ],
+        }),
+        record,
+      );
+
+      const c1 = await repo.trackGeometryFor('C1');
+      expect(c1.map((g) => g.shapeId)).toEqual(['10_C1', '10_C1b']);
+      expect(c1.every((g) => g.lineCode === 'C1')).toBe(true);
+      expect(c1[0]?.path).toHaveLength(2);
+      expect(await repo.trackGeometryFor('C2')).toHaveLength(1);
+      expect(await repo.trackGeometryFor('nope')).toEqual([]);
+    });
+
+    it('simplifies to ~5 m, keeping the endpoints', async () => {
+      await repo.saveStaticNetwork(
+        network({ geometries: [{ shapeId: '10_C1', lineCode: 'C1', path: dense }] }),
+        record,
+      );
+
+      const [full] = await repo.trackGeometryFor('C1');
+      const [simple] = await repo.simplifiedTrackGeometryFor('C1');
+      expect(full?.path).toHaveLength(300);
+      expect(simple?.shapeId).toBe('10_C1');
+      expect(simple?.lineCode).toBe('C1');
+      expect(simple?.path.length).toBeLessThan(10);
+      expect(simple?.path[0]).toEqual(full?.path[0]);
+      expect(simple?.path.at(-1)).toEqual(full?.path.at(-1));
+    });
+
+    it('keeps a two-point geometry intact when simplifying', async () => {
+      await repo.saveStaticNetwork(network(), record);
+
+      const [simple] = await repo.simplifiedTrackGeometryFor('C1');
+      expect(simple?.path).toHaveLength(2);
+    });
+
+    it('accepts a custom tolerance', async () => {
+      await repo.saveStaticNetwork(
+        network({
+          geometries: [
+            {
+              shapeId: '10_C1',
+              lineCode: 'C1',
+              // Middle vertex is ~20 m off the straight line between the ends.
+              path: [
+                [-3.7, 40.42],
+                [-3.7, 40.4205],
+                [-3.7005, 40.421],
+              ],
+            },
+          ],
+        }),
+        record,
+      );
+
+      expect((await repo.simplifiedTrackGeometryFor('C1', 5))[0]?.path).toHaveLength(3);
+      expect((await repo.simplifiedTrackGeometryFor('C1', 100))[0]?.path).toHaveLength(2);
+    });
+  });
+
   it('records imports and returns the latest per source', async () => {
     await repo.saveStaticNetwork(network(), record);
     const later = {
