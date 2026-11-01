@@ -1,0 +1,134 @@
+'use client';
+
+import type { StationBoard } from '@stt/contracts';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { Link } from '@/i18n/navigation';
+import { fetchStationBoard } from '@/lib/station-board-api';
+import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
+import { type DelayBadge, delayMinutes, runDetailPath } from '../run/run-detail-view';
+import { entryBadge, entryTimes } from './station-board-view';
+
+export const REFRESH_MS = 30_000;
+
+const BADGE_CLASSES: Record<DelayBadge, string> = {
+  on_time: 'bg-green-100 text-green-800',
+  minor: 'bg-amber-100 text-amber-800',
+  major: 'bg-red-100 text-red-800',
+  cancelled: 'bg-gray-800 text-white',
+  unknown: 'bg-gray-100 text-gray-700',
+};
+
+type Tab = 'departures' | 'arrivals';
+
+/** Station board with departures/arrivals tabs, refreshed every 30 s from the API. */
+export function StationBoardView({ initial }: { initial: StationBoard }) {
+  const t = useTranslations('StationBoard');
+  const [board, setBoard] = useState(initial);
+  const [tab, setTab] = useState<Tab>('departures');
+  const [stale, setStale] = useState(false);
+
+  useEffect(() => {
+    const id = setInterval(async () => {
+      try {
+        const next = await fetchStationBoard(initial.stationCode);
+        if (next) setBoard(next);
+        setStale(!next);
+      } catch {
+        setStale(true);
+      }
+    }, REFRESH_MS);
+    return () => clearInterval(id);
+  }, [initial.stationCode]);
+
+  const entries = board[tab];
+
+  return (
+    <div className="mx-auto h-full w-full max-w-2xl overflow-y-auto p-4">
+      <h1 className="text-xl font-semibold">{board.stationName}</h1>
+      <p className="text-sm text-gray-600">{t('window')}</p>
+      {stale && (
+        <p role="status" className="mt-2 text-sm text-amber-800">
+          {t('stale')}
+        </p>
+      )}
+
+      <div role="tablist" aria-label={t('tabs')} className="mt-3 flex gap-2">
+        {(['departures', 'arrivals'] as const).map((name) => (
+          <button
+            key={name}
+            type="button"
+            role="tab"
+            id={`tab-${name}`}
+            aria-selected={tab === name}
+            aria-controls="board-panel"
+            onClick={() => setTab(name)}
+            className={`min-h-11 flex-1 rounded border px-3 text-sm font-medium ${tab === name ? 'bg-gray-900 text-white' : 'bg-white'}`}
+          >
+            {t(name)}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" id="board-panel" aria-labelledby={`tab-${tab}`} className="mt-3">
+        {entries.length === 0 ? (
+          <p className="text-sm text-gray-600">{t('empty')}</p>
+        ) : (
+          <ul className="divide-y rounded border bg-white">
+            {entries.map((entry) => {
+              const badge = entryBadge(entry);
+              const times = entryTimes(entry);
+              return (
+                <li key={`${entry.serviceDate}/${entry.trainNumber}`}>
+                  <Link
+                    href={runDetailPath(entry)}
+                    className="flex min-h-14 items-center justify-between gap-3 px-3 py-2"
+                  >
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2 font-medium">
+                        <span
+                          aria-hidden="true"
+                          className="inline-block size-3 shrink-0 rounded-full"
+                          style={{ backgroundColor: SERVICE_TYPE_COLORS[entry.serviceType] }}
+                        />
+                        {entry.trainNumber}
+                        {entry.lineCode && (
+                          <span className="text-sm font-normal">· {entry.lineCode}</span>
+                        )}
+                      </span>
+                      <span className="block truncate text-sm text-gray-600">
+                        {t(tab === 'departures' ? 'to' : 'from', {
+                          station: entry.counterpartStationCode,
+                        })}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block tabular-nums">
+                        {times.changed ? (
+                          <>
+                            <s className="text-gray-500">{times.scheduled}</s> {times.estimated}
+                          </>
+                        ) : (
+                          times.scheduled
+                        )}
+                      </span>
+                      <span
+                        data-testid="delay-badge"
+                        data-badge={badge}
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${BADGE_CLASSES[badge]}`}
+                      >
+                        {badge === 'on_time' || badge === 'cancelled' || badge === 'unknown'
+                          ? t(`badge.${badge}`)
+                          : t('badge.late', { minutes: delayMinutes(entry.delaySeconds ?? 0) })}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}

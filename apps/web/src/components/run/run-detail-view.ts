@@ -6,12 +6,16 @@ export type DelayBadge = 'on_time' | 'minor' | 'major' | 'cancelled' | 'unknown'
 const ON_TIME_BELOW_S = 60;
 const MAJOR_FROM_S = 300;
 
-export function delayBadge(detail: RunDetail): DelayBadge {
-  if (detail.serviceStatus === 'cancelled') return 'cancelled';
-  const delay = detail.delaySeconds ?? detail.run.delaySeconds;
+/** Badge for a Delay in seconds (undefined = unknown), ignoring Service status. */
+export function badgeForDelay(delay: number | undefined): DelayBadge {
   if (delay === undefined) return 'unknown';
   if (delay < ON_TIME_BELOW_S) return 'on_time';
   return delay < MAJOR_FROM_S ? 'minor' : 'major';
+}
+
+export function delayBadge(detail: RunDetail): DelayBadge {
+  if (detail.serviceStatus === 'cancelled') return 'cancelled';
+  return badgeForDelay(detail.delaySeconds ?? detail.run.delaySeconds);
 }
 
 export const delayMinutes = (seconds: number): number => Math.round(seconds / 60);
