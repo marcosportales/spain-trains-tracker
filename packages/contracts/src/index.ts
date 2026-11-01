@@ -10,6 +10,7 @@ export * from './search.js';
 export * from './service-alert.js';
 export * from './service-date.js';
 export * from './service-type.js';
+export * from './sighting-window.js';
 export * from './station.js';
 export * from './station-board.js';
 export * from './train-history.js';
