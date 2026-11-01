@@ -1,9 +1,12 @@
 import { Inject, Module, type OnModuleDestroy } from '@nestjs/common';
+import { ListServiceAlerts } from '../../application/alert/list-service-alerts.use-case.js';
 import { GetHealth } from '../../application/get-health.use-case.js';
+import { GetLinesGeometry, ListLines } from '../../application/line/lines.js';
 import { GetLiveSnapshot } from '../../application/live/get-live-snapshot.use-case.js';
 import { LiveNotifications } from '../../application/live/live-notifications.js';
 import { LiveRunsReader } from '../../application/live/live-runs.reader.js';
 import { LiveStream } from '../../application/live/live-stream.js';
+import { MovementRepository } from '../../application/movement/movement.repository.js';
 import { NetworkRepository } from '../../application/network/network.repository.js';
 import { GetRunDetail } from '../../application/run/get-run-detail.use-case.js';
 import { RunDetailReader } from '../../application/run/run-detail.reader.js';
@@ -15,13 +18,16 @@ import { StationBoardReader } from '../../application/station/station-board.read
 import { AppConfigModule } from '../config/app-config.module.js';
 import { DbModule } from '../db/db.module.js';
 import { DrizzleLiveRunsReader } from '../db/drizzle-live-runs.reader.js';
+import { DrizzleMovementRepository } from '../db/drizzle-movement.repository.js';
 import { DrizzleNetworkRepository } from '../db/drizzle-network.repository.js';
 import { DrizzleRunDetailReader } from '../db/drizzle-run-detail.reader.js';
 import { DrizzleSearchReader } from '../db/drizzle-search.reader.js';
 import { DrizzleStationBoardReader } from '../db/drizzle-station-board.reader.js';
 import { PostgresLiveNotifications } from '../db/postgres-live-notifications.js';
 import { LoggingModule } from '../logging/logging.module.js';
+import { AlertsController } from './alerts.controller.js';
 import { HealthController } from './health.controller.js';
+import { LinesController } from './lines.controller.js';
 import { LiveController } from './live.controller.js';
 import { RunsController } from './runs.controller.js';
 import { SearchController } from './search.controller.js';
@@ -30,6 +36,8 @@ import { StationsController } from './stations.controller.js';
 @Module({
   imports: [AppConfigModule, LoggingModule, DbModule],
   controllers: [
+    AlertsController,
+    LinesController,
     HealthController,
     LiveController,
     RunsController,
@@ -70,6 +78,22 @@ import { StationsController } from './stations.controller.js';
       provide: ListStations,
       inject: [NetworkRepository],
       useFactory: (network: NetworkRepository) => new ListStations(network),
+    },
+    { provide: MovementRepository, useClass: DrizzleMovementRepository },
+    {
+      provide: ListServiceAlerts,
+      inject: [MovementRepository],
+      useFactory: (movement: MovementRepository) => new ListServiceAlerts(movement),
+    },
+    {
+      provide: ListLines,
+      inject: [NetworkRepository],
+      useFactory: (network: NetworkRepository) => new ListLines(network),
+    },
+    {
+      provide: GetLinesGeometry,
+      inject: [NetworkRepository],
+      useFactory: (network: NetworkRepository) => new GetLinesGeometry(network),
     },
     { provide: LiveNotifications, useClass: PostgresLiveNotifications },
     {
