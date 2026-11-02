@@ -3,7 +3,7 @@
 import type { RunId } from '@stt/contracts';
 import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
 import { useEffect, useMemo, useRef } from 'react';
-import { COLORS, SERVICE_TYPE_COLORS, type Theme } from '@/theme/tokens';
+import { COLORS, DELAY_BAND_COLORS, SERVICE_TYPE_COLORS, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
 import type { TrackPaths } from '../motion/interpolation';
 import { RunMotions } from '../motion/run-motions';
@@ -12,9 +12,31 @@ import { type MapRuns, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
 const CIRCLE_LAYER_ID = 'live-runs-circles';
+const RING_LAYER_ID = 'live-runs-rings';
 const LABEL_LAYER_ID = 'live-runs-labels';
 const LABEL_MIN_ZOOM = 9;
 const DIMMED_OPACITY = 0.4;
+const DOT_RADIUS = 4;
+const DOT_RADIUS_MOBILE = 4.4;
+const MOBILE_QUERY = '(max-width: 767px)';
+/** The Delay ring sits this far outside the dot's edge. */
+const RING_GAP = 2.6;
+const RING_WIDTH = 2.2;
+
+const dotRadius = (): number =>
+  typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches
+    ? DOT_RADIUS_MOBILE
+    : DOT_RADIUS;
+
+/** Ring stroke by Delay band; only `late` and `severely_late` are ever drawn. */
+const ringColorExpression = (theme: Theme) =>
+  [
+    'match',
+    ['get', 'band'],
+    'severely_late',
+    DELAY_BAND_COLORS[theme].severely_late.strong,
+    DELAY_BAND_COLORS[theme].late.strong,
+  ] as unknown as string;
 
 /** Dot fill by Service type; a Run with no known type is drawn in muted ink. */
 const colorExpression = (theme: Theme) =>
@@ -31,12 +53,26 @@ function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] },
   });
+  // Under the dots, and only for late Runs: on time and unknown ones get no ring.
+  map.addLayer({
+    id: RING_LAYER_ID,
+    type: 'circle',
+    source: SOURCE_ID,
+    filter: ['in', ['get', 'band'], ['literal', ['late', 'severely_late']]],
+    paint: {
+      'circle-radius': dotRadius() + RING_GAP,
+      'circle-color': 'rgba(0, 0, 0, 0)',
+      'circle-stroke-color': ringColorExpression(theme),
+      'circle-stroke-width': RING_WIDTH,
+      'circle-stroke-opacity': dimmed ? DIMMED_OPACITY : 1,
+    },
+  });
   map.addLayer({
     id: CIRCLE_LAYER_ID,
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 3, 12, 8],
+      'circle-radius': dotRadius(),
       'circle-color': colorExpression(theme),
       // Snapped positions (not real GPS) are drawn hollow, with a Service type stroke; the
       // others get the 1 px outline that keeps every dot legible on the basemap.
@@ -118,13 +154,19 @@ export function LiveRunsLayer({
     const reset = () => {
       map.getCanvas().style.cursor = '';
     };
-    map.on('click', CIRCLE_LAYER_ID, onClick);
-    map.on('mouseenter', CIRCLE_LAYER_ID, pointer);
-    map.on('mouseleave', CIRCLE_LAYER_ID, reset);
+    // A ring is part of its Run: clicking it opens the Run like clicking the dot.
+    const layers = [CIRCLE_LAYER_ID, RING_LAYER_ID];
+    for (const layer of layers) {
+      map.on('click', layer, onClick);
+      map.on('mouseenter', layer, pointer);
+      map.on('mouseleave', layer, reset);
+    }
     return () => {
-      map.off('click', CIRCLE_LAYER_ID, onClick);
-      map.off('mouseenter', CIRCLE_LAYER_ID, pointer);
-      map.off('mouseleave', CIRCLE_LAYER_ID, reset);
+      for (const layer of layers) {
+        map.off('click', layer, onClick);
+        map.off('mouseenter', layer, pointer);
+        map.off('mouseleave', layer, reset);
+      }
     };
   }, [map]);
 
@@ -160,8 +202,23 @@ export function LiveRunsLayer({
       opacity,
     ]);
     map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', opacity);
+    map.setPaintProperty(RING_LAYER_ID, 'circle-stroke-opacity', opacity);
     map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', opacity);
   }, [map, dimmed]);
+
+  // Dots grow slightly on narrow viewports.
+  useEffect(() => {
+    if (!map) return;
+    const query = window.matchMedia(MOBILE_QUERY);
+    const apply = () => {
+      if (!map.getLayer(CIRCLE_LAYER_ID)) return;
+      const radius = dotRadius();
+      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-radius', radius);
+      map.setPaintProperty(RING_LAYER_ID, 'circle-radius', radius + RING_GAP);
+    };
+    query.addEventListener('change', apply);
+    return () => query.removeEventListener('change', apply);
+  }, [map]);
 
   return null;
 }
