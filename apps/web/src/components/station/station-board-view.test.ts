@@ -1,6 +1,6 @@
 import type { StationBoardEntry } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
-import { entryBadge, entryTimes, stationBoardPath } from './station-board-view';
+import { entryBand, entryTimes, stationBoardPath } from './station-board-view';
 
 const entry = (over: Partial<StationBoardEntry> = {}): StationBoardEntry => ({
   trainNumber: '03063',
@@ -11,15 +11,16 @@ const entry = (over: Partial<StationBoardEntry> = {}): StationBoardEntry => ({
   ...over,
 });
 
-describe('entryBadge', () => {
+describe('entryBand', () => {
   it.each([
     [{ serviceStatus: 'cancelled', delaySeconds: 0 }, 'cancelled'],
     [{}, 'unknown'],
     [{ delaySeconds: 30 }, 'on_time'],
-    [{ delaySeconds: 120 }, 'minor'],
-    [{ delaySeconds: 300 }, 'major'],
+    [{ delaySeconds: 299 }, 'on_time'],
+    [{ delaySeconds: 300 }, 'late'],
+    [{ delaySeconds: 900 }, 'severely_late'],
   ] as const)('%j is %s', (over, expected) => {
-    expect(entryBadge(entry(over))).toBe(expected);
+    expect(entryBand(entry(over))).toBe(expected);
   });
 });
 

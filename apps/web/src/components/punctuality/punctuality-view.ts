@@ -1,5 +1,5 @@
 import type { HourPunctuality, LinePunctuality } from '@stt/contracts';
-import { delayMinutes } from '../run/run-detail-view';
+import { delayMinutes } from '../delay/delay-band';
 
 export const punctualityPath = '/punctuality';
 

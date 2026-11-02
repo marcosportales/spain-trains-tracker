@@ -1,5 +1,5 @@
 import type { TrainHistory } from '@stt/contracts';
-import { delayMinutes } from './run-detail-view';
+import { delayMinutes } from '../delay/delay-band';
 
 /** Typical Delay under this many seconds reads as "usually on time". */
 const ON_TIME_BELOW_S = 60;

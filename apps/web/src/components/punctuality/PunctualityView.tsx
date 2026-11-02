@@ -4,7 +4,7 @@ import type { DelayByHour, PunctualityRanking } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { fetchDelayByHour, fetchPunctualityRanking } from '@/lib/punctuality-api';
-import { delayMinutes } from '../run/run-detail-view';
+import { delayMinutes } from '../delay/delay-band';
 import { hourBars, type SortDirection, type SortKey, sortLines } from './punctuality-view';
 
 const DAY_OPTIONS = [7, 30, 90] as const;

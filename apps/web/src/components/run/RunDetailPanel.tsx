@@ -1,21 +1,16 @@
 import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { type DelayBand, delayMinutes } from '../delay/delay-band';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { ShareButton } from '../share/ShareButton';
-import {
-  type DelayBadge,
-  delayBadge,
-  delayMinutes,
-  showsNoPositionBadge,
-  stopTimes,
-} from './run-detail-view';
+import { delayBand, showsNoPositionBadge, stopTimes } from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
 
-const BADGE_CLASSES: Record<DelayBadge, string> = {
+const BADGE_CLASSES: Record<DelayBand, string> = {
   on_time: 'bg-green-100 text-green-800',
-  minor: 'bg-amber-100 text-amber-800',
-  major: 'bg-red-100 text-red-800',
+  late: 'bg-amber-100 text-amber-800',
+  severely_late: 'bg-red-100 text-red-800',
   cancelled: 'bg-gray-800 text-white',
   unknown: 'bg-gray-100 text-gray-700',
 };
@@ -31,7 +26,7 @@ export function RunDetailPanel({
 }) {
   const t = useTranslations('RunDetail');
   const { run } = detail;
-  const badge = delayBadge(detail);
+  const badge = delayBand(detail);
   const delay = detail.delaySeconds;
   const nextStop = detail.position?.nextStationCode;
   const typical = history && typicalDelay(history);
@@ -82,11 +77,9 @@ export function RunDetailPanel({
           data-badge={badge}
           className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BADGE_CLASSES[badge]}`}
         >
-          {badge === 'cancelled' || badge === 'unknown'
-            ? t(`badge.${badge}`)
-            : badge === 'on_time'
-              ? t('badge.on_time')
-              : t('badge.late', { minutes: delayMinutes(delay ?? 0) })}
+          {badge === 'late' || badge === 'severely_late'
+            ? t('badge.late', { minutes: delayMinutes(delay ?? 0) })
+            : t(`badge.${badge}`)}
         </p>
       )}
 

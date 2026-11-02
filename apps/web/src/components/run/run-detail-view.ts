@@ -1,21 +1,8 @@
 import type { RunDetail, RunId, RunStop } from '@stt/contracts';
+import { type DelayBand, delayBandFor } from '../delay/delay-band';
 
-/** How a Run's punctuality is shown: on time, under 5 min late, 5+ min late, cancelled. */
-export type DelayBadge = 'on_time' | 'minor' | 'major' | 'cancelled' | 'unknown';
-
-const ON_TIME_BELOW_S = 60;
-const MAJOR_FROM_S = 300;
-
-/** Badge for a Delay in seconds (undefined = unknown), ignoring Service status. */
-export function badgeForDelay(delay: number | undefined): DelayBadge {
-  if (delay === undefined) return 'unknown';
-  if (delay < ON_TIME_BELOW_S) return 'on_time';
-  return delay < MAJOR_FROM_S ? 'minor' : 'major';
-}
-
-export function delayBadge(detail: RunDetail): DelayBadge {
-  if (detail.serviceStatus === 'cancelled') return 'cancelled';
-  return badgeForDelay(detail.delaySeconds);
+export function delayBand(detail: RunDetail): DelayBand {
+  return delayBandFor(detail.delaySeconds, detail.serviceStatus);
 }
 
 /** A Scheduled Run: known from the timetable only, with no live position yet. */
@@ -26,8 +13,6 @@ export const showsNoPositionBadge = (detail: RunDetail): boolean =>
   isScheduledRun(detail) &&
   detail.serviceStatus !== 'cancelled' &&
   detail.delaySeconds === undefined;
-
-export const delayMinutes = (seconds: number): number => Math.round(seconds / 60);
 
 const MADRID_TIME = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Madrid',
