@@ -5,6 +5,11 @@
   },
   "Header": {
     "appName": "Spain Trains Tracker",
+    "map": "Map",
+    "navigation": "Main navigation",
+    "menu": "Menu",
+    "openSearch": "Open search",
+    "closeSearch": "Close search",
     "language": "Language",
     "punctuality": "Punctuality",
     "replay": "Replay"

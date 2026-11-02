@@ -4,8 +4,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
-import { Footer } from '@/components/Footer';
-import { Header } from '@/components/Header';
+import { TopBar } from '@/components/top-bar/TopBar';
 import { routing } from '@/i18n/routing';
 import { THEME_SCRIPT } from '@/theme/theme-script';
 import '../globals.css';
@@ -47,11 +46,10 @@ export default async function LocaleLayout({
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a constant script, no user input; it must run before first paint */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="flex h-dvh flex-col">
+      <body>
         <NextIntlClientProvider>
-          <Header />
-          <main className="relative min-h-0 flex-1">{children}</main>
-          <Footer />
+          <TopBar />
+          <main className="relative h-dvh">{children}</main>
         </NextIntlClientProvider>
       </body>
     </html>

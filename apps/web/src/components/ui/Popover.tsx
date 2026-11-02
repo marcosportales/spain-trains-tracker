@@ -8,13 +8,21 @@ export function Popover({
   trigger,
   children,
   align = 'start',
+  open,
+  onOpenChange,
 }: {
   trigger: ReactNode;
   children: ReactNode;
   align?: 'start' | 'center' | 'end';
+  /** Set both `open` and `onOpenChange` to control it, e.g. to close it after navigating. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   return (
-    <RadixPopover.Root>
+    <RadixPopover.Root
+      {...(open !== undefined && { open })}
+      {...(onOpenChange && { onOpenChange })}
+    >
       <RadixPopover.Trigger asChild>{trigger}</RadixPopover.Trigger>
       <RadixPopover.Portal>
         <RadixPopover.Content

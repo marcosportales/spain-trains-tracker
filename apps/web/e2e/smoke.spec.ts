@@ -42,3 +42,47 @@ test('map shows a live Run, its panel, and a searched Station board', async ({ p
   );
   await expect(page.getByRole('link', { name: new RegExp(RUN.trainNumber) })).toBeVisible();
 });
+
+test('the nav marks the current page', async ({ page }) => {
+  await page.goto('/en');
+  const nav = page.getByRole('navigation', { name: 'Main navigation' });
+  await expect(nav.getByRole('link', { name: 'Map' })).toHaveAttribute('aria-current', 'page');
+  await expect(nav.getByRole('link', { name: 'Replay' })).not.toHaveAttribute('aria-current');
+
+  await nav.getByRole('link', { name: 'Replay' }).click();
+  await expect(page).toHaveURL(/\/en\/replay$/);
+  await expect(nav.getByRole('link', { name: 'Replay' })).toHaveAttribute('aria-current', 'page');
+  await expect(nav.getByRole('link', { name: 'Map' })).not.toHaveAttribute('aria-current');
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('the bar fits, and the search expands and collapses', async ({ page }) => {
+    await page.goto('/en');
+    const fits = () =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+    await expect(page.getByRole('button', { name: 'Menu' })).toBeVisible();
+    expect(await fits()).toBe(true);
+    await expect(page.getByRole('combobox', { name: 'Search' })).toBeHidden();
+
+    await page.getByRole('button', { name: 'Open search' }).click();
+    const search = page.getByRole('combobox', { name: 'Search' });
+    await expect(search).toBeFocused();
+    expect(await fits()).toBe(true);
+
+    await page.keyboard.press('Escape');
+    await expect(search).toBeHidden();
+    await page.getByRole('button', { name: 'Open search' }).click();
+    await page.getByRole('button', { name: 'Close search' }).click();
+    await expect(search).toBeHidden();
+  });
+
+  test('the menu holds the nav', async ({ page }) => {
+    await page.goto('/en');
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('link', { name: 'Replay' }).click();
+    await expect(page).toHaveURL(/\/en\/replay$/);
+    await expect(page.getByRole('link', { name: 'Replay' })).toBeHidden();
+  });
+});
