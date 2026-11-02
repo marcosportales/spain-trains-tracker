@@ -32,7 +32,7 @@
     "clear": "Quitar filtros"
   },
   "RunDetail": {
-    "title": "Circulación {trainNumber}",
+    "title": "Tren {trainNumber}",
     "close": "Cerrar",
     "route": "{origin} → {destination}",
     "nextStation": "Próxima estación",

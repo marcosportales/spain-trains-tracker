@@ -1,14 +1,16 @@
 import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
 import type { StationNames } from '@/lib/station-names';
 import { serviceTypeVar } from '@/theme/tokens';
 import { BAND_CLASSES, DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
+import { DetailSurface } from '../ui/DetailSurface';
+import { EmptyState } from '../ui/EmptyState';
+import { RunCloseButton } from './RunCloseButton';
 import { delayBand, showsNoPositionBadge, stopTimes } from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
 
-/** Run detail: a side panel on larger screens, a bottom sheet on mobile. Server-renderable. */
+/** Run detail on a `DetailSurface`: a side panel on larger screens, a bottom sheet on mobile. */
 export function RunDetailPanel({
   detail,
   history,
@@ -27,13 +29,17 @@ export function RunDetailPanel({
   const typical = history && typicalDelay(history);
 
   return (
-    <aside
-      aria-label={t('title', { trainNumber: run.trainNumber })}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 max-h-[60dvh] overflow-y-auto rounded-t-xl border bg-white p-4 shadow-lg md:top-below-bar md:right-3 md:bottom-3 md:left-auto md:max-h-none md:w-96 md:rounded-xl"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="flex items-center gap-2 text-lg font-semibold">
+    <DetailSurface
+      label={t('title', { trainNumber: run.trainNumber })}
+      actions={
+        <>
+          <ShareButton title={t('title', { trainNumber: run.trainNumber })} />
+          <RunCloseButton />
+        </>
+      }
+      headline={
+        <>
+          <h1 className="flex items-center gap-2 text-xl font-semibold">
             <span
               aria-hidden="true"
               className="inline-block size-3 rounded-full"
@@ -42,7 +48,7 @@ export function RunDetailPanel({
             {t(`serviceTypes.${run.serviceType}`)} {run.trainNumber}
             {run.lineCode && <span className="text-sm font-normal">· {run.lineCode}</span>}
           </h1>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm font-normal text-ink-2">
             {detail.originStationCode && detail.destinationStationCode
               ? t('route', {
                   origin: names(detail.originStationCode),
@@ -50,28 +56,25 @@ export function RunDetailPanel({
                 })
               : null}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ShareButton title={t('title', { trainNumber: run.trainNumber })} />
-          <Link href="/" className="rounded border px-2 py-1 text-sm">
-            {t('close')}
-          </Link>
-        </div>
-      </div>
-
-      {showsNoPositionBadge(detail) ? (
-        <p
-          data-testid="no-position-badge"
-          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium tabular-nums ${BAND_CLASSES.unknown}`}
-        >
-          {t('badge.noPosition')}
-        </p>
-      ) : (
-        <div className="mt-3">
-          <DelayBadge band={band} delaySeconds={detail.delaySeconds} data-testid="delay-badge" />
-        </div>
-      )}
-
+          {showsNoPositionBadge(detail) ? (
+            <p
+              data-testid="no-position-badge"
+              className={`mt-2 inline-block rounded-full px-3 py-1 text-sm font-medium tabular-nums ${BAND_CLASSES.unknown}`}
+            >
+              {t('badge.noPosition')}
+            </p>
+          ) : (
+            <div className="mt-2">
+              <DelayBadge
+                band={band}
+                delaySeconds={detail.delaySeconds}
+                data-testid="delay-badge"
+              />
+            </div>
+          )}
+        </>
+      }
+    >
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         {nextStop && (
           <>
@@ -95,7 +98,7 @@ export function RunDetailPanel({
 
       <h2 className="mt-4 text-sm font-semibold">{t('stops')}</h2>
       {detail.stops.length === 0 ? (
-        <p className="text-sm text-gray-600">{t('noStops')}</p>
+        <EmptyState message={t('noStops')} />
       ) : (
         <ol className="mt-1 space-y-1 text-sm">
           {detail.stops.map((stop) => {
@@ -154,6 +157,6 @@ export function RunDetailPanel({
           )}
         </section>
       )}
-    </aside>
+    </DetailSurface>
   );
 }
