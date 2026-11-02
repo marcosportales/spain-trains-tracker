@@ -1,7 +1,13 @@
 'use client';
 
 import type { RunId } from '@stt/contracts';
-import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
+import type {
+  ExpressionSpecification,
+  FilterSpecification,
+  GeoJSONSource,
+  MapLayerMouseEvent,
+  Map as MapLibreMap,
+} from 'maplibre-gl';
 import { useEffect, useMemo, useRef } from 'react';
 import { COLORS, DELAY_BAND_COLORS, SERVICE_TYPE_COLORS, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
@@ -15,7 +21,14 @@ const CIRCLE_LAYER_ID = 'live-runs-circles';
 const RING_LAYER_ID = 'live-runs-rings';
 const LABEL_LAYER_ID = 'live-runs-labels';
 const LABEL_MIN_ZOOM = 9;
+const HALO_LAYER_ID = 'live-runs-halo';
 const DIMMED_OPACITY = 0.4;
+/** The other Runs while one is selected. */
+const UNSELECTED_OPACITY = 0.35;
+/** The selected Run's dot is this much bigger, with a halo of this radius beyond its edge. */
+const SELECTED_SCALE = 1.7;
+const HALO_RADIUS = 9;
+const HALO_OPACITY = 0.35;
 const DOT_RADIUS = 4;
 const DOT_RADIUS_MOBILE = 4.4;
 const MOBILE_QUERY = '(max-width: 767px)';
@@ -47,11 +60,73 @@ const colorExpression = (theme: Theme) =>
     COLORS[theme]['ink-3'],
   ] as unknown as string;
 
-function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
+/** Whether a feature is the selected Run; never true without one. */
+const isSelectedExpression = (selected: RunId | undefined) =>
+  selected
+    ? [
+        'all',
+        ['==', ['get', 'serviceDate'], selected.serviceDate],
+        ['==', ['get', 'trainNumber'], selected.trainNumber],
+      ]
+    : ['==', ['get', 'trainNumber'], ''];
+
+type PaintState = { dimmed: boolean; selected: RunId | undefined };
+
+/**
+ * Sets everything that depends on the state of the map: stale (dimmed) positions, and the
+ * selected Run, which grows and gets a halo while the others fade.
+ */
+function applyPaint(map: MapLibreMap, { dimmed, selected }: PaintState) {
+  if (!map.getLayer(CIRCLE_LAYER_ID)) return;
+  const radius = dotRadius();
+  const base = dimmed ? DIMMED_OPACITY : 1;
+  const isSelected = isSelectedExpression(selected);
+  const opacity = (value: number): number | ExpressionSpecification =>
+    selected
+      ? ([
+          'case',
+          isSelected,
+          value,
+          Math.min(base, UNSELECTED_OPACITY),
+        ] as unknown as ExpressionSpecification)
+      : value;
+  const scaled = (value: number): number | ExpressionSpecification =>
+    selected
+      ? (['case', isSelected, value * SELECTED_SCALE, value] as unknown as ExpressionSpecification)
+      : value;
+
+  map.setFilter(HALO_LAYER_ID, isSelected as unknown as FilterSpecification);
+  map.setPaintProperty(HALO_LAYER_ID, 'circle-radius', radius * SELECTED_SCALE + HALO_RADIUS);
+  map.setPaintProperty(
+    HALO_LAYER_ID,
+    'circle-opacity',
+    dimmed ? Math.min(HALO_OPACITY, DIMMED_OPACITY) : HALO_OPACITY,
+  );
+  map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-radius', scaled(radius));
+  map.setPaintProperty(RING_LAYER_ID, 'circle-radius', scaled(radius + RING_GAP));
+  map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', [
+    'case',
+    ['get', 'snapped'],
+    0,
+    opacity(base),
+  ]);
+  map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', opacity(base));
+  map.setPaintProperty(RING_LAYER_ID, 'circle-stroke-opacity', opacity(base));
+  map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', opacity(base));
+}
+
+function addLayers(map: MapLibreMap, theme: Theme, paint: PaintState) {
   const colors = COLORS[theme];
   map.addSource(SOURCE_ID, {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] },
+  });
+  // Under everything else: the selected Run's halo.
+  map.addLayer({
+    id: HALO_LAYER_ID,
+    type: 'circle',
+    source: SOURCE_ID,
+    paint: { 'circle-color': colors.accent, 'circle-radius': 0, 'circle-opacity': HALO_OPACITY },
   });
   // Under the dots, and only for late Runs: on time and unknown ones get no ring.
   map.addLayer({
@@ -64,7 +139,7 @@ function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
       'circle-color': 'rgba(0, 0, 0, 0)',
       'circle-stroke-color': ringColorExpression(theme),
       'circle-stroke-width': RING_WIDTH,
-      'circle-stroke-opacity': dimmed ? DIMMED_OPACITY : 1,
+      'circle-stroke-opacity': 1,
     },
   });
   map.addLayer({
@@ -76,7 +151,7 @@ function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
       'circle-color': colorExpression(theme),
       // Snapped positions (not real GPS) are drawn hollow, with a Service type stroke; the
       // others get the 1 px outline that keeps every dot legible on the basemap.
-      'circle-opacity': ['case', ['get', 'snapped'], 0, dimmed ? DIMMED_OPACITY : 1],
+      'circle-opacity': ['case', ['get', 'snapped'], 0, 1],
       'circle-stroke-color': [
         'case',
         ['get', 'snapped'],
@@ -84,7 +159,7 @@ function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
         colors['dot-outline'],
       ],
       'circle-stroke-width': ['case', ['get', 'snapped'], 2, 1],
-      'circle-stroke-opacity': dimmed ? DIMMED_OPACITY : 1,
+      'circle-stroke-opacity': 1,
     },
   });
   map.addLayer({
@@ -103,9 +178,10 @@ function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
       'text-color': colors.ink,
       'text-halo-color': colors.surface,
       'text-halo-width': 1.5,
-      'text-opacity': dimmed ? DIMMED_OPACITY : 1,
+      'text-opacity': 1,
     },
   });
+  applyPaint(map, paint);
 }
 
 const prefersReducedMotion = (): boolean =>
@@ -122,6 +198,7 @@ export function LiveRunsLayer({
   paths,
   onSelect,
   dimmed = false,
+  selected,
 }: {
   map: MapLibreMap | null;
   runs: MapRuns;
@@ -129,6 +206,8 @@ export function LiveRunsLayer({
   onSelect?: (id: RunId) => void;
   /** Draws dots and labels at 40 % opacity: the positions are stale (the stream is offline). */
   dimmed?: boolean;
+  /** The Run whose detail is open: drawn bigger with a halo, while every other Run fades. */
+  selected?: RunId | undefined;
 }) {
   // Rebuilt when the Track geometry arrives; Runs then restart from their reported positions.
   const motions = useMemo(
@@ -136,8 +215,8 @@ export function LiveRunsLayer({
     [paths],
   );
   const { theme } = useTheme();
-  const dimmedRef = useRef(dimmed);
-  dimmedRef.current = dimmed;
+  const paintRef = useRef<PaintState>({ dimmed, selected });
+  paintRef.current = { dimmed, selected };
   const select = useRef(onSelect);
   select.current = onSelect;
 
@@ -181,7 +260,7 @@ export function LiveRunsLayer({
       frame = motions.isAnimating(now) ? requestAnimationFrame(draw) : undefined;
     };
     const sync = () => {
-      if (!map.getSource(SOURCE_ID)) addLayers(map, theme, dimmedRef.current);
+      if (!map.getSource(SOURCE_ID)) addLayers(map, theme, paintRef.current);
       motions.update(runs, performance.now());
       draw(performance.now());
     };
@@ -192,30 +271,17 @@ export function LiveRunsLayer({
     };
   }, [map, runs, motions, theme]);
 
+  const selectedKey = selected && `${selected.serviceDate}:${selected.trainNumber}`;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `selectedKey` stands for `selected`
   useEffect(() => {
-    if (!map?.getLayer(CIRCLE_LAYER_ID)) return;
-    const opacity = dimmed ? DIMMED_OPACITY : 1;
-    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', [
-      'case',
-      ['get', 'snapped'],
-      0,
-      opacity,
-    ]);
-    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', opacity);
-    map.setPaintProperty(RING_LAYER_ID, 'circle-stroke-opacity', opacity);
-    map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', opacity);
-  }, [map, dimmed]);
+    if (map) applyPaint(map, { dimmed, selected });
+  }, [map, dimmed, selectedKey]);
 
   // Dots grow slightly on narrow viewports.
   useEffect(() => {
     if (!map) return;
     const query = window.matchMedia(MOBILE_QUERY);
-    const apply = () => {
-      if (!map.getLayer(CIRCLE_LAYER_ID)) return;
-      const radius = dotRadius();
-      map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-radius', radius);
-      map.setPaintProperty(RING_LAYER_ID, 'circle-radius', radius + RING_GAP);
-    };
+    const apply = () => applyPaint(map, paintRef.current);
     query.addEventListener('change', apply);
     return () => query.removeEventListener('change', apply);
   }, [map]);

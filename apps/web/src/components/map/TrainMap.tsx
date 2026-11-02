@@ -28,6 +28,7 @@ import { useLiveRuns } from './live/use-live-runs';
 import { SELECTED_ZOOM } from './map-config';
 import { StationsLayer } from './stations/StationsLayer';
 import { useStations } from './stations/use-stations';
+import { splitTrack } from './track/split-track';
 import { TrackGeometryLayer } from './track/TrackGeometryLayer';
 import { useTrackGeometry } from './track/use-track-geometry';
 
@@ -130,6 +131,20 @@ export function TrainMap({
     }
   }, [map, followed, lon, lat]);
 
+  const lineCode = selectedRun?.lineCode;
+  const nextCode = selectedRun?.nextStationCode;
+  const next = nextCode ? stations.find((station) => station.code === nextCode) : undefined;
+  const nextLon = next?.lon;
+  const nextLat = next?.lat;
+  // The selected Run's Line, cut at the Run: behind it dimmed, ahead of it strong.
+  const selectedTrack = useMemo(() => {
+    const paths = lineCode ? track.paths.get(lineCode) : undefined;
+    if (!paths || lon === undefined || lat === undefined) return undefined;
+    const towards: [number, number] | undefined =
+      nextLon !== undefined && nextLat !== undefined ? [nextLon, nextLat] : undefined;
+    return splitTrack(paths, [lon, lat], towards);
+  }, [track.paths, lineCode, lon, lat, nextLon, nextLat]);
+
   const fallbackStation = selectedRun
     ? undefined
     : stations.find((station) => station.code === fallbackStationCode);
@@ -156,7 +171,12 @@ export function TrainMap({
       <p id="stations-hint" className="sr-only">
         {stationsHint}
       </p>
-      <TrackGeometryLayer map={map} track={track.collection} highlighted={highlighted} />
+      <TrackGeometryLayer
+        map={map}
+        track={track.collection}
+        highlighted={highlighted}
+        selectedTrack={selectedTrack}
+      />
       <StationsLayer map={map} stations={stations} onSelect={openStation} />
       <LiveRunsLayer
         map={map}
@@ -164,6 +184,7 @@ export function TrainMap({
         paths={track.paths}
         onSelect={openRun}
         dimmed={offline}
+        selected={selectedRun ? selected : undefined}
       />
       {!selected && (
         <>
