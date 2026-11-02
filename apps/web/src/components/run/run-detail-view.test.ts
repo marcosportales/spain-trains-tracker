@@ -5,7 +5,7 @@ import {
   formatMadridTime,
   isScheduledRun,
   runDetailPath,
-  showsNoPositionBadge,
+  runHeadline,
   stopTimes,
 } from './run-detail-view';
 
@@ -108,11 +108,76 @@ describe('Scheduled Run presentation', () => {
     expect(isScheduledRun(scheduled())).toBe(true);
     expect(isScheduledRun(detail())).toBe(false);
   });
+});
 
-  it('shows the no-position badge for a plain Scheduled Run only', () => {
-    expect(showsNoPositionBadge(scheduled())).toBe(true);
-    expect(showsNoPositionBadge(detail())).toBe(false);
-    expect(showsNoPositionBadge(scheduled({ serviceStatus: 'cancelled' }))).toBe(false);
-    expect(showsNoPositionBadge(scheduled({ delaySeconds: 120 }))).toBe(false);
+describe('runHeadline', () => {
+  const names = (code: string) => (code === 'A' ? 'Atocha' : code === 'C' ? 'Chamartín' : code);
+  const stops = [
+    { stationCode: 'C', sequence: 0, scheduledDeparture: '2026-10-31T10:05:00+01:00' },
+    {
+      stationCode: 'A',
+      sequence: 1,
+      scheduledArrival: '2026-10-31T10:35:00+01:00',
+      estimatedArrival: '2026-10-31T10:42:00+01:00',
+    },
+  ];
+  const withNext = (over: Partial<RunDetail> = {}) =>
+    detail({
+      stops,
+      position: { ...detail().position!, nextStationCode: 'A' },
+      ...over,
+    });
+
+  it('is cancelled even when the Run has a Delay', () => {
+    expect(runHeadline(withNext({ serviceStatus: 'cancelled', delaySeconds: 600 }), names)).toEqual(
+      { kind: 'cancelled' },
+    );
+  });
+
+  it('says where a Scheduled Run leaves from, and when', () => {
+    const { position: _position, ...scheduled } = withNext();
+    expect(runHeadline(scheduled, names)).toEqual({
+      kind: 'not_departed',
+      origin: 'Chamartín',
+      time: '10:05',
+    });
+  });
+
+  it('orders the origin by sequence, not array order', () => {
+    const { position: _position, ...scheduled } = withNext({ stops: [...stops].reverse() });
+    expect(runHeadline(scheduled, names)).toMatchObject({ origin: 'Chamartín' });
+  });
+
+  it('is running/late with minutes and the next stop at its estimated arrival', () => {
+    expect(runHeadline(withNext({ delaySeconds: 420 }), names)).toEqual({
+      kind: 'running',
+      band: 'late',
+      minutes: 7,
+      nextStop: { station: 'Atocha', time: '10:42' },
+    });
+  });
+
+  it('is on_time for a negative Delay, without minutes', () => {
+    expect(runHeadline(withNext({ delaySeconds: -60 }), names)).toEqual({
+      kind: 'running',
+      band: 'on_time',
+      nextStop: { station: 'Atocha', time: '10:42' },
+    });
+  });
+
+  it('is unknown without a Delay', () => {
+    expect(runHeadline(withNext(), names)).toMatchObject({ kind: 'running', band: 'unknown' });
+  });
+
+  it('leaves out the time when the next stop is not in the stops', () => {
+    expect(runHeadline(withNext({ stops: [stops[0]!] }), names)).toEqual({
+      kind: 'running',
+      band: 'unknown',
+      nextStop: { station: 'Atocha' },
+    });
+  });
+
+  it('has no next stop when the position names none', () => {
+    expect(runHeadline(detail({ stops }), names)).toEqual({ kind: 'running', band: 'unknown' });
   });
 });

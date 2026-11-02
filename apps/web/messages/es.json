@@ -47,9 +47,6 @@
     "historyLate": "Suele llegar {minutes} min tarde (últimas {runs} circulaciones)",
     "historyNone": "Aún no hay historial de este tren",
     "historyRun": "{date}: {minutes} min de media, hasta {maxMinutes} min",
-    "badge": {
-      "noPosition": "Sin posición en directo todavía"
-    },
     "serviceTypes": {
       "cercanias": "Cercanías",
       "ave": "AVE",
@@ -57,7 +54,17 @@
       "media_distancia": "Media Distancia",
       "ancho_metrico": "Ancho métrico"
     },
-    "description": "{serviceType} {trainNumber}: {status}"
+    "description": "{serviceType} {trainNumber}: {status}",
+    "headline": {
+      "cancelled": "Cancelado",
+      "notDeparted": "Aún no ha salido · sale de {origin} a las {time}",
+      "notDepartedNoTime": "Aún no ha salido · sale de {origin}",
+      "late": "Va {minutes} min tarde",
+      "onTime": "Puntual",
+      "unknown": "Sin datos de retraso",
+      "nextStop": "próxima parada {station}, {time}",
+      "nextStopNoTime": "próxima parada {station}"
+    }
   },
   "StationBoard": {
     "title": "Panel de {station}",

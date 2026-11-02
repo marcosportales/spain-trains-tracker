@@ -2,13 +2,41 @@ import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import type { StationNames } from '@/lib/station-names';
 import { serviceTypeVar } from '@/theme/tokens';
-import { BAND_CLASSES, DelayBadge } from '../delay/DelayBadge';
+import { DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
 import { DetailSurface } from '../ui/DetailSurface';
 import { EmptyState } from '../ui/EmptyState';
 import { RunCloseButton } from './RunCloseButton';
-import { delayBand, showsNoPositionBadge, stopTimes } from './run-detail-view';
+import { delayBand, type RunHeadline, runHeadline, stopTimes } from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
+
+type Translate = ReturnType<typeof useTranslations<'RunDetail'>>;
+
+/** The headline sentence: the status, then "· next stop …" when the next stop is known. */
+function headlineText(t: Translate, headline: RunHeadline): string {
+  switch (headline.kind) {
+    case 'cancelled':
+      return t('headline.cancelled');
+    case 'not_departed':
+      return headline.time
+        ? t('headline.notDeparted', { origin: headline.origin, time: headline.time })
+        : t('headline.notDepartedNoTime', { origin: headline.origin });
+    case 'running': {
+      const status =
+        headline.band === 'on_time'
+          ? t('headline.onTime')
+          : headline.band === 'unknown'
+            ? t('headline.unknown')
+            : t('headline.late', { minutes: headline.minutes ?? 0 });
+      const { nextStop } = headline;
+      if (!nextStop) return status;
+      const next = nextStop.time
+        ? t('headline.nextStop', { station: nextStop.station, time: nextStop.time })
+        : t('headline.nextStopNoTime', { station: nextStop.station });
+      return `${status} · ${next}`;
+    }
+  }
+}
 
 /** Run detail on a `DetailSurface`: a side panel on larger screens, a bottom sheet on mobile. */
 export function RunDetailPanel({
@@ -25,6 +53,7 @@ export function RunDetailPanel({
   const t = useTranslations('RunDetail');
   const { run } = detail;
   const band = delayBand(detail);
+  const headline = runHeadline(detail, names);
   const nextStop = detail.position?.nextStationCode;
   const typical = history && typicalDelay(history);
 
@@ -38,41 +67,42 @@ export function RunDetailPanel({
         </>
       }
       headline={
-        <>
-          <h1 className="flex items-center gap-2 text-xl font-semibold">
-            <span
-              aria-hidden="true"
-              className="inline-block size-3 rounded-full"
-              style={{ backgroundColor: serviceTypeVar(run.serviceType) }}
-            />
-            {t(`serviceTypes.${run.serviceType}`)} {run.trainNumber}
-            {run.lineCode && <span className="text-sm font-normal">· {run.lineCode}</span>}
-          </h1>
-          <p className="text-sm font-normal text-ink-2">
-            {detail.originStationCode && detail.destinationStationCode
-              ? t('route', {
-                  origin: names(detail.originStationCode),
-                  destination: names(detail.destinationStationCode),
-                })
-              : null}
-          </p>
-          {showsNoPositionBadge(detail) ? (
-            <p
-              data-testid="no-position-badge"
-              className={`mt-2 inline-block rounded-full px-3 py-1 text-sm font-medium tabular-nums ${BAND_CLASSES.unknown}`}
+        <div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1
+              data-testid="run-headline"
+              className="text-[20px] leading-tight font-semibold tabular-nums md:text-[22px]"
             >
-              {t('badge.noPosition')}
-            </p>
-          ) : (
-            <div className="mt-2">
+              {headlineText(t, headline)}
+            </h1>
+            {headline.kind !== 'not_departed' && (
               <DelayBadge
                 band={band}
                 delaySeconds={detail.delaySeconds}
                 data-testid="delay-badge"
               />
-            </div>
-          )}
-        </>
+            )}
+          </div>
+          <p className="mt-1 flex items-center gap-2 text-sm font-normal text-ink-2">
+            <span
+              aria-hidden="true"
+              className="inline-block size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: serviceTypeVar(run.serviceType) }}
+            />
+            {[
+              t(`serviceTypes.${run.serviceType}`),
+              run.lineCode,
+              detail.originStationCode &&
+                detail.destinationStationCode &&
+                t('route', {
+                  origin: names(detail.originStationCode),
+                  destination: names(detail.destinationStationCode),
+                }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        </div>
       }
     >
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">

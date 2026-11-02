@@ -1,5 +1,6 @@
 import type { RunDetail, RunId, RunStop } from '@stt/contracts';
-import { type DelayBand, delayBandFor } from '../delay/delay-band';
+import type { StationNames } from '@/lib/station-names';
+import { type DelayBand, delayBandFor, delayMinutes } from '../delay/delay-band';
 
 export function delayBand(detail: RunDetail): DelayBand {
   return delayBandFor(detail.delaySeconds, detail.serviceStatus);
@@ -7,12 +8,6 @@ export function delayBand(detail: RunDetail): DelayBand {
 
 /** A Scheduled Run: known from the timetable only, with no live position yet. */
 export const isScheduledRun = (detail: RunDetail): boolean => detail.position === undefined;
-
-/** Whether the panel says "no live position yet" instead of a Delay badge (cancelled and known Delays win). */
-export const showsNoPositionBadge = (detail: RunDetail): boolean =>
-  isScheduledRun(detail) &&
-  detail.serviceStatus !== 'cancelled' &&
-  detail.delaySeconds === undefined;
 
 const MADRID_TIME = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Madrid',
@@ -41,3 +36,53 @@ export function stopTimes(stop: RunStop): StopTimes {
 }
 
 export const runDetailPath = (id: RunId): string => `/runs/${id.serviceDate}/${id.trainNumber}`;
+
+export type RunHeadline =
+  | { kind: 'cancelled' }
+  | { kind: 'not_departed'; origin: string; time?: string }
+  | {
+      kind: 'running';
+      band: Exclude<DelayBand, 'cancelled'>;
+      minutes?: number;
+      nextStop?: { station: string; time?: string };
+    };
+
+const madridTime = (timestamp: string | undefined): string | undefined =>
+  timestamp === undefined ? undefined : formatMadridTime(timestamp);
+
+/** The one-sentence answer to "where is my train?" (first match wins; see the Run detail design). */
+export function runHeadline(detail: RunDetail, names: StationNames): RunHeadline {
+  if (detail.serviceStatus === 'cancelled') return { kind: 'cancelled' };
+
+  if (isScheduledRun(detail)) {
+    const first = [...detail.stops].sort((a, b) => a.sequence - b.sequence)[0];
+    const origin = first?.stationCode ?? detail.originStationCode;
+    // With no Station to name, fall through to the running headline.
+    if (origin !== undefined) {
+      const time = madridTime(first?.scheduledDeparture);
+      return { kind: 'not_departed', origin: names(origin), ...(time && { time }) };
+    }
+  }
+
+  const band = delayBand(detail) as Exclude<DelayBand, 'cancelled'>;
+  const minutes =
+    (band === 'late' || band === 'severely_late') && detail.delaySeconds !== undefined
+      ? delayMinutes(detail.delaySeconds)
+      : undefined;
+  const nextCode = detail.position?.nextStationCode;
+  const stop = detail.stops.find((s) => s.stationCode === nextCode);
+  const time = madridTime(
+    stop?.estimatedArrival ??
+      stop?.scheduledArrival ??
+      stop?.estimatedDeparture ??
+      stop?.scheduledDeparture,
+  );
+  return {
+    kind: 'running',
+    band,
+    ...(minutes !== undefined && { minutes }),
+    ...(nextCode !== undefined && {
+      nextStop: { station: names(nextCode), ...(time && { time }) },
+    }),
+  };
+}

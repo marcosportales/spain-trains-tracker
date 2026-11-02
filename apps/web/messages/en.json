@@ -47,9 +47,6 @@
     "historyLate": "Usually {minutes} min late (last {runs} runs)",
     "historyNone": "No history for this train yet",
     "historyRun": "{date}: {minutes} min on average, up to {maxMinutes} min",
-    "badge": {
-      "noPosition": "No live position yet"
-    },
     "serviceTypes": {
       "cercanias": "Cercanías",
       "ave": "AVE",
@@ -57,7 +54,17 @@
       "media_distancia": "Medium distance",
       "ancho_metrico": "Metre gauge"
     },
-    "description": "{serviceType} {trainNumber}: {status}"
+    "description": "{serviceType} {trainNumber}: {status}",
+    "headline": {
+      "cancelled": "Cancelled",
+      "notDeparted": "Not departed yet · leaves {origin} at {time}",
+      "notDepartedNoTime": "Not departed yet · leaves {origin}",
+      "late": "Running {minutes} min late",
+      "onTime": "On time",
+      "unknown": "No delay data",
+      "nextStop": "next stop {station}, {time}",
+      "nextStopNoTime": "next stop {station}"
+    }
   },
   "StationBoard": {
     "title": "{station} board",
