@@ -4,11 +4,12 @@ import type {
   LinePunctuality,
   PunctualityRanking,
 } from '@stt/contracts';
+import { serviceDateFor } from '../../domain/movement/service-date.js';
 import type { PunctualityReader } from './punctuality.reader.js';
 
 export const DEFAULT_DAYS = 7;
-/** A Line needs this many Delay observations in the window to be ranked: fewer is noise. */
-export const DEFAULT_MIN_OBSERVATIONS = 30;
+/** A Line needs this many Runs in the window to be ranked: fewer is noise. */
+export const DEFAULT_MIN_RUNS = 10;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const since = (now: Date, days: number) => new Date(now.getTime() - days * DAY_MS);
@@ -17,35 +18,47 @@ export interface PunctualityQuery {
   readonly days?: number;
 }
 
-/** Lines ranked from least to most on-time share over the last `days` days. */
+/** First Service date of a window of `days` days: today's Madrid date minus `days`, `YYYY-MM-DD`. */
+function sinceServiceDate(now: Date, days: number): string {
+  const first = new Date(`${serviceDateFor(now)}T00:00:00Z`);
+  first.setUTCDate(first.getUTCDate() - days);
+  return first.toISOString().slice(0, 10);
+}
+
+/**
+ * Lines ranked from least to most on-time share of Runs over the last `days` days (ADR 0007):
+ * each Run counts once, by its final Delay.
+ */
 export class GetPunctualityRanking {
   constructor(
     private readonly reader: PunctualityReader,
     private readonly now: () => Date = () => new Date(),
-    private readonly minObservations: number = DEFAULT_MIN_OBSERVATIONS,
+    private readonly minRuns: number = DEFAULT_MIN_RUNS,
   ) {}
 
   async execute(query: PunctualityQuery = {}): Promise<PunctualityRanking> {
     const days = query.days ?? DEFAULT_DAYS;
-    const totals = await this.reader.lineTotals(since(this.now(), days));
+    const totals = (await this.reader.lineRunTotals(sinceServiceDate(this.now(), days))).filter(
+      (line) => line.runs >= this.minRuns,
+    );
     const lines: LinePunctuality[] = totals
-      .filter((line) => line.observations >= this.minObservations)
       .map((line) => ({
         lineCode: line.lineCode,
         name: line.name,
         serviceType: line.serviceType,
         ...(line.hubCode !== undefined && { hubCode: line.hubCode }),
-        observations: line.observations,
-        onTimePct: (100 * line.onTimeObservations) / line.observations,
-        avgSeconds: line.totalSeconds / line.observations,
+        runs: line.runs,
+        onTimePct: (100 * line.onTimeRuns) / line.runs,
+        avgSeconds: line.totalFinalSeconds / line.runs,
       }))
       .sort(
         (a, b) =>
-          a.onTimePct - b.onTimePct ||
-          b.observations - a.observations ||
-          a.lineCode.localeCompare(b.lineCode),
+          a.onTimePct - b.onTimePct || b.runs - a.runs || a.lineCode.localeCompare(b.lineCode),
       );
-    return { days, lines };
+    const runs = totals.reduce((sum, line) => sum + line.runs, 0);
+    const onTimeRuns = totals.reduce((sum, line) => sum + line.onTimeRuns, 0);
+    const overall = runs === 0 ? null : { runs, onTimePct: (100 * onTimeRuns) / runs };
+    return { days, overall, lines };
   }
 }
 
@@ -53,7 +66,7 @@ export interface DelayByHourQuery extends PunctualityQuery {
   readonly lineCode?: string;
 }
 
-/** Delay pooled by Madrid hour of day over the last `days` days, for every Line or for one. */
+/** Delay observations pooled by Madrid hour of day over the last `days` days, for every Line or for one. */
 export class GetDelayByHour {
   constructor(
     private readonly reader: PunctualityReader,

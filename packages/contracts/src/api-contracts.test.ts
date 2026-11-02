@@ -219,21 +219,26 @@ describe('LineDto', () => {
 describe('PunctualityRanking', () => {
   const ok = {
     days: 7,
+    overall: { runs: 120, onTimePct: 91.5 },
     lines: [
       {
         lineCode: 'C1',
         name: 'C1',
         serviceType: 'cercanias',
         hubCode: 'madrid',
-        observations: 120,
+        runs: 120,
         onTimePct: 91.5,
         avgSeconds: -20,
       },
     ],
   };
   it('accepts an example payload', () => expect(PunctualityRanking.parse(ok)).toEqual(ok));
-  it('accepts an empty ranking', () =>
-    expect(PunctualityRanking.safeParse({ days: 7, lines: [] }).success).toBe(true));
+  it('accepts an empty ranking with a null overall', () =>
+    expect(PunctualityRanking.safeParse({ days: 7, overall: null, lines: [] }).success).toBe(true));
+  it('rejects a ranking without overall', () =>
+    rejects(PunctualityRanking, { days: 7, lines: [] }));
+  it('rejects a Line without Runs', () =>
+    rejects(PunctualityRanking, { ...ok, lines: [{ ...ok.lines[0], runs: 0 }] }));
   it('rejects an on-time share above 100', () =>
     rejects(PunctualityRanking, { ...ok, lines: [{ ...ok.lines[0], onTimePct: 101 }] }));
 });

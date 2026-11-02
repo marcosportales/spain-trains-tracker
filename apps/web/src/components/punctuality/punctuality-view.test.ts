@@ -2,14 +2,14 @@ import type { HourPunctuality, LinePunctuality } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
 import { hourBars, punctualityPath, sortLines } from './punctuality-view';
 
-const line = (lineCode: string, onTimePct: number, avgSeconds = 0, observations = 100) =>
+const line = (lineCode: string, onTimePct: number, avgSeconds = 0, runs = 100) =>
   ({
     lineCode,
     name: lineCode,
     serviceType: 'cercanias',
     onTimePct,
     avgSeconds,
-    observations,
+    runs,
   }) satisfies LinePunctuality;
 
 describe('sortLines', () => {
@@ -22,8 +22,8 @@ describe('sortLines', () => {
     expect(codes(sortLines(lines, 'onTimePct', 'desc'))).toEqual(['C2', 'C3', 'C1']));
   it('sorts by average Delay', () =>
     expect(codes(sortLines(lines, 'avgSeconds', 'desc'))).toEqual(['C1', 'C3', 'C2']));
-  it('sorts by observations', () =>
-    expect(codes(sortLines(lines, 'observations', 'desc'))).toEqual(['C2', 'C3', 'C1']));
+  it('sorts by Runs', () =>
+    expect(codes(sortLines(lines, 'runs', 'desc'))).toEqual(['C2', 'C3', 'C1']));
   it('sorts by Line code', () =>
     expect(codes(sortLines(lines, 'lineCode', 'asc'))).toEqual(['C1', 'C2', 'C3']));
   it('does not mutate its input', () => {
