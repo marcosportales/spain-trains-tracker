@@ -5,8 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { fetchStationBoard } from '@/lib/station-board-api';
+import { serviceTypeVar } from '@/theme/tokens';
 import { DelayBadge } from '../delay/DelayBadge';
-import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { runDetailPath } from '../run/run-detail-view';
 import { ShareButton } from '../share/ShareButton';
 import { entryBand, entryTimes } from './station-board-view';
@@ -88,7 +88,7 @@ export function StationBoardView({ initial }: { initial: StationBoard }) {
                         <span
                           aria-hidden="true"
                           className="inline-block size-3 shrink-0 rounded-full"
-                          style={{ backgroundColor: SERVICE_TYPE_COLORS[entry.serviceType] }}
+                          style={{ backgroundColor: serviceTypeVar(entry.serviceType) }}
                         />
                         {entry.trainNumber}
                         {entry.lineCode && (

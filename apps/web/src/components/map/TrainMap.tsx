@@ -1,28 +1,25 @@
 'use client';
 
 import type { LiveRun, RunId } from '@stt/contracts';
-import {
-  AttributionControl,
-  Map as MapLibreMap,
-  NavigationControl,
-  setWorkerUrl,
-} from 'maplibre-gl';
+import { type Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
+import { useTheme } from '@/theme/use-theme';
 import { runDetailPath } from '../run/run-detail-view';
 import { stationBoardPath } from '../station/station-board-view';
 import { AlertsPanel } from './alerts/AlertsPanel';
 import { affectedLineCodes, alertsForLine } from './alerts/alerts-view';
 import { useServiceAlerts } from './alerts/use-service-alerts';
+import { applyMapTheme, createMap } from './create-map';
 import { FilterPanel } from './filters/FilterPanel';
 import { matchesServiceTypes, toStreamFilters } from './filters/map-filters';
 import { useMapFilters } from './filters/use-map-filters';
 import { LiveRunsLayer } from './live/LiveRunsLayer';
 import { runKey } from './live/live-runs';
 import { useLiveRuns } from './live/use-live-runs';
-import { attributionHtml, MAP_STYLE_URL, SELECTED_ZOOM, SPAIN_VIEW } from './map-config';
+import { SELECTED_ZOOM } from './map-config';
 import { StationsLayer } from './stations/StationsLayer';
 import { useStations } from './stations/use-stations';
 import { TrackGeometryLayer } from './track/TrackGeometryLayer';
@@ -79,27 +76,23 @@ export function TrainMap({
     [runs],
   );
 
+  const { theme } = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+
   useEffect(() => {
     if (!container.current) return;
-    const instance = new MapLibreMap({
-      container: container.current,
-      style: MAP_STYLE_URL,
-      center: SPAIN_VIEW.center,
-      zoom: SPAIN_VIEW.zoom,
-      attributionControl: false,
-      dragRotate: false,
-    });
-    instance.touchZoomRotate.disableRotation();
-    instance.addControl(
-      new AttributionControl({ compact: false, customAttribution: attributionHtml() }),
-    );
-    instance.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+    const instance = createMap(container.current, themeRef.current);
     setMap(instance);
     return () => {
       setMap(null);
       instance.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (map) applyMapTheme(map, theme);
+  }, [map, theme]);
 
   const selectedRun = selected ? (runs.get(runKey(selected)) ?? selectedFallback) : undefined;
   const lon = selectedRun?.lon;

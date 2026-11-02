@@ -37,14 +37,6 @@ export function liveRunsReducer(state: LiveRuns, action: LiveRunsAction): LiveRu
 /** Cercanías positions at or approaching a Station are snapped to it; only `in_transit_to` is real GPS. */
 export const isSnapped = (run: Pick<LiveRun, 'status'>): boolean => run.status !== 'in_transit_to';
 
-export const SERVICE_TYPE_COLORS: Record<ServiceType, string> = {
-  cercanias: '#e11d48',
-  ave: '#7c3aed',
-  larga_distancia: '#2563eb',
-  media_distancia: '#ea580c',
-  ancho_metrico: '#16a34a',
-};
-
 export type LiveRunProperties = {
   serviceType?: ServiceType | undefined;
   label: string;

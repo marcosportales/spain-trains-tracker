@@ -5,7 +5,6 @@ import {
   isSnapped,
   liveRunsReducer,
   runKey,
-  SERVICE_TYPE_COLORS,
   toFeatureCollection,
 } from './live-runs';
 
@@ -95,18 +94,6 @@ describe('toFeatureCollection', () => {
     const r = run('03063', { serviceType: 'ave', lineCode: undefined });
     const fc = toFeatureCollection(new Map([[runKey(r), r]]));
     expect(fc.features[0]?.properties.label).toBe('03063');
-  });
-});
-
-describe('SERVICE_TYPE_COLORS', () => {
-  it('has a color for every Service type', () => {
-    expect(Object.keys(SERVICE_TYPE_COLORS).sort()).toEqual([
-      'ancho_metrico',
-      'ave',
-      'cercanias',
-      'larga_distancia',
-      'media_distancia',
-    ]);
   });
 });
 

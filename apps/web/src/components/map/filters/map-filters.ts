@@ -1,5 +1,5 @@
 import type { LiveRun, ServiceType } from '@stt/contracts';
-import { SERVICE_TYPE_COLORS } from '../live/live-runs';
+import { SERVICE_TYPES } from '../../../theme/tokens';
 import type { LiveRunFilters } from '../live/use-live-runs';
 
 /** What the map is narrowed to. Lives in the URL so a view can be shared and survives reload. */
@@ -28,8 +28,6 @@ export const HUB_OPTIONS = [
   { code: '62', name: 'Santander' },
 ] as const;
 
-/** Service types in display order; types only are imported from contracts (no runtime zod). */
-export const SERVICE_TYPES = Object.keys(SERVICE_TYPE_COLORS) as ServiceType[];
 const isServiceType = (value: string): value is ServiceType =>
   (SERVICE_TYPES as string[]).includes(value);
 

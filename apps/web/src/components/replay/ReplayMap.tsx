@@ -1,18 +1,14 @@
 'use client';
 
 import type { RunId } from '@stt/contracts';
-import {
-  AttributionControl,
-  Map as MapLibreMap,
-  NavigationControl,
-  setWorkerUrl,
-} from 'maplibre-gl';
+import { type Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useRouter } from '@/i18n/navigation';
+import { useTheme } from '@/theme/use-theme';
+import { applyMapTheme, createMap } from '../map/create-map';
 import { LiveRunsLayer } from '../map/live/LiveRunsLayer';
-import { attributionHtml, MAP_STYLE_URL, SPAIN_VIEW } from '../map/map-config';
 import { TrackGeometryLayer } from '../map/track/TrackGeometryLayer';
 import { useTrackGeometry } from '../map/track/use-track-geometry';
 import { runDetailPath } from '../run/run-detail-view';
@@ -55,27 +51,23 @@ export function ReplayMap({ label }: { label: string }) {
   const instant = from.getTime() + position;
   const runs = useMemo(() => (index ? replayRuns(index, instant) : new Map()), [index, instant]);
 
+  const { theme } = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+
   useEffect(() => {
     if (!container.current) return;
-    const instance = new MapLibreMap({
-      container: container.current,
-      style: MAP_STYLE_URL,
-      center: SPAIN_VIEW.center,
-      zoom: SPAIN_VIEW.zoom,
-      attributionControl: false,
-      dragRotate: false,
-    });
-    instance.touchZoomRotate.disableRotation();
-    instance.addControl(
-      new AttributionControl({ compact: false, customAttribution: attributionHtml() }),
-    );
-    instance.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+    const instance = createMap(container.current, themeRef.current);
     setMap(instance);
     return () => {
       setMap(null);
       instance.remove();
     };
   }, []);
+
+  useEffect(() => {
+    if (map) applyMapTheme(map, theme);
+  }, [map, theme]);
 
   // A new window starts again from its beginning, paused.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset only when the window changes
@@ -177,7 +169,7 @@ export function ReplayMap({ label }: { label: string }) {
             className="min-w-0 flex-1"
           />
         </div>
-        <p className="text-sm" aria-live="off">
+        <p className="text-sm tabular-nums" aria-live="off">
           {state.status === 'loading' && t('loading')}
           {state.status === 'error' && t('error')}
           {state.status === 'ready' &&

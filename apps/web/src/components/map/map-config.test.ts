@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ATTRIBUTION, MAP_STYLE_URL, SPAIN_VIEW } from './map-config';
+import { ATTRIBUTION, mapStyleUrl, SPAIN_VIEW } from './map-config';
 
 describe('map config', () => {
-  it('uses the OpenFreeMap liberty style', () => {
-    expect(MAP_STYLE_URL).toBe('https://tiles.openfreemap.org/styles/liberty');
+  it('uses the OpenFreeMap positron style in light and dark in dark', () => {
+    expect(mapStyleUrl('light')).toBe('https://tiles.openfreemap.org/styles/positron');
+    expect(mapStyleUrl('dark')).toBe('https://tiles.openfreemap.org/styles/dark');
   });
 
   it('is centered on mainland Spain', () => {

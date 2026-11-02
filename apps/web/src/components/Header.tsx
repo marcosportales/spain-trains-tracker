@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { LocaleSwitcher } from './LocaleSwitcher';
 import { SearchBox } from './search/SearchBox';
+import { ThemeToggle } from './ThemeToggle';
 
 export function Header() {
   const t = useTranslations('Header');
@@ -18,6 +19,7 @@ export function Header() {
       </Link>
       <SearchBox />
       <LocaleSwitcher />
+      <ThemeToggle />
     </header>
   );
 }

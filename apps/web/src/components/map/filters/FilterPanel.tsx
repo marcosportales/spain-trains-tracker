@@ -3,8 +3,8 @@
 import type { ServiceType } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
-import { SERVICE_TYPE_COLORS } from '../live/live-runs';
-import { HUB_OPTIONS, type MapFilters, SERVICE_TYPES } from './map-filters';
+import { SERVICE_TYPES, serviceTypeVar } from '@/theme/tokens';
+import { HUB_OPTIONS, type MapFilters } from './map-filters';
 
 type Props = {
   filters: MapFilters;
@@ -63,7 +63,7 @@ export function FilterPanel({ filters, lineOptions, onChange }: Props) {
               <span
                 aria-hidden="true"
                 className="inline-block size-3 rounded-full"
-                style={{ backgroundColor: SERVICE_TYPE_COLORS[type] }}
+                style={{ backgroundColor: serviceTypeVar(type) }}
               />
               {t(`serviceTypes.${type}`)}
             </label>
