@@ -84,3 +84,9 @@ describe.each(['light', 'dark'] as const)('Delay band badge text contrast (%s)',
     expect(contrast(c.text ?? COLORS[theme].ink, c.soft)).toBeGreaterThanOrEqual(4.5);
   });
 });
+
+describe('SERVICE_TYPES', () => {
+  it.each(['light', 'dark'] as const)('has a colour in %s for every Service type', (theme) => {
+    expect(Object.keys(SERVICE_TYPE_COLORS[theme]).sort()).toEqual([...SERVICE_TYPES].sort());
+  });
+});

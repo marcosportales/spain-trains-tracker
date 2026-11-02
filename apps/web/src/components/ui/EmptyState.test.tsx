@@ -1,3 +1,4 @@
+import { NextIntlClientProvider } from 'next-intl';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { EmptyState } from './EmptyState';
@@ -20,9 +21,12 @@ describe('EmptyState', () => {
 
   it('renders a link for an href action', () => {
     const html = renderToStaticMarkup(
-      <EmptyState message="Ningún tren" action={{ label: 'Ir al mapa', href: '/es' }} />,
+      <NextIntlClientProvider locale="es" messages={{}}>
+        <EmptyState message="Ningún tren" action={{ label: 'Ir al mapa', href: '/punctuality' }} />
+      </NextIntlClientProvider>,
     );
-    expect(html).toContain('<a href="/es"');
+    expect(html).toContain('href="/es/punctuality"');
+    expect(html).toContain('<a ');
     expect(html).toContain('Ir al mapa');
   });
 });

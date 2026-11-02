@@ -73,7 +73,7 @@ function BottomSheet({ label, headline, children, actions }: Props) {
           style={{ height: '100dvh' }}
           className="fixed inset-x-0 bottom-0 z-20 flex flex-col rounded-t-xl bg-surface text-ink shadow-2 outline-none"
         >
-          <Drawer.Handle className="mt-2 mb-1 bg-line" />
+          <Drawer.Handle className="mt-2 mb-1 bg-ink-3" />
           <Drawer.Title className="sr-only">{label}</Drawer.Title>
           <div className="flex items-start gap-2 px-4 pt-1 pb-2">
             <div className="min-w-0 flex-1 text-xl font-semibold">{headline}</div>

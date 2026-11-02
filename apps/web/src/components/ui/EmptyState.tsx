@@ -1,3 +1,4 @@
+import { Link } from '@/i18n/navigation';
 import { Button } from './Button';
 
 export type EmptyStateAction =
@@ -11,12 +12,12 @@ export function EmptyState({ message, action }: { message: string; action?: Empt
       <p className="text-base text-ink-2">{message}</p>
       {action &&
         ('href' in action ? (
-          <a
+          <Link
             href={action.href}
             className="inline-flex min-h-11 items-center rounded-md bg-surface-2 px-4 text-base font-medium text-ink focus-visible:outline-2 focus-visible:outline-accent"
           >
             {action.label}
-          </a>
+          </Link>
         ) : (
           <Button variant="secondary" onClick={action.onAction}>
             {action.label}
