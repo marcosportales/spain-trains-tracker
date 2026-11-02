@@ -3,7 +3,7 @@ import { delayMinutes } from '../delay/delay-band';
 
 export const punctualityPath = '/punctuality';
 
-export type SortKey = 'lineCode' | 'onTimePct' | 'avgSeconds' | 'observations';
+export type SortKey = 'lineCode' | 'onTimePct' | 'avgSeconds' | 'runs';
 export type SortDirection = 'asc' | 'desc';
 
 /** The ranking sorted by a column. Ties keep Line code order. */

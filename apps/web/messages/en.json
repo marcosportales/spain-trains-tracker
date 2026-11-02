@@ -103,7 +103,7 @@
     "line": "Line",
     "onTime": "On time",
     "avgDelay": "Avg delay",
-    "observations": "Observations",
+    "runs": "Trains",
     "minutes": "{minutes} min",
     "showHours": "Show by hour",
     "byHour": "Delay by hour of day",

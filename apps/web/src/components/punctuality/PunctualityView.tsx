@@ -57,7 +57,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
     ['lineCode', t('line')],
     ['onTimePct', t('onTime')],
     ['avgSeconds', t('avgDelay')],
-    ['observations', t('observations')],
+    ['runs', t('runs')],
   ];
 
   return (
@@ -133,7 +133,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
                   <td className="py-1 pr-3 tabular-nums">
                     {t('minutes', { minutes: delayMinutes(line.avgSeconds) })}
                   </td>
-                  <td className="py-1 pr-3 tabular-nums">{line.observations}</td>
+                  <td className="py-1 pr-3 tabular-nums">{line.runs}</td>
                   <td className="py-1">
                     <button
                       type="button"
