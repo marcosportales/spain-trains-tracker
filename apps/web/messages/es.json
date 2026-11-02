@@ -23,6 +23,7 @@
     "line": "Línea",
     "allHubs": "Todos los núcleos",
     "allLines": "Todas las líneas",
+    "noMatch": "Ningún tren coincide con los filtros",
     "clear": "Quitar filtros"
   },
   "RunDetail": {

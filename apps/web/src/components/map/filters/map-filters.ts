@@ -70,3 +70,8 @@ export function matchesServiceTypes(
 ) {
   return selected.length === 0 || selected.includes(type);
 }
+
+/** Whether any filter (Service types, Hub or Line) is narrowing the map. */
+export function hasActiveFilters(filters: MapFilters): boolean {
+  return filters.serviceTypes.length > 0 || Boolean(filters.hub) || Boolean(filters.line);
+}

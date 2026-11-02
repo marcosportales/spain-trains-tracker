@@ -23,6 +23,7 @@
     "line": "Line",
     "allHubs": "All hubs",
     "allLines": "All lines",
+    "noMatch": "No trains match the filters",
     "clear": "Clear filters"
   },
   "RunDetail": {

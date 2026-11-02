@@ -31,7 +31,12 @@ export function startMockApi(port: number): Promise<Server> {
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
       });
-      const snapshot = { cycleId: 1, generatedAt: RUN.observedAt, runs: [RUN] };
+      const lineFilter = url.searchParams.get('line');
+      const snapshot = {
+        cycleId: 1,
+        generatedAt: RUN.observedAt,
+        runs: lineFilter && lineFilter !== RUN.lineCode ? [] : [RUN],
+      };
       res.write(`event: snapshot\ndata: ${JSON.stringify(snapshot)}\n\n`);
       const heartbeat = setInterval(() => res.write('event: heartbeat\ndata: {}\n\n'), 1000);
       req.on('close', () => clearInterval(heartbeat));

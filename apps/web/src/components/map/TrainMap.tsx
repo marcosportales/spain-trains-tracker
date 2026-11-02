@@ -5,6 +5,8 @@ import { type Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from '@/i18n/navigation';
 import { useTheme } from '@/theme/use-theme';
 import { runDetailPath } from '../run/run-detail-view';
@@ -14,7 +16,7 @@ import { affectedLineCodes } from './alerts/alerts-view';
 import { useServiceAlerts } from './alerts/use-service-alerts';
 import { applyMapTheme, createMap } from './create-map';
 import { FilterPanel } from './filters/FilterPanel';
-import { matchesServiceTypes, toStreamFilters } from './filters/map-filters';
+import { hasActiveFilters, matchesServiceTypes, toStreamFilters } from './filters/map-filters';
 import { useMapFilters } from './filters/use-map-filters';
 import { Legend } from './legend/Legend';
 import { serviceTypeCounts } from './legend/legend-view';
@@ -53,6 +55,7 @@ export function TrainMap({
   fallbackStationCode,
 }: Props) {
   const router = useRouter();
+  const tFilters = useTranslations('Filters');
   const search = useSearchParams().toString();
   const container = useRef<HTMLElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -75,6 +78,8 @@ export function TrainMap({
       ),
     [streamed, filters.serviceTypes],
   );
+  const loaded = lastEventAt !== undefined;
+  const noMatch = loaded && runs.size === 0 && hasActiveFilters(filters);
   const counts = useMemo(() => serviceTypeCounts(streamed), [streamed]);
   const lineOptions = useMemo(
     () => [...new Set([...runs.values()].flatMap((r) => (r.lineCode ? [r.lineCode] : [])))].sort(),
@@ -163,7 +168,7 @@ export function TrainMap({
       {!selected && (
         <>
           <div className="pointer-events-none absolute right-3 bottom-3 left-3 z-10 flex flex-col items-start gap-2 md:right-auto">
-            <Legend filters={filters} counts={counts} onChange={setFilters} />
+            <Legend filters={filters} counts={counts} onChange={setFilters} loading={!loaded} />
             <div className="flex flex-wrap items-center gap-2">
               <LiveIndicator count={streamed.size} lastEventAt={lastEventAt} openedAt={openedAt} />
               <AlertsChip
@@ -173,6 +178,19 @@ export function TrainMap({
               />
             </div>
           </div>
+          {noMatch && (
+            <div className="pointer-events-none absolute top-20 left-1/2 z-10 -translate-x-1/2">
+              <div className="pointer-events-auto rounded-lg bg-surface shadow-2">
+                <EmptyState
+                  message={tFilters('noMatch')}
+                  action={{
+                    label: tFilters('clear'),
+                    onAction: () => setFilters({ serviceTypes: [] }),
+                  }}
+                />
+              </div>
+            </div>
+          )}
           <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
         </>
       )}

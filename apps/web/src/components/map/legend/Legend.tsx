@@ -4,6 +4,7 @@ import type { ServiceType } from '@stt/contracts';
 import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Popover } from '@/components/ui/Popover';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { SERVICE_TYPES, serviceTypeVar } from '@/theme/tokens';
 import type { MapFilters } from '../filters/map-filters';
 import { toggleServiceType } from './legend-view';
@@ -12,6 +13,8 @@ type Props = {
   filters: MapFilters;
   counts: Record<ServiceType, number>;
   onChange: (next: MapFilters) => void;
+  /** No snapshot yet: show placeholders shaped like the buttons instead of zero counts. */
+  loading?: boolean;
 };
 
 const isShown = (filters: MapFilters, type: ServiceType) =>
@@ -41,7 +44,7 @@ function RingsKey() {
 }
 
 /** Service types with live counts; each button shows or hides that type's dots. */
-export function Legend({ filters, counts, onChange }: Props) {
+export function Legend({ filters, counts, onChange, loading = false }: Props) {
   const t = useTranslations('Legend');
 
   return (
@@ -49,6 +52,13 @@ export function Legend({ filters, counts, onChange }: Props) {
       <div className="flex items-center gap-1 p-1 md:flex-col md:items-stretch">
         <ul className="flex min-w-0 gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {SERVICE_TYPES.map((type) => {
+            if (loading) {
+              return (
+                <li key={type} className="shrink-0">
+                  <Skeleton className="h-11 w-32 md:w-full md:min-w-44" />
+                </li>
+              );
+            }
             const shown = isShown(filters, type);
             return (
               <li key={type} className="shrink-0">

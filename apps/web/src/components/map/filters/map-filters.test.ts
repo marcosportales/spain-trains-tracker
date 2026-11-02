@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { filtersToSearch, matchesServiceTypes, parseFilters, toStreamFilters } from './map-filters';
+import {
+  filtersToSearch,
+  hasActiveFilters,
+  matchesServiceTypes,
+  parseFilters,
+  toStreamFilters,
+} from './map-filters';
 
 describe('parseFilters', () => {
   it('returns empty filters for an empty query', () => {
@@ -54,5 +60,17 @@ describe('matchesServiceTypes', () => {
   it('matches only the selected ones', () => {
     expect(matchesServiceTypes(['ave'], 'ave')).toBe(true);
     expect(matchesServiceTypes(['ave'], 'cercanias')).toBe(false);
+  });
+});
+
+describe('hasActiveFilters', () => {
+  it('is false when nothing narrows the map', () => {
+    expect(hasActiveFilters({ serviceTypes: [] })).toBe(false);
+  });
+
+  it('is true for a hidden Service type, a Hub or a Line', () => {
+    expect(hasActiveFilters({ serviceTypes: ['ave'] })).toBe(true);
+    expect(hasActiveFilters({ serviceTypes: [], hub: '10' })).toBe(true);
+    expect(hasActiveFilters({ serviceTypes: [], line: 'C1' })).toBe(true);
   });
 });
