@@ -64,7 +64,8 @@
       "unknown": "No delay data",
       "nextStop": "next stop {station}, {time}",
       "nextStopNoTime": "next stop {station}"
-    }
+    },
+    "trainHere": "The train is here"
   },
   "StationBoard": {
     "title": "{station} board",

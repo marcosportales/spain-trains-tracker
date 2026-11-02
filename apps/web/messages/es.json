@@ -64,7 +64,8 @@
       "unknown": "Sin datos de retraso",
       "nextStop": "próxima parada {station}, {time}",
       "nextStopNoTime": "próxima parada {station}"
-    }
+    },
+    "trainHere": "El tren está aquí"
   },
   "StationBoard": {
     "title": "Panel de {station}",

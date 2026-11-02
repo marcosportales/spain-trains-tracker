@@ -35,6 +35,33 @@ export function stopTimes(stop: RunStop): StopTimes {
   return { scheduled: s, estimated: e, changed: s !== undefined && e !== undefined && s !== e };
 }
 
+export type TimelineStop = {
+  station: string;
+  times: StopTimes;
+  state: 'past' | 'current' | 'future';
+};
+
+export type StopTimeline = {
+  stops: TimelineStop[];
+  /** Where the train is: on the stop at `atIndex`, or just before it when `between`. */
+  marker: { atIndex: number; between: boolean } | undefined;
+};
+
+/** The stops in order, which are behind the train, and where to draw the train marker. */
+export function stopTimeline(detail: RunDetail, names: StationNames): StopTimeline {
+  const ordered = [...detail.stops].sort((a, b) => a.sequence - b.sequence);
+  const nextCode = detail.position?.nextStationCode;
+  const next = nextCode === undefined ? -1 : ordered.findIndex((s) => s.stationCode === nextCode);
+  const stoppedAt = next >= 0 && detail.position?.status === 'stopped_at';
+
+  const stops = ordered.map((stop, i): TimelineStop => {
+    const state =
+      next < 0 || i > next ? 'future' : i < next ? 'past' : stoppedAt ? 'current' : 'future';
+    return { station: names(stop.stationCode), times: stopTimes(stop), state };
+  });
+  return { stops, marker: next < 0 ? undefined : { atIndex: next, between: !stoppedAt } };
+}
+
 export const runDetailPath = (id: RunId): string => `/runs/${id.serviceDate}/${id.trainNumber}`;
 
 export type RunHeadline =

@@ -5,9 +5,9 @@ import { serviceTypeVar } from '@/theme/tokens';
 import { DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
 import { DetailSurface } from '../ui/DetailSurface';
-import { EmptyState } from '../ui/EmptyState';
 import { RunCloseButton } from './RunCloseButton';
-import { delayBand, type RunHeadline, runHeadline, stopTimes } from './run-detail-view';
+import { RunTimeline } from './RunTimeline';
+import { delayBand, type RunHeadline, runHeadline } from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
 
 type Translate = ReturnType<typeof useTranslations<'RunDetail'>>;
@@ -127,33 +127,7 @@ export function RunDetailPanel({
       </dl>
 
       <h2 className="mt-4 text-sm font-semibold">{t('stops')}</h2>
-      {detail.stops.length === 0 ? (
-        <EmptyState message={t('noStops')} />
-      ) : (
-        <ol className="mt-1 space-y-1 text-sm">
-          {detail.stops.map((stop) => {
-            const times = stopTimes(stop);
-            return (
-              <li
-                key={stop.sequence}
-                aria-current={stop.stationCode === nextStop ? 'step' : undefined}
-                className={`flex justify-between gap-2 rounded px-2 py-1 ${stop.stationCode === nextStop ? 'bg-gray-100 font-medium' : ''}`}
-              >
-                <span>{names(stop.stationCode)}</span>
-                <span className="tabular-nums">
-                  {times.changed ? (
-                    <>
-                      <s className="text-gray-500">{times.scheduled}</s> {times.estimated}
-                    </>
-                  ) : (
-                    (times.estimated ?? times.scheduled)
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      <RunTimeline detail={detail} names={names} />
 
       {history && (
         <section data-testid="train-history" aria-labelledby="train-history-title">

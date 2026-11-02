@@ -6,6 +6,7 @@ import {
   isScheduledRun,
   runDetailPath,
   runHeadline,
+  stopTimeline,
   stopTimes,
 } from './run-detail-view';
 
@@ -25,6 +26,8 @@ const detail = (over: Partial<RunDetail> = {}): RunDetail => ({
   stops: [],
   ...over,
 });
+
+const POSITION = detail().position as NonNullable<RunDetail['position']>;
 
 describe('delayBand', () => {
   it('is cancelled whenever the Service status is cancelled', () => {
@@ -124,7 +127,7 @@ describe('runHeadline', () => {
   const withNext = (over: Partial<RunDetail> = {}) =>
     detail({
       stops,
-      position: { ...detail().position!, nextStationCode: 'A' },
+      position: { ...POSITION, nextStationCode: 'A' },
       ...over,
     });
 
@@ -170,7 +173,7 @@ describe('runHeadline', () => {
   });
 
   it('leaves out the time when the next stop is not in the stops', () => {
-    expect(runHeadline(withNext({ stops: [stops[0]!] }), names)).toEqual({
+    expect(runHeadline(withNext({ stops: stops.slice(0, 1) }), names)).toEqual({
       kind: 'running',
       band: 'unknown',
       nextStop: { station: 'Atocha' },
@@ -179,5 +182,57 @@ describe('runHeadline', () => {
 
   it('has no next stop when the position names none', () => {
     expect(runHeadline(detail({ stops }), names)).toEqual({ kind: 'running', band: 'unknown' });
+  });
+});
+
+describe('stopTimeline', () => {
+  const names = (code: string) => `name-${code}`;
+  const stops = ['A', 'B', 'C'].map((stationCode, sequence) => ({
+    stationCode,
+    sequence,
+    scheduledDeparture: `2026-10-31T1${sequence}:00:00+01:00`,
+  }));
+  const tracked = (status: 'stopped_at' | 'incoming_at' | 'in_transit_to', next?: string) =>
+    detail({
+      stops: [...stops].reverse(),
+      position: {
+        ...POSITION,
+        status,
+        ...(next !== undefined && { nextStationCode: next }),
+      },
+    });
+  const states = (d: RunDetail) => stopTimeline(d, names).stops.map((s) => s.state);
+
+  it('makes every stop future, with no marker, for a Scheduled Run', () => {
+    const { position: _position, ...scheduled } = detail({ stops });
+    expect(states(scheduled)).toEqual(['future', 'future', 'future']);
+    expect(stopTimeline(scheduled, names).marker).toBeUndefined();
+  });
+
+  it('lists stops by sequence with names and times', () => {
+    const { stops: rows } = stopTimeline(tracked('in_transit_to', 'B'), names);
+    expect(rows.map((r) => r.station)).toEqual(['name-A', 'name-B', 'name-C']);
+    expect(rows[0]?.times.scheduled).toBe('10:00');
+  });
+
+  it('puts the marker on the next stop when the train is stopped there', () => {
+    const d = tracked('stopped_at', 'B');
+    expect(states(d)).toEqual(['past', 'current', 'future']);
+    expect(stopTimeline(d, names).marker).toEqual({ atIndex: 1, between: false });
+  });
+
+  it('puts the marker between the previous and next stop when moving', () => {
+    for (const status of ['incoming_at', 'in_transit_to'] as const) {
+      const d = tracked(status, 'C');
+      expect(states(d)).toEqual(['past', 'past', 'future']);
+      expect(stopTimeline(d, names).marker).toEqual({ atIndex: 2, between: true });
+    }
+  });
+
+  it('makes every stop future, with no marker, when the next station is not a stop', () => {
+    for (const d of [tracked('in_transit_to', 'Z'), tracked('in_transit_to')]) {
+      expect(states(d)).toEqual(['future', 'future', 'future']);
+      expect(stopTimeline(d, names).marker).toBeUndefined();
+    }
   });
 });
