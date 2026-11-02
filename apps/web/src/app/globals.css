@@ -1,1 +1,101 @@
 @import "tailwindcss";
+
+/* Dark theme: `<html data-theme="dark">`, set before first paint by `theme/theme-script.ts`. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Design tokens (light). `static` keeps every variable in the output even when no utility uses
+ * it, since DOM swatches read `var(--color-service-<type>)`. `theme/tokens.ts` mirrors the
+ * colours for MapLibre paint and `og-image.tsx`; `theme/tokens.test.ts` keeps the two in sync.
+ */
+@theme static {
+  --color-page: #e6e7ea;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f4f5;
+  --color-surface-3: #e7e7ea;
+  --color-line: #e4e4e7;
+  --color-ink: #18181b;
+  --color-ink-2: #52525b;
+  --color-ink-3: #71717a;
+  --color-on-ink: #ffffff;
+  --color-accent: #2563eb;
+  --color-accent-soft: #dbe6fd;
+  --color-dot-outline: rgba(24, 24, 27, 0.55);
+
+  --color-service-cercanias: #53c3b1;
+  --color-service-ave: #ad9bfa;
+  --color-service-larga-distancia: #0d60e0;
+  --color-service-media-distancia: #8e2b86;
+  --color-service-ancho-metrico: #8b440e;
+
+  --color-band-on-time: #1f9e55;
+  --color-band-on-time-soft: #e3f4e9;
+  --color-band-late: #c27c00;
+  --color-band-late-soft: #fbefd6;
+  --color-band-severely-late: #d6382f;
+  --color-band-severely-late-soft: #fbe3e1;
+  --color-band-cancelled: #868c96;
+  --color-band-cancelled-soft: #52525b;
+  --color-band-cancelled-text: #ffffff;
+  --color-band-unknown: #868c96;
+  --color-band-unknown-soft: #ececee;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-1: 0 1px 2px rgba(20, 22, 28, 0.06), 0 2px 8px rgba(20, 22, 28, 0.06);
+  --shadow-2: 0 2px 6px rgba(20, 22, 28, 0.08), 0 12px 32px rgba(20, 22, 28, 0.14);
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 30px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-page: #0a0b0d;
+  --color-surface: #1d1f23;
+  --color-surface-2: #25282d;
+  --color-surface-3: #30333a;
+  --color-line: #30333a;
+  --color-ink: #f4f4f5;
+  --color-ink-2: #c4c5cb;
+  --color-ink-3: #8e939c;
+  --color-on-ink: #18181b;
+  --color-accent: #6ea8fe;
+  --color-accent-soft: #1c2c47;
+  --color-dot-outline: rgba(244, 244, 245, 0.5);
+
+  --color-service-cercanias: #0c8568;
+  --color-service-ave: #7943aa;
+  --color-service-larga-distancia: #257bf1;
+  --color-service-media-distancia: #ca68b9;
+  --color-service-ancho-metrico: #a04b00;
+
+  --color-band-on-time: #3fbf74;
+  --color-band-on-time-soft: #163322;
+  --color-band-late: #f0a832;
+  --color-band-late-soft: #3a2c10;
+  --color-band-severely-late: #f2635a;
+  --color-band-severely-late-soft: #3d1c1a;
+  --color-band-cancelled: #8b919b;
+  --color-band-cancelled-soft: #4a4d55;
+  --color-band-cancelled-text: #f4f4f5;
+  --color-band-unknown: #8b919b;
+  --color-band-unknown-soft: #2a2c31;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+body {
+  @apply bg-page text-ink;
+  font-size: 14px;
+}
