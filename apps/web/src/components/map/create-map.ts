@@ -18,7 +18,7 @@ export function createMap(container: HTMLElement, theme: Theme): MapLibreMap {
   shownTheme.set(map, theme);
   map.touchZoomRotate.disableRotation();
   map.addControl(new AttributionControl({ compact: false, customAttribution: attributionHtml() }));
-  map.addControl(new NavigationControl({ showCompass: false }), 'top-right');
+  map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
   return map;
 }
 

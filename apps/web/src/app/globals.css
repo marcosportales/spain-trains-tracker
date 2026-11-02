@@ -95,6 +95,25 @@
   --shadow-2: 0 2px 6px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* Floating content starts below the top bar: 10 + 48 px on mobile, 12 + 52 px on desktop, plus a gap. */
+:root {
+  --bar-offset: 68px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --bar-offset: 76px;
+  }
+}
+
+@utility top-below-bar {
+  top: var(--bar-offset);
+}
+
+@utility pt-below-bar {
+  padding-top: var(--bar-offset);
+}
+
 body {
   @apply bg-page text-ink;
   font-size: 14px;

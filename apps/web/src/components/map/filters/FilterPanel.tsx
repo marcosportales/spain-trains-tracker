@@ -30,7 +30,7 @@ export function FilterPanel({ filters, lineOptions, onChange }: Props) {
       : lineOptions;
 
   return (
-    <div className="pointer-events-none absolute top-3 left-3 z-10 flex flex-col items-start gap-2">
+    <div className="pointer-events-none absolute top-below-bar left-3 z-10 flex flex-col items-start gap-2">
       <Button
         variant="secondary"
         icon={SlidersHorizontal}

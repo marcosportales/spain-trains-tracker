@@ -48,7 +48,7 @@ export function Legend({ filters, counts, onChange, loading = false }: Props) {
   const t = useTranslations('Legend');
 
   return (
-    <div className="pointer-events-auto min-w-0 rounded-lg bg-surface text-ink shadow-2">
+    <div className="pointer-events-auto min-w-0 max-w-full rounded-lg bg-surface text-ink shadow-2">
       <div className="flex items-center gap-1 p-1 md:flex-col md:items-stretch">
         <ul className="flex min-w-0 gap-1 overflow-x-auto md:flex-col md:overflow-visible">
           {SERVICE_TYPES.map((type) => {

@@ -1,6 +1,7 @@
 'use client';
 
 import type { SearchResult } from '@stt/contracts';
+import { Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
@@ -107,7 +108,12 @@ export function SearchBox() {
   ] as const;
 
   return (
-    <div ref={root} className="relative w-full max-w-sm">
+    <div ref={root} className="relative w-full max-w-xl">
+      <Search
+        aria-hidden="true"
+        size={16}
+        className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
+      />
       <input
         type="search"
         role="combobox"
@@ -126,7 +132,7 @@ export function SearchBox() {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        className="w-full rounded-full border px-4 py-1.5 text-sm"
+        className="min-h-10 w-full rounded-md bg-surface-2 py-1.5 pr-3 pl-9 text-sm text-ink placeholder:text-ink-3 focus-visible:outline-2 focus-visible:outline-accent"
       />
       <div role="status" className="sr-only">
         {showPopup &&
@@ -140,7 +146,7 @@ export function SearchBox() {
         role="listbox"
         aria-label={t('label')}
         hidden={!showPopup || options.length === 0}
-        className="absolute inset-x-0 top-full z-30 mt-1 max-h-[60dvh] overflow-y-auto rounded-xl border bg-white p-1 shadow-lg"
+        className="absolute inset-x-0 top-full z-30 mt-2 max-h-[60dvh] overflow-y-auto rounded-lg bg-surface p-1 text-ink shadow-2"
       >
         {groups.map(({ kind, label }) => {
           const group = options.filter((o) => o.kind === kind);
@@ -148,7 +154,7 @@ export function SearchBox() {
           return (
             // biome-ignore lint/a11y/useSemanticElements: a listbox group must be role=group, not a fieldset
             <div key={kind} role="group" aria-label={label}>
-              <div aria-hidden="true" className="px-3 pt-2 text-xs font-semibold text-gray-500">
+              <div aria-hidden="true" className="px-3 pt-2 text-xs font-semibold text-ink-3">
                 {label}
               </div>
               {group.map((option) => {
@@ -164,7 +170,7 @@ export function SearchBox() {
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => select(option)}
                     onMouseMove={() => setActive(index)}
-                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm ${index === active ? 'bg-gray-100' : ''}`}
+                    className={`cursor-pointer rounded-md px-3 py-1.5 text-sm ${index === active ? 'bg-surface-2' : ''}`}
                   >
                     <OptionLabel option={option} />
                   </div>
@@ -175,7 +181,7 @@ export function SearchBox() {
         })}
       </div>
       {showPopup && message && (
-        <p className="absolute inset-x-0 top-full z-30 mt-1 rounded-xl border bg-white px-3 py-2 text-sm shadow-lg">
+        <p className="absolute inset-x-0 top-full z-30 mt-2 rounded-lg bg-surface px-3 py-2 text-sm text-ink shadow-2">
           {message}
         </p>
       )}
@@ -191,7 +197,7 @@ function OptionLabel({ option }: { option: SearchOption }) {
         <>
           <span className="font-medium">{option.hit.lineCode}</span>{' '}
           {option.hit.name !== option.hit.lineCode && (
-            <span className="text-gray-600">{option.hit.name}</span>
+            <span className="text-ink-2">{option.hit.name}</span>
           )}
         </>
       );
@@ -201,7 +207,7 @@ function OptionLabel({ option }: { option: SearchOption }) {
       return (
         <>
           <span className="font-medium">{t('run', { trainNumber: option.hit.trainNumber })}</span>
-          {option.hit.lineCode && <span className="text-gray-600"> · {option.hit.lineCode}</span>}
+          {option.hit.lineCode && <span className="text-ink-2"> · {option.hit.lineCode}</span>}
         </>
       );
   }
