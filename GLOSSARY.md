@@ -30,6 +30,14 @@ _Avoid_: Shape, polyline
 One concrete journey of a train number on a service date (the AVE 03063 on 2026-10-31). What users casually call "a train". Spanish alias: Circulación.
 _Avoid_: Train, trip, journey
 
+**Scheduled Run**:
+A Run known only from the timetable, with no Sighting yet (it has not departed, or no feed has reported it). It becomes a Tracked Run when its first Sighting arrives. Station boards list Scheduled Runs and Tracked Runs alike.
+_Avoid_: Planned run, future train
+
+**Tracked Run**:
+A Run with at least one Sighting, so it has a known position on the map.
+_Avoid_: Live run, active train
+
 **Train number**:
 The commercial number that identifies a Run within its service date.
 _Avoid_: Train ID, code
