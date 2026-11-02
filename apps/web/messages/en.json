@@ -44,9 +44,8 @@
     "noStops": "No timetable available",
     "history": "Delay history",
     "historyOnTime": "Usually on time (last {runs} runs)",
-    "historyLate": "Usually {minutes} min late (last {runs} runs)",
+    "historyLate": "Usually about {minutes} min late (last {runs} runs)",
     "historyNone": "No history for this train yet",
-    "historyRun": "{date}: {minutes} min on average, up to {maxMinutes} min",
     "serviceTypes": {
       "cercanias": "Cercanías",
       "ave": "AVE",
@@ -65,7 +64,9 @@
       "nextStop": "next stop {station}, {time}",
       "nextStopNoTime": "next stop {station}"
     },
-    "trainHere": "The train is here"
+    "trainHere": "The train is here",
+    "historyBar": "{date}: {minutes} min on average, up to {maxMinutes} min",
+    "historyRuns": "{n} runs"
   },
   "StationBoard": {
     "title": "{station} board",

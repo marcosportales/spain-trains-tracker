@@ -43,10 +43,9 @@
     "stops": "Paradas",
     "noStops": "Horario no disponible",
     "history": "Historial de retrasos",
-    "historyOnTime": "Suele ir puntual (últimas {runs} circulaciones)",
-    "historyLate": "Suele llegar {minutes} min tarde (últimas {runs} circulaciones)",
+    "historyOnTime": "Normalmente llega puntual (últimos {runs} trenes)",
+    "historyLate": "Normalmente llega unos {minutes} min tarde (últimos {runs} trenes)",
     "historyNone": "Aún no hay historial de este tren",
-    "historyRun": "{date}: {minutes} min de media, hasta {maxMinutes} min",
     "serviceTypes": {
       "cercanias": "Cercanías",
       "ave": "AVE",
@@ -65,7 +64,9 @@
       "nextStop": "próxima parada {station}, {time}",
       "nextStopNoTime": "próxima parada {station}"
     },
-    "trainHere": "El tren está aquí"
+    "trainHere": "El tren está aquí",
+    "historyBar": "{date}: {minutes} min de media, hasta {maxMinutes} min",
+    "historyRuns": "{n} trenes"
   },
   "StationBoard": {
     "title": "Panel de {station}",

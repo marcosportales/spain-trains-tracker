@@ -5,10 +5,11 @@ import { serviceTypeVar } from '@/theme/tokens';
 import { DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
 import { DetailSurface } from '../ui/DetailSurface';
+import { HistoryBars } from './HistoryBars';
 import { RunCloseButton } from './RunCloseButton';
 import { RunTimeline } from './RunTimeline';
 import { delayBand, type RunHeadline, runHeadline } from './run-detail-view';
-import { recentRuns, typicalDelay } from './train-history-view';
+import { typicalDelay } from './train-history-view';
 
 type Translate = ReturnType<typeof useTranslations<'RunDetail'>>;
 
@@ -144,20 +145,10 @@ export function RunDetailPanel({
                       runs: typical.runs,
                     })}
               </p>
-              <ul className="mt-1 space-y-1 text-sm text-gray-600">
-                {recentRuns(history).map((row) => (
-                  <li key={row.serviceDate} className="tabular-nums">
-                    {t('historyRun', {
-                      date: row.serviceDate,
-                      minutes: row.minutes,
-                      maxMinutes: row.maxMinutes,
-                    })}
-                  </li>
-                ))}
-              </ul>
+              <HistoryBars history={history} />
             </>
           ) : (
-            <p className="text-sm text-gray-600">{t('historyNone')}</p>
+            <p className="text-sm text-ink-2">{t('historyNone')}</p>
           )}
         </section>
       )}
