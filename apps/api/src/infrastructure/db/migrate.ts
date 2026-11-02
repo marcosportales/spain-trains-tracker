@@ -35,12 +35,6 @@ export async function backfillDelayAggregates(sql: postgres.Sql): Promise<void> 
     date_trunc('day', ${first}::timestamptz), date_trunc('day', ${last}::timestamptz) + INTERVAL '1 day')`;
 }
 
-async function appliedMigrations(sql: postgres.Sql, schema: string): Promise<number> {
-  const [row] = await sql<{ count: string }[]>`
-    SELECT count(*) AS count FROM ${sql(schema)}.__drizzle_migrations`.catch(() => [undefined]);
-  return Number(row?.count ?? 0);
-}
-
 export async function runMigrations(options: MigrateOptions): Promise<void> {
   const { databaseUrl, migrationsFolder = DEFAULT_MIGRATIONS_FOLDER, schema } = options;
   const sql = postgres(databaseUrl, {
@@ -50,14 +44,13 @@ export async function runMigrations(options: MigrateOptions): Promise<void> {
     ...(schema ? { connection: { search_path: `${schema},public` } } : {}),
   });
   try {
-    const before = await appliedMigrations(sql, schema ?? 'drizzle');
     await migrate(drizzle(sql), {
       migrationsFolder,
       ...(schema ? { migrationsSchema: schema } : {}),
     });
-    if ((await appliedMigrations(sql, schema ?? 'drizzle')) > before) {
-      await backfillDelayAggregates(sql);
-    }
+    // Every run, not only after a new migration: a failed backfill is retried, and refreshing an
+    // up-to-date aggregate is a cheap no-op.
+    await backfillDelayAggregates(sql);
   } finally {
     await sql.end();
   }

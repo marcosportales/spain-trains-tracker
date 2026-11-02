@@ -20,9 +20,9 @@ export interface PunctualityQuery {
 
 /** First Service date of a window of `days` days: today's Madrid date minus `days`, `YYYY-MM-DD`. */
 function sinceServiceDate(now: Date, days: number): string {
-  const since = new Date(`${serviceDateFor(now)}T00:00:00Z`);
-  since.setUTCDate(since.getUTCDate() - days);
-  return since.toISOString().slice(0, 10);
+  const first = new Date(`${serviceDateFor(now)}T00:00:00Z`);
+  first.setUTCDate(first.getUTCDate() - days);
+  return first.toISOString().slice(0, 10);
 }
 
 /**
