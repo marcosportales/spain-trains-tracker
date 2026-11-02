@@ -75,12 +75,6 @@ const useCase = (detail: StoredRunDetail | undefined, net = network()) =>
   new GetRunDetail({ findRunDetail: async () => detail } as RunDetailReader, net);
 
 describe('GetRunDetail', () => {
-  it('throws RunNotFoundError for an unknown Run', async () => {
-    await expect(useCase(undefined).execute('03063', '2026-10-31')).rejects.toBeInstanceOf(
-      RunNotFoundError,
-    );
-  });
-
   it('returns a RunDetail valid against the contract', async () => {
     const result = await useCase(
       stored({
@@ -102,6 +96,8 @@ describe('GetRunDetail', () => {
         serviceDate: '2026-10-31',
         serviceType: 'ave',
         lineCode: 'AVE-MS',
+      },
+      position: {
         lat: 40.4,
         lon: -3.7,
         status: 'in_transit_to',
@@ -121,7 +117,6 @@ describe('GetRunDetail', () => {
     const delay = createDelay({ runId, source: 'gtfsrt_ld', observedAt: lastSeenAt, seconds: 120 });
     const result = await useCase(stored({ delay })).execute('03063', '2026-10-31');
     expect(result.delaySeconds).toBe(120);
-    expect(result.run.delaySeconds).toBe(120);
     expect(result.stops).toEqual([
       {
         stationCode: '60000',
@@ -228,15 +223,65 @@ describe('GetRunDetail', () => {
     expect(asked).toEqual(['trip-1']);
   });
 
-  it('throws RunNotFoundError when no Sighting has a position', async () => {
+  it('returns a Scheduled Run from the timetable, with ordered stops and no position', async () => {
+    const result = await useCase(undefined).execute('03063', '2026-10-31');
+    expect(RunDetail.parse(result)).toEqual(result);
+    expect(result.run).toEqual({
+      trainNumber: '03063',
+      serviceDate: '2026-10-31',
+      serviceType: 'ave',
+      lineCode: 'AVE-MS',
+    });
+    expect(result.position).toBeUndefined();
+    expect(result.stops.map((s) => s.stationCode)).toEqual(['60000', '51003', '71801']);
+    expect(result.stops[0]).toEqual({
+      stationCode: '60000',
+      sequence: 0,
+      scheduledArrival: '2026-10-31T07:00:00.000Z',
+      scheduledDeparture: '2026-10-31T07:00:00.000Z',
+    });
+    expect(result.originStationCode).toBe('60000');
+    expect(result.destinationStationCode).toBe('71801');
+  });
+
+  it('throws RunNotFoundError for a Run in neither the timetable nor the live data', async () => {
+    await expect(
+      useCase(undefined, network([])).execute('99999', '2026-10-31'),
+    ).rejects.toBeInstanceOf(RunNotFoundError);
+  });
+
+  it('keeps the stored Delay and service status when no Sighting has a position', async () => {
     const noFix = createSighting({
       runId,
       source: 'gtfsrt_ld',
       observedAt: lastSeenAt,
       status: 'IN_TRANSIT_TO',
     });
-    await expect(
-      useCase(stored({ sightings: [noFix] })).execute('03063', '2026-10-31'),
-    ).rejects.toBeInstanceOf(RunNotFoundError);
+    const delay = createDelay({ runId, source: 'gtfsrt_ld', observedAt: lastSeenAt, seconds: 600 });
+    const result = await useCase(
+      stored({
+        sightings: [noFix],
+        delay,
+        run: { id: runId, serviceType: 'ave', lineCode: 'AVE-MS', status: 'cancelled', lastSeenAt },
+      }),
+    ).execute('03063', '2026-10-31');
+    expect(result.position).toBeUndefined();
+    expect(result.delaySeconds).toBe(600);
+    expect(result.serviceStatus).toBe('cancelled');
+    expect(result.stops).toHaveLength(3);
+  });
+
+  it('resolves a Train number without leading zeros', async () => {
+    const asked: string[] = [];
+    const net = {
+      findScheduledRuns: async (trainNumber: string) => {
+        asked.push(trainNumber);
+        return [{ ...scheduledRun, trainNumber: '08275' }];
+      },
+      getScheduledStops: async () => stops,
+    } as unknown as NetworkRepository;
+    const result = await useCase(undefined, net).execute('8275', '2026-10-31');
+    expect(asked).toEqual(['08275']);
+    expect(result.run.trainNumber).toBe('08275');
   });
 });

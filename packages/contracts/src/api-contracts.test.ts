@@ -49,8 +49,11 @@ describe('LiveDiff', () => {
 });
 
 describe('RunDetail', () => {
+  const identity = { trainNumber: '03063', serviceDate: '2026-10-31', serviceType: 'ave' };
+  const { trainNumber: _t, serviceDate: _d, serviceType: _s, ...position } = run;
   const ok = {
-    run,
+    run: identity,
+    position,
     delaySeconds: 120,
     rollingStock: 'S-103',
     stops: [
@@ -69,12 +72,16 @@ describe('RunDetail', () => {
   };
   it('accepts an example payload', () => expect(RunDetail.parse(ok)).toEqual(ok));
   it('accepts a Run without Rolling stock or Delay', () =>
-    expect(RunDetail.safeParse({ run, stops: [] }).success).toBe(true));
+    expect(RunDetail.safeParse({ run: identity, stops: [] }).success).toBe(true));
   it('rejects a stop with an unzoned time', () =>
     rejects(RunDetail, {
-      run,
+      run: identity,
       stops: [{ stationCode: '1', sequence: 0, scheduledArrival: '2026-10-31T11:30:00' }],
     }));
+  it('accepts a Scheduled Run: no position', () =>
+    expect(RunDetail.safeParse({ run: identity, stops: [] }).success).toBe(true));
+  it('rejects a position without coordinates', () =>
+    rejects(RunDetail, { ...ok, position: { ...position, lat: undefined } }));
   it('rejects empty Rolling stock', () => rejects(RunDetail, { ...ok, rollingStock: '' }));
   it('accepts origin, destination, service status and accessibility', () => {
     const full = {
