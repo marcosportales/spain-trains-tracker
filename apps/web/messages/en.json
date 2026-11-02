@@ -83,12 +83,8 @@
   },
   "Alerts": {
     "title": "Alerts",
-    "count": "{count, plural, one {# active alert} other {# active alerts}}",
-    "line": "Line",
-    "allLines": "All lines",
-    "empty": "No active alerts",
-    "lines": "Lines: {lines}",
-    "source": "Source: Renfe",
+    "chip": "{count, plural, one {# alert} other {# alerts}}",
+    "source": "Official Renfe notice",
     "since": "since {when}"
   },
   "Punctuality": {

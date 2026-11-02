@@ -99,3 +99,12 @@ export function search(query: string): SearchResult {
     stations: hit.map((s) => ({ stationCode: s.code, name: s.name })),
   };
 }
+
+/** An active Service alert affecting two Lines. */
+export const ALERT = {
+  id: 'alert-1',
+  lineCodes: ['C1', 'C5'],
+  header: 'Reduced service',
+  description: 'Works between Atocha and Chamartín.',
+  activeFrom: '2026-07-01T10:05:00Z',
+};

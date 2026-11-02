@@ -1,5 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import {
+  ALERT,
   NO_TRACK,
   RUN,
   RUN_DETAIL,
@@ -38,7 +39,7 @@ export function startMockApi(port: number): Promise<Server> {
     }
     if (url.pathname === '/stations') return json(STATIONS);
     if (url.pathname === '/lines/geometry') return json(NO_TRACK);
-    if (url.pathname === '/alerts') return json([]);
+    if (url.pathname === '/alerts') return json([ALERT]);
     if (url.pathname === '/search') return json(search(url.searchParams.get('q') ?? ''));
     if (url.pathname === `/runs/${SERVICE_DATE}/${RUN.trainNumber}`) return json(RUN_DETAIL);
     if (url.pathname === `/stations/${STATION_CODE}/board`) return json(STATION_BOARD);

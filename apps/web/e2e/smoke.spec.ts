@@ -42,3 +42,15 @@ test('map shows a live Run, its panel, and a searched Station board', async ({ p
   );
   await expect(page.getByRole('link', { name: new RegExp(RUN.trainNumber) })).toBeVisible();
 });
+
+test('alerts chip lists an alert and highlights its Lines when tapped', async ({ page }) => {
+  await page.goto('/en');
+
+  await page.getByRole('button', { name: '1 alert' }).click();
+  const item = page.getByRole('button', { name: /Affects C1 and C5/ });
+  await expect(item).toHaveAttribute('aria-pressed', 'false');
+  await item.click();
+  await expect(item).toHaveAttribute('aria-pressed', 'true');
+  await item.click();
+  await expect(item).toHaveAttribute('aria-pressed', 'false');
+});
