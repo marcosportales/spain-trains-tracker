@@ -21,7 +21,7 @@ Built as tokens (Tailwind v4 `@theme`, redefined for dark). No hard-coded hex in
 - **UI accent:** neutral ink is the primary action (near-black zinc on light, white on dark). A single blue is reserved for focus rings, selection and links.
 - **Delay band colours are reserved.** Green, amber, red and grey mean On time, Late, Severely late and Cancelled, and nothing else uses those hues.
 - **Service type palette** is categorical and avoids the reserved hues. Starting point to validate: Cercanías teal, AVE violet, Larga Distancia blue, Media Distancia magenta, Ancho métrico sand/brown. It must pass the `dataviz` skill's validator (contrast on both basemaps, colour-vision deficiency separation).
-- **Validated values** (the exact hex for each token, both themes) are recorded in the section of that name at the end of this file once the prototype is approved.
+- **Validated values** (the exact hex for each token, both themes) are recorded in the section of that name at the end of this file.
 
 ## Delay bands
 
@@ -80,7 +80,7 @@ Stations are always shown by **name**, never by code.
 
 ## Station board
 
-A departures-board table: **Hora | Destino | Tren | Estado**, with tabs Salidas / Llegadas. A delayed row shows the scheduled time struck through and the new time beside it. It shows "actualizado hace X". The styling is our own, not an imitation of station screens.
+A departures-board table: **Hora | Destino | Tren | Estado**, with tabs Salidas / Llegadas (on Llegadas the second column is **Origen**). A delayed row shows the scheduled time struck through and the new time beside it. It shows "actualizado hace X". The styling is our own, not an imitation of station screens.
 
 ## Punctuality
 
@@ -120,4 +120,84 @@ Each spec is one GitHub issue labelled `ready-for-agent`. Its **tickets** live i
 
 ## Validated values
 
-_Filled in once the prototype is approved: final token hex values for light and dark, the Service type palette with its validator output, spacing/radius/shadow scale, and any decision the prototype changed._
+Settled by the prototype, approved by the owner on 2026-11-02.
+
+- **Prototype:** https://claude.ai/artifact/QnsFSHAvRaGwc4DxbGeozd (private). Source on the throwaway branch `prototype/ui-redesign` (`docs/design/prototype/`), kept off `main`.
+- **Basemap surfaces used for validation:** light `#f2f3f0` (positron land), dark `#16181b` (dark land). The published prototype draws a simplified SVG basemap because artifact pages cannot load OpenFreeMap tiles; re-check the colours on the real styles in S1.
+
+### Colour tokens
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `page` | `#e6e7ea` | `#0a0b0d` | Background behind non-map pages |
+| `surface` | `#ffffff` | `#1d1f23` | Panels, bars, cards |
+| `surface-2` | `#f4f4f5` | `#25282d` | Inputs, hover, chips |
+| `surface-3` | `#e7e7ea` | `#30333a` | Skeletons, neutral bars, segmented track |
+| `line` | `#e4e4e7` | `#30333a` | Borders and dividers |
+| `ink` | `#18181b` | `#f4f4f5` | Primary text and primary action |
+| `ink-2` | `#52525b` | `#c4c5cb` | Secondary text |
+| `ink-3` | `#71717a` | `#8e939c` | Muted text, captions |
+| `on-ink` | `#ffffff` | `#18181b` | Text on a primary (ink) button |
+| `accent` | `#2563eb` | `#6ea8fe` | Focus rings, selection, links, alert highlight on the map |
+| `accent-soft` | `#dbe6fd` | `#1c2c47` | Selected item background |
+| `dot-outline` | `#18181b` @ 55 % | `#f4f4f5` @ 50 % | 1 px outline on every train dot |
+
+### Service type palette
+
+| Service type | Light | Dark |
+|---|---|---|
+| Cercanías (teal) | `#53c3b1` | `#0c8568` |
+| AVE (violet) | `#ad9bfa` | `#7943aa` |
+| Larga Distancia (blue) | `#0d60e0` | `#257bf1` |
+| Media Distancia (magenta) | `#8e2b86` | `#ca68b9` |
+| Vía estrecha / Ancho métrico (brown) | `#8b440e` | `#a04b00` |
+
+`dataviz` validator, all pairs (`--pairs all`, since any two dots can touch on a map):
+
+```
+light, surface #f2f3f0
+  [PASS] Lightness band       all 5 inside L 0.43–0.77
+  [PASS] Chroma floor         all 5 >= 0.1
+  [PASS] CVD separation       worst #ad9bfa↔#53c3b1 ΔE 11.7 (deutan) · tritan 4.1
+  [PASS] Normal-vision floor  worst #8b440e↔#8e2b86 ΔE 18.7
+  [WARN] Contrast vs surface  #53c3b1 1.92, #ad9bfa 2.13 — relief required
+dark, surface #16181b
+  [PASS] Lightness band       all 5 inside L 0.48–0.67
+  [PASS] Chroma floor         all 5 >= 0.1
+  [PASS] CVD separation       worst #ca68b9↔#257bf1 ΔE 9.4 (protan) · tritan 7.7
+  [PASS] Normal-vision floor  worst #257bf1↔#7943aa ΔE 17.9
+  [WARN] Contrast vs surface  #7943aa 2.71, #a04b00 2.97 — relief required
+```
+
+The contrast WARN is structural, not a tuning miss: a search over each hue family found no five-hue palette that passes CVD separation, the normal-vision floor and 3:1 contrast at once on the light basemap. CVD separation was kept fully passing, since identity on the map depends on it, and the contrast relief is mandatory in implementation: every dot carries the `dot-outline`, the legend always names each type in text, and Run detail names the type.
+
+Every Service type colour is at least ΔE 15 (OKLab ×100) from every Delay band strong colour in both themes, so dots never read as a Delay band.
+
+### Delay band colours
+
+Strong is the mark colour (map ring, bar, badge dot). Soft is the badge background; badge text is `ink`, so colour is never the only cue.
+
+| Band | Strong light | Strong dark | Soft light | Soft dark |
+|---|---|---|---|---|
+| On time | `#1f9e55` | `#3fbf74` | `#e3f4e9` | `#163322` |
+| Late | `#c27c00` | `#f0a832` | `#fbefd6` | `#3a2c10` |
+| Severely late | `#d6382f` | `#f2635a` | `#fbe3e1` | `#3d1c1a` |
+| Cancelled | `#868c96` | `#8b919b` | solid `#52525b`, text `#ffffff` | solid `#4a4d55`, text `#f4f4f5` |
+| Unknown | hollow ring `#868c96` | hollow ring `#8b919b` | `#ececee` | `#2a2c31` |
+
+Checks: strong vs basemap 3.10 / 3.05 / 4.22 / 3.04 (light) and 7.55 / 8.77 / 5.68 / 5.61 (dark), all ≥ 3:1. Ink on soft ≥ 14.5:1 (light) and ≥ 12.3:1 (dark).
+
+### Spacing, radius, shadow, type
+
+- **Spacing** (4-based): 4, 8, 12, 16, 20, 24, 32 px. Floating chrome sits 12 px from the map edge (10 px on mobile).
+- **Radius:** 6 (small controls), 10 (buttons, inputs, menus), 14 (panels, cards, top bar), 20 (bottom sheet top corners), pill 999.
+- **Shadow:** `shadow-1` `0 1px 2px rgba(20,22,28,.06), 0 2px 8px rgba(20,22,28,.06)` for cards; `shadow-2` `0 2px 6px rgba(20,22,28,.08), 0 12px 32px rgba(20,22,28,.14)` for floating chrome over the map. Dark: `0 1px 2px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3)` and `0 2px 6px rgba(0,0,0,.45), 0 12px 32px rgba(0,0,0,.5)`.
+- **Type** (Inter, tabular figures on every time and count): 12 / 13 / 14 (body) / 16 / 20 / 24 / 30 px. Run detail and Station board headline 22 px desktop, 20 px mobile, weight 600; Punctuality headline 30 px desktop, 24 px mobile.
+- **Layout sizes:** top bar 52 px high (48 mobile); desktop side panel 400 px wide; map dot radius 4 px (4.4 mobile), Delay ring 2.2 px stroke at +2.6 px; selected dot ×1.7 with a 9 px halo.
+- **Sheet snap points (mobile):** peek ≈ 150 px of headline, half at 42 % of the viewport height, full up to just under the top bar.
+
+### Decisions the prototype changed or added
+
+- **Llegadas column:** the second column reads **Origen** on the Llegadas tab (Station board section updated).
+- **Board status for not-yet-departed Runs:** a Scheduled Run with no Delay shows the Unknown band, "Sin datos de retraso", in soft grey. Kept after review; revisit if it crowds the board in real data.
+- **Delay band colour roles:** each band has a strong mark colour and a soft badge background, and badge text stays in ink (refines the Delay bands table above).
