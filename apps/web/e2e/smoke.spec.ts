@@ -43,6 +43,34 @@ test('map shows a live Run, its panel, and a searched Station board', async ({ p
   await expect(page.getByRole('link', { name: new RegExp(RUN.trainNumber) })).toBeVisible();
 });
 
+test('alerts chip lists an alert and highlights its Lines when tapped', async ({ page }) => {
+  await page.goto('/en');
+
+  await page.getByRole('button', { name: '1 alert' }).click();
+  const item = page.getByRole('button', { name: /Affects C1 and C5/ });
+  await expect(item).toHaveAttribute('aria-pressed', 'false');
+  await item.click();
+  await expect(item).toHaveAttribute('aria-pressed', 'true');
+  await item.click();
+  await expect(item).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('an over-filtered map says so, and clearing the filters brings the Run back', async ({
+  page,
+}) => {
+  await page.goto('/en?line=NOPE');
+
+  const map = page.getByRole('region', { name: 'Map of live trains in Spain' });
+  await expect(page.getByText('No trains match the filters')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Clear filters' }).first().click();
+  await expect(page.getByText('No trains match the filters')).toBeHidden();
+  await expect(async () => {
+    await map.hover();
+    await expect(map.locator('canvas')).toHaveCSS('cursor', 'pointer');
+  }).toPass();
+});
+
 test('the nav marks the current page', async ({ page }) => {
   await page.goto('/en');
   const nav = page.getByRole('navigation', { name: 'Main navigation' });

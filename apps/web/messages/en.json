@@ -24,19 +24,12 @@
   },
   "Filters": {
     "title": "Filters",
-    "serviceType": "Service type",
-    "hub": "Hub",
+    "hub": "Cercanías network",
     "line": "Line",
     "allHubs": "All hubs",
     "allLines": "All lines",
-    "clear": "Clear filters",
-    "serviceTypes": {
-      "cercanias": "Cercanías",
-      "ave": "AVE",
-      "larga_distancia": "Long distance",
-      "media_distancia": "Medium distance",
-      "ancho_metrico": "Metre gauge"
-    }
+    "noMatch": "No trains match the filters",
+    "clear": "Clear filters"
   },
   "RunDetail": {
     "title": "Run {trainNumber}",
@@ -96,12 +89,8 @@
   },
   "Alerts": {
     "title": "Alerts",
-    "count": "{count, plural, one {# active alert} other {# active alerts}}",
-    "line": "Line",
-    "allLines": "All lines",
-    "empty": "No active alerts",
-    "lines": "Lines: {lines}",
-    "source": "Source: Renfe",
+    "chip": "{count, plural, one {# alert} other {# alerts}}",
+    "source": "Official Renfe notice",
     "since": "since {when}"
   },
   "Punctuality": {
@@ -159,5 +148,18 @@
     "ago": "{seconds} s ago",
     "reconnecting": "Reconnecting…",
     "offline": "Offline: positions from {minutes} min ago"
+  },
+  "Legend": {
+    "late": "amber = late",
+    "severelyLate": "red = severely late",
+    "ringsInfo": "What the rings mean",
+    "typeCount": "{type}, {count, plural, one {# train} other {# trains}}",
+    "types": {
+      "cercanias": "Cercanías",
+      "ave": "AVE",
+      "larga_distancia": "Long distance",
+      "media_distancia": "Medium distance",
+      "ancho_metrico": "Narrow gauge"
+    }
   }
 }

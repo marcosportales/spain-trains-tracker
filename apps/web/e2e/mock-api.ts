@@ -1,5 +1,6 @@
 import { createServer, type Server } from 'node:http';
 import {
+  ALERT,
   NO_TRACK,
   RUN,
   RUN_DETAIL,
@@ -30,7 +31,12 @@ export function startMockApi(port: number): Promise<Server> {
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
       });
-      const snapshot = { cycleId: 1, generatedAt: RUN.observedAt, runs: [RUN] };
+      const lineFilter = url.searchParams.get('line');
+      const snapshot = {
+        cycleId: 1,
+        generatedAt: RUN.observedAt,
+        runs: lineFilter && lineFilter !== RUN.lineCode ? [] : [RUN],
+      };
       res.write(`event: snapshot\ndata: ${JSON.stringify(snapshot)}\n\n`);
       const heartbeat = setInterval(() => res.write('event: heartbeat\ndata: {}\n\n'), 1000);
       req.on('close', () => clearInterval(heartbeat));
@@ -38,7 +44,7 @@ export function startMockApi(port: number): Promise<Server> {
     }
     if (url.pathname === '/stations') return json(STATIONS);
     if (url.pathname === '/lines/geometry') return json(NO_TRACK);
-    if (url.pathname === '/alerts') return json([]);
+    if (url.pathname === '/alerts') return json([ALERT]);
     if (url.pathname === '/search') return json(search(url.searchParams.get('q') ?? ''));
     if (url.pathname === `/runs/${SERVICE_DATE}/${RUN.trainNumber}`) return json(RUN_DETAIL);
     if (url.pathname === `/stations/${STATION_CODE}/board`) return json(STATION_BOARD);

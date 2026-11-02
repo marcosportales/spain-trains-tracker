@@ -1,11 +1,6 @@
 import type { ServiceAlertDto } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
-import {
-  affectedLineCodes,
-  alertLineOptions,
-  alertsForLine,
-  formatAlertTimestamp,
-} from './alerts-view';
+import { affectedLineCodes, affectsSentence, formatAlertTimestamp } from './alerts-view';
 
 const alert = (id: string, lineCodes: string[]): ServiceAlertDto => ({
   id,
@@ -14,17 +9,6 @@ const alert = (id: string, lineCodes: string[]): ServiceAlertDto => ({
 });
 
 const alerts = [alert('a', ['C1', 'C2']), alert('b', ['C2']), alert('c', ['R4'])];
-
-describe('alertsForLine', () => {
-  it('returns every alert without a Line filter', () => {
-    expect(alertsForLine(alerts, undefined)).toEqual(alerts);
-  });
-
-  it('keeps only alerts affecting the Line', () => {
-    expect(alertsForLine(alerts, 'C2').map((a) => a.id)).toEqual(['a', 'b']);
-    expect(alertsForLine(alerts, 'X9')).toEqual([]);
-  });
-});
 
 describe('affectedLineCodes', () => {
   it('lists each affected Line once, sorted', () => {
@@ -36,13 +20,20 @@ describe('affectedLineCodes', () => {
   });
 });
 
-describe('alertLineOptions', () => {
-  it('offers the affected Lines', () => {
-    expect(alertLineOptions(alerts, undefined)).toEqual(['C1', 'C2', 'R4']);
+describe('affectsSentence', () => {
+  it('names one Line', () => {
+    expect(affectsSentence(['C1'], 'es')).toBe('Afecta a C1');
+    expect(affectsSentence(['C1'], 'en')).toBe('Affects C1');
   });
 
-  it('keeps the selected Line even if no alert affects it', () => {
-    expect(alertLineOptions(alerts, 'X9')).toEqual(['X9', 'C1', 'C2', 'R4']);
+  it('joins two Lines with the locale conjunction', () => {
+    expect(affectsSentence(['C1', 'C5'], 'es')).toBe('Afecta a C1 y C5');
+    expect(affectsSentence(['C1', 'C5'], 'en')).toBe('Affects C1 and C5');
+  });
+
+  it('joins three Lines as a list', () => {
+    expect(affectsSentence(['C1', 'C2', 'C5'], 'es')).toBe('Afecta a C1, C2 y C5');
+    expect(affectsSentence(['C1', 'C2', 'C5'], 'en')).toBe('Affects C1, C2, and C5');
   });
 });
 

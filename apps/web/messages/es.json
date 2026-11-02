@@ -24,19 +24,12 @@
   },
   "Filters": {
     "title": "Filtros",
-    "serviceType": "Tipo de servicio",
-    "hub": "Núcleo",
+    "hub": "Red de Cercanías",
     "line": "Línea",
     "allHubs": "Todos los núcleos",
     "allLines": "Todas las líneas",
-    "clear": "Quitar filtros",
-    "serviceTypes": {
-      "cercanias": "Cercanías",
-      "ave": "AVE",
-      "larga_distancia": "Larga Distancia",
-      "media_distancia": "Media Distancia",
-      "ancho_metrico": "Ancho métrico"
-    }
+    "noMatch": "Ningún tren coincide con los filtros",
+    "clear": "Quitar filtros"
   },
   "RunDetail": {
     "title": "Circulación {trainNumber}",
@@ -96,12 +89,8 @@
   },
   "Alerts": {
     "title": "Avisos",
-    "count": "{count, plural, one {# aviso activo} other {# avisos activos}}",
-    "line": "Línea",
-    "allLines": "Todas las líneas",
-    "empty": "No hay avisos activos",
-    "lines": "Líneas: {lines}",
-    "source": "Fuente: Renfe",
+    "chip": "{count, plural, one {# aviso} other {# avisos}}",
+    "source": "Aviso oficial de Renfe",
     "since": "desde {when}"
   },
   "Punctuality": {
@@ -159,5 +148,18 @@
     "ago": "hace {seconds} s",
     "reconnecting": "Reconectando…",
     "offline": "Sin conexión: posiciones de hace {minutes} min"
+  },
+  "Legend": {
+    "late": "ámbar = retraso",
+    "severelyLate": "rojo = retraso grave",
+    "ringsInfo": "Qué significan los anillos",
+    "typeCount": "{type}, {count, plural, one {# tren} other {# trenes}}",
+    "types": {
+      "cercanias": "Cercanías",
+      "ave": "AVE",
+      "larga_distancia": "Larga Distancia",
+      "media_distancia": "Media Distancia",
+      "ancho_metrico": "Vía estrecha"
+    }
   }
 }

@@ -1,9 +1,10 @@
 'use client';
 
-import type { ServiceType } from '@stt/contracts';
+import { SlidersHorizontal } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useId, useState } from 'react';
-import { SERVICE_TYPES, serviceTypeVar } from '@/theme/tokens';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { HUB_OPTIONS, type MapFilters } from './map-filters';
 
 type Props = {
@@ -13,20 +14,15 @@ type Props = {
   onChange: (next: MapFilters) => void;
 };
 
-/** Filter panel: a bottom sheet on mobile, a floating card on larger screens. */
+/** `Select` options must be non-empty, so "no filter" gets a sentinel value. */
+const ALL = '__all__';
+
+/** Hub and Line filters. Service types live in the Legend. */
 export function FilterPanel({ filters, lineOptions, onChange }: Props) {
   const t = useTranslations('Filters');
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const active = filters.serviceTypes.length + (filters.hub ? 1 : 0) + (filters.line ? 1 : 0);
-
-  const toggleType = (type: ServiceType) =>
-    onChange({
-      ...filters,
-      serviceTypes: filters.serviceTypes.includes(type)
-        ? filters.serviceTypes.filter((s) => s !== type)
-        : [...filters.serviceTypes, type],
-    });
+  const active = (filters.hub ? 1 : 0) + (filters.line ? 1 : 0);
 
   const lines =
     filters.line && !lineOptions.includes(filters.line)
@@ -34,82 +30,54 @@ export function FilterPanel({ filters, lineOptions, onChange }: Props) {
       : lineOptions;
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-start gap-2 p-3 md:inset-x-auto md:top-below-bar md:bottom-auto md:left-3">
-      <button
-        type="button"
+    <div className="pointer-events-none absolute top-below-bar left-3 z-10 flex flex-col items-start gap-2">
+      <Button
+        variant="secondary"
+        icon={SlidersHorizontal}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className="pointer-events-auto rounded-full border bg-white px-4 py-2 text-sm font-medium shadow"
+        className="pointer-events-auto shadow-2"
       >
         {t('title')}
         {active > 0 && ` (${active})`}
-      </button>
+      </Button>
       <section
         id={panelId}
         aria-label={t('title')}
         hidden={!open}
-        className="pointer-events-auto max-h-[60dvh] w-full space-y-4 overflow-y-auto rounded-t-xl border bg-white p-4 shadow-lg md:w-72 md:rounded-xl"
+        className="pointer-events-auto max-h-[60dvh] w-72 max-w-[calc(100vw-1.5rem)] space-y-4 overflow-y-auto rounded-lg bg-surface p-4 text-ink shadow-2"
       >
-        <fieldset className="space-y-1">
-          <legend className="text-sm font-semibold">{t('serviceType')}</legend>
-          {SERVICE_TYPES.map((type) => (
-            <label key={type} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={filters.serviceTypes.includes(type)}
-                onChange={() => toggleType(type)}
-              />
-              <span
-                aria-hidden="true"
-                className="inline-block size-3 rounded-full"
-                style={{ backgroundColor: serviceTypeVar(type) }}
-              />
-              {t(`serviceTypes.${type}`)}
-            </label>
-          ))}
-        </fieldset>
-
-        <label className="block space-y-1 text-sm">
-          <span className="font-semibold">{t('hub')}</span>
-          <select
-            className="w-full rounded border px-2 py-1"
-            value={filters.hub ?? ''}
-            onChange={(e) => onChange({ ...filters, hub: e.target.value || undefined })}
-          >
-            <option value="">{t('allHubs')}</option>
-            {HUB_OPTIONS.map((hub) => (
-              <option key={hub.code} value={hub.code}>
-                {hub.name}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block space-y-1 text-sm">
-          <span className="font-semibold">{t('line')}</span>
-          <select
-            className="w-full rounded border px-2 py-1"
-            value={filters.line ?? ''}
-            onChange={(e) => onChange({ ...filters, line: e.target.value || undefined })}
-          >
-            <option value="">{t('allLines')}</option>
-            {lines.map((line) => (
-              <option key={line} value={line}>
-                {line}
-              </option>
-            ))}
-          </select>
-        </label>
-
+        <Select
+          label={t('hub')}
+          value={filters.hub ?? ALL}
+          onValueChange={(value) =>
+            onChange({ ...filters, hub: value === ALL ? undefined : value })
+          }
+          options={[
+            { value: ALL, label: t('allHubs') },
+            ...HUB_OPTIONS.map((hub) => ({ value: hub.code, label: hub.name })),
+          ]}
+        />
+        <Select
+          label={t('line')}
+          value={filters.line ?? ALL}
+          onValueChange={(value) =>
+            onChange({ ...filters, line: value === ALL ? undefined : value })
+          }
+          options={[
+            { value: ALL, label: t('allLines') },
+            ...lines.map((line) => ({ value: line, label: line })),
+          ]}
+        />
         {active > 0 && (
-          <button
-            type="button"
-            className="text-sm underline"
-            onClick={() => onChange({ serviceTypes: [] })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onChange({ serviceTypes: filters.serviceTypes })}
           >
             {t('clear')}
-          </button>
+          </Button>
         )}
       </section>
     </div>
