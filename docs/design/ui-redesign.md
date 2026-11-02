@@ -110,8 +110,8 @@ Each spec is one GitHub issue labelled `ready-for-agent`. Its **tickets** live i
 | Spec | Blocked by |
 |---|---|
 | S1 Visual foundations | prototype approved |
-| S2 One definition of On time | — |
-| S3 Punctuality per Run (backend) | — |
+| S2 One definition of On time (#124) | — |
+| S3 Punctuality per Run (backend) (#125) | — |
 | S4 Home screen | S1, S2 |
 | S5 Run detail | S1, S2 |
 | S6 Station board | S1, S2 |
