@@ -6,6 +6,8 @@ import { TrainMap } from '@/components/map/TrainMap';
 import { RunDetailPanel } from '@/components/run/RunDetailPanel';
 import { badgeText, runOgContent } from '@/components/share/og-content';
 import { fetchRunDetail } from '@/lib/run-detail-api';
+import { stationNames } from '@/lib/station-names';
+import { fetchStations } from '@/lib/stations-api';
 import { fetchTrainHistory } from '@/lib/train-history-api';
 
 type Params = Promise<{ locale: string; serviceDate: string; trainNumber: string }>;
@@ -46,7 +48,11 @@ export default async function RunPage({ params }: { params: Params }) {
   const { locale, detail } = await loadRun(params);
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'Home' });
-  const history = await fetchTrainHistory(detail.run.trainNumber);
+  const [history, stations] = await Promise.all([
+    fetchTrainHistory(detail.run.trainNumber),
+    // Names are a nicety: if the Stations cannot be had, the panel shows codes.
+    fetchStations({ revalidate: 3600 }).catch(() => []),
+  ]);
   return (
     <>
       <Suspense>
@@ -64,7 +70,7 @@ export default async function RunPage({ params }: { params: Params }) {
           }
         />
       </Suspense>
-      <RunDetailPanel detail={detail} history={history} />
+      <RunDetailPanel detail={detail} history={history} names={stationNames(stations)} />
     </>
   );
 }

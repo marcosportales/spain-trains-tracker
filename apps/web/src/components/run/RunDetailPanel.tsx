@@ -1,6 +1,7 @@
 import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import type { StationNames } from '@/lib/station-names';
 import { serviceTypeVar } from '@/theme/tokens';
 import { BAND_CLASSES, DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
@@ -11,8 +12,11 @@ import { recentRuns, typicalDelay } from './train-history-view';
 export function RunDetailPanel({
   detail,
   history,
+  names,
 }: {
   detail: RunDetail;
+  /** Station name for a code (see `stationNames`). */
+  names: StationNames;
   /** Delay history of the Train number; leave out when it could not be loaded. */
   history?: TrainHistory | undefined;
 }) {
@@ -41,8 +45,8 @@ export function RunDetailPanel({
           <p className="text-sm text-gray-600">
             {detail.originStationCode && detail.destinationStationCode
               ? t('route', {
-                  origin: detail.originStationCode,
-                  destination: detail.destinationStationCode,
+                  origin: names(detail.originStationCode),
+                  destination: names(detail.destinationStationCode),
                 })
               : null}
           </p>
@@ -72,7 +76,7 @@ export function RunDetailPanel({
         {nextStop && (
           <>
             <dt className="font-semibold">{t('nextStation')}</dt>
-            <dd>{nextStop}</dd>
+            <dd>{names(nextStop)}</dd>
           </>
         )}
         {detail.wheelchairAccessible !== undefined && (
@@ -102,7 +106,7 @@ export function RunDetailPanel({
                 aria-current={stop.stationCode === nextStop ? 'step' : undefined}
                 className={`flex justify-between gap-2 rounded px-2 py-1 ${stop.stationCode === nextStop ? 'bg-gray-100 font-medium' : ''}`}
               >
-                <span>{stop.stationCode}</span>
+                <span>{names(stop.stationCode)}</span>
                 <span className="tabular-nums">
                   {times.changed ? (
                     <>
