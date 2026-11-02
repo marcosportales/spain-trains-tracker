@@ -37,16 +37,12 @@ describe('filtersToSearch', () => {
 });
 
 describe('toStreamFilters', () => {
-  it('passes a single Service type to the stream', () => {
+  it('sends Hub and Line but never the Service type, so the Legend counts every type', () => {
     expect(toStreamFilters({ serviceTypes: ['ave'], hub: '10' })).toEqual({
-      serviceType: 'ave',
+      serviceType: undefined,
       hub: '10',
       line: undefined,
     });
-  });
-
-  it('leaves several Service types to the client', () => {
-    expect(toStreamFilters({ serviceTypes: ['ave', 'cercanias'] }).serviceType).toBeUndefined();
   });
 });
 

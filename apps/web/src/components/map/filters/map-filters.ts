@@ -57,15 +57,11 @@ export function filtersToSearch(filters: MapFilters): string {
 }
 
 /**
- * Filters sent to `/live/stream`, which takes one Service type: with several selected the
- * stream stays unfiltered by type and `matchesServiceTypes` narrows the Runs client-side.
+ * Filters sent to `/live/stream`. The Service type is never sent: the Legend counts every type
+ * even while some are hidden, so `matchesServiceTypes` narrows the Runs client-side.
  */
 export function toStreamFilters(filters: MapFilters): LiveRunFilters {
-  return {
-    serviceType: filters.serviceTypes.length === 1 ? filters.serviceTypes[0] : undefined,
-    hub: filters.hub,
-    line: filters.line,
-  };
+  return { serviceType: undefined, hub: filters.hub, line: filters.line };
 }
 
 export function matchesServiceTypes(

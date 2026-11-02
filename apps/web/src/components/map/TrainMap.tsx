@@ -16,6 +16,8 @@ import { applyMapTheme, createMap } from './create-map';
 import { FilterPanel } from './filters/FilterPanel';
 import { matchesServiceTypes, toStreamFilters } from './filters/map-filters';
 import { useMapFilters } from './filters/use-map-filters';
+import { Legend } from './legend/Legend';
+import { serviceTypeCounts } from './legend/legend-view';
 import { LiveIndicator } from './live/LiveIndicator';
 import { LiveRunsLayer } from './live/LiveRunsLayer';
 import { liveIndicator } from './live/live-indicator';
@@ -73,6 +75,7 @@ export function TrainMap({
       ),
     [streamed, filters.serviceTypes],
   );
+  const counts = useMemo(() => serviceTypeCounts(streamed), [streamed]);
   const lineOptions = useMemo(
     () => [...new Set([...runs.values()].flatMap((r) => (r.lineCode ? [r.lineCode] : [])))].sort(),
     [runs],
@@ -159,7 +162,8 @@ export function TrainMap({
       />
       {!selected && (
         <>
-          <div className="pointer-events-none absolute bottom-3 left-3 z-10">
+          <div className="pointer-events-none absolute right-3 bottom-3 left-3 z-10 flex flex-col items-start gap-2 md:right-auto">
+            <Legend filters={filters} counts={counts} onChange={setFilters} />
             <LiveIndicator count={streamed.size} lastEventAt={lastEventAt} openedAt={openedAt} />
           </div>
           <AlertsPanel alerts={alerts} line={alertLine} onLineChange={setAlertLine} />
