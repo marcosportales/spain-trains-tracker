@@ -128,7 +128,7 @@ export function RunDetailPanel({
               <p className="text-sm">
                 {typical.kind === 'on_time'
                   ? t('historyOnTime', { runs: typical.runs })
-                  : t(typical.kind === 'late' ? 'historyLate' : 'historyEarly', {
+                  : t('historyLate', {
                       minutes: typical.minutes,
                       runs: typical.runs,
                     })}

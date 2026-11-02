@@ -16,16 +16,16 @@ const history = (over: Partial<TrainHistory> = {}): TrainHistory => ({
 describe('typicalDelay', () => {
   it('is late with whole minutes', () =>
     expect(typicalDelay(history())).toEqual({ kind: 'late', runs: 5, minutes: 7 }));
-  it('is on time under a minute either way', () => {
-    for (const typicalSeconds of [0, 59, -59])
+  it('is on time under 5 min, early included', () => {
+    for (const typicalSeconds of [-400, 0, 250])
       expect(
         typicalDelay(history({ summary: { runs: 5, typicalSeconds, onTimePct: 100 } })),
       ).toEqual({ kind: 'on_time', runs: 5 });
   });
-  it('is early when negative', () =>
+  it('is late from 5 min', () =>
     expect(
-      typicalDelay(history({ summary: { runs: 5, typicalSeconds: -180, onTimePct: 100 } })),
-    ).toEqual({ kind: 'early', runs: 5, minutes: 3 }));
+      typicalDelay(history({ summary: { runs: 5, typicalSeconds: 300, onTimePct: 50 } })),
+    ).toEqual({ kind: 'late', runs: 5, minutes: 5 }));
   it('is undefined without data', () => {
     const { summary: _, ...rest } = history();
     expect(typicalDelay(rest)).toBeUndefined();

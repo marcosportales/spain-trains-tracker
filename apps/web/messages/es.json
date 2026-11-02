@@ -47,7 +47,6 @@
     "history": "Historial de retrasos",
     "historyOnTime": "Suele ir puntual (últimas {runs} circulaciones)",
     "historyLate": "Suele llegar {minutes} min tarde (últimas {runs} circulaciones)",
-    "historyEarly": "Suele ir {minutes} min adelantado (últimas {runs} circulaciones)",
     "historyNone": "Aún no hay historial de este tren",
     "historyRun": "{date}: {minutes} min de media, hasta {maxMinutes} min",
     "badge": {
