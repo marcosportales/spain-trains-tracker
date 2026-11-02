@@ -180,9 +180,9 @@ describe('GET /live/stream', () => {
     }
   });
 
-  it('sends a heartbeat comment while idle', async () => {
+  it('sends a heartbeat event while idle', async () => {
     const client = await open();
-    await client.next((m) => m.comment === 'heartbeat');
+    await client.next((m) => m.event === 'heartbeat');
   });
 
   it('releases the LISTEN when the last client disconnects', async () => {

@@ -21,3 +21,10 @@ export const LiveDiff = z.object({
   removed: z.array(RunId),
 });
 export type LiveDiff = z.infer<typeof LiveDiff>;
+
+/**
+ * The `GET /live/stream` events: `snapshot` (a LiveSnapshot), then `diff` (a LiveDiff) per ingest
+ * cycle that changed Runs, and `heartbeat` (data `{}`) every 15 s. The heartbeat is a named event,
+ * not an SSE comment, because `EventSource` never surfaces comments to JavaScript: clients use it
+ * to tell a quiet stream from a dead one.
+ */

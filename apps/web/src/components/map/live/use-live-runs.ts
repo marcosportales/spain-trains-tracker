@@ -1,7 +1,7 @@
 'use client';
 
 import type { LiveDiff, LiveSnapshot, ServiceType } from '@stt/contracts';
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { initialLiveRuns, type LiveRuns, liveRunsReducer } from './live-runs';
 
 export type LiveRunFilters = {
@@ -30,13 +30,23 @@ function parseEvent<T>(event: Event): Partial<T> | undefined {
   }
 }
 
+export type LiveRunsState = {
+  runs: LiveRuns;
+  /** `Date.now()` of the last `snapshot`, `diff` or `heartbeat` event; undefined until the first. */
+  lastEventAt: number | undefined;
+  /** `Date.now()` when the current stream was started (reset when the filters change). */
+  openedAt: number;
+};
+
 /**
  * Live Runs from `/live/stream`. The browser reconnects dropped streams by itself, and every
  * reconnect starts with a fresh `snapshot`, so Runs missed meanwhile are replaced. When the
  * browser gives up (e.g. the API answered an error), we reopen with exponential backoff.
  */
-export function useLiveRuns(filters: LiveRunFilters = {}): LiveRuns {
+export function useLiveRuns(filters: LiveRunFilters = {}): LiveRunsState {
   const [runs, dispatch] = useReducer(liveRunsReducer, initialLiveRuns);
+  const [lastEventAt, setLastEventAt] = useState<number>();
+  const [openedAt, setOpenedAt] = useState(() => Date.now());
   const { serviceType, hub, line } = filters;
 
   useEffect(() => {
@@ -45,6 +55,8 @@ export function useLiveRuns(filters: LiveRunFilters = {}): LiveRuns {
     let retry: ReturnType<typeof setTimeout> | undefined;
     let delay = RETRY_MIN_MS;
     dispatch({ type: 'reset' });
+    setLastEventAt(undefined);
+    setOpenedAt(Date.now());
 
     const open = () => {
       source = new EventSource(url);
@@ -52,13 +64,16 @@ export function useLiveRuns(filters: LiveRunFilters = {}): LiveRuns {
         const data = parseEvent<LiveSnapshot>(e);
         if (!Array.isArray(data?.runs)) return;
         delay = RETRY_MIN_MS;
+        setLastEventAt(Date.now());
         dispatch({ type: 'snapshot', runs: data.runs });
       });
       source.addEventListener('diff', (e) => {
         const data = parseEvent<LiveDiff>(e);
         if (!Array.isArray(data?.upserted) || !Array.isArray(data.removed)) return;
+        setLastEventAt(Date.now());
         dispatch({ type: 'diff', upserted: data.upserted, removed: data.removed });
       });
+      source.addEventListener('heartbeat', () => setLastEventAt(Date.now()));
       source.onerror = () => {
         if (source?.readyState !== EventSource.CLOSED) return; // browser is reconnecting
         source.close();
@@ -74,5 +89,5 @@ export function useLiveRuns(filters: LiveRunFilters = {}): LiveRuns {
     };
   }, [serviceType, hub, line]);
 
-  return runs;
+  return { runs, lastEventAt, openedAt };
 }

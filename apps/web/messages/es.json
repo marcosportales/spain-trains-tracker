@@ -147,5 +147,12 @@
     "system": "Sistema",
     "light": "Claro",
     "dark": "Oscuro"
+  },
+  "Live": {
+    "connecting": "Conectando…",
+    "live": "En directo · {count, plural, one {# tren} other {# trenes}}",
+    "ago": "hace {seconds} s",
+    "reconnecting": "Reconectando…",
+    "offline": "Sin conexión: posiciones de hace {minutes} min"
   }
 }

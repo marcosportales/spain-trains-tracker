@@ -147,5 +147,12 @@
     "system": "System",
     "light": "Light",
     "dark": "Dark"
+  },
+  "Live": {
+    "connecting": "Connecting…",
+    "live": "Live · {count, plural, one {# train} other {# trains}}",
+    "ago": "{seconds} s ago",
+    "reconnecting": "Reconnecting…",
+    "offline": "Offline: positions from {minutes} min ago"
   }
 }
