@@ -90,6 +90,17 @@ describe('toFeatureCollection', () => {
     });
   });
 
+  it.each([
+    [600, 'late'],
+    [900, 'severely_late'],
+    [0, 'on_time'],
+    [undefined, 'unknown'],
+  ] as const)('gives a Run with delaySeconds %s the band %s', (delaySeconds, band) => {
+    const r = run('1', delaySeconds === undefined ? {} : { delaySeconds });
+    const fc = toFeatureCollection(new Map([[runKey(r), r]]));
+    expect(fc.features[0]?.properties.band).toBe(band);
+  });
+
   it('falls back to the train number when there is no Line code', () => {
     const r = run('03063', { serviceType: 'ave', lineCode: undefined });
     const fc = toFeatureCollection(new Map([[runKey(r), r]]));
