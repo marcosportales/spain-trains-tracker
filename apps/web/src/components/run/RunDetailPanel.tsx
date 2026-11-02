@@ -1,19 +1,11 @@
 import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { type DelayBand, delayMinutes } from '../delay/delay-band';
+import { BAND_CLASSES, DelayBadge } from '../delay/DelayBadge';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { ShareButton } from '../share/ShareButton';
 import { delayBand, showsNoPositionBadge, stopTimes } from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
-
-const BADGE_CLASSES: Record<DelayBand, string> = {
-  on_time: 'bg-green-100 text-green-800',
-  late: 'bg-amber-100 text-amber-800',
-  severely_late: 'bg-red-100 text-red-800',
-  cancelled: 'bg-gray-800 text-white',
-  unknown: 'bg-gray-100 text-gray-700',
-};
 
 /** Run detail: a side panel on larger screens, a bottom sheet on mobile. Server-renderable. */
 export function RunDetailPanel({
@@ -26,8 +18,7 @@ export function RunDetailPanel({
 }) {
   const t = useTranslations('RunDetail');
   const { run } = detail;
-  const badge = delayBand(detail);
-  const delay = detail.delaySeconds;
+  const band = delayBand(detail);
   const nextStop = detail.position?.nextStationCode;
   const typical = history && typicalDelay(history);
 
@@ -67,20 +58,14 @@ export function RunDetailPanel({
       {showsNoPositionBadge(detail) ? (
         <p
           data-testid="no-position-badge"
-          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BADGE_CLASSES.unknown}`}
+          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BAND_CLASSES.unknown}`}
         >
           {t('badge.noPosition')}
         </p>
       ) : (
-        <p
-          data-testid="delay-badge"
-          data-badge={badge}
-          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BADGE_CLASSES[badge]}`}
-        >
-          {badge === 'late' || badge === 'severely_late'
-            ? t('badge.late', { minutes: delayMinutes(delay ?? 0) })
-            : t(`badge.${badge}`)}
-        </p>
+        <div className="mt-3">
+          <DelayBadge band={band} delaySeconds={detail.delaySeconds} data-testid="delay-badge" />
+        </div>
       )}
 
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">

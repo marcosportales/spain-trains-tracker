@@ -64,6 +64,6 @@ export type BadgeLabels = {
 
 /** Localised text for a Delay badge. */
 export function badgeText(badge: DelayBand, minutes: number | undefined, l: BadgeLabels): string {
-  if (badge === 'on_time' || badge === 'cancelled' || badge === 'unknown') return l[badge];
-  return l.late(minutes ?? 0);
+  if (badge === 'late' || badge === 'severely_late') return l.late(minutes ?? 0);
+  return l[badge];
 }

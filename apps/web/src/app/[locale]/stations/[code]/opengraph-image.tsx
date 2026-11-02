@@ -18,12 +18,13 @@ export default async function Image({
   if (!board) notFound();
   const content = stationOgContent(board);
   const t = await getTranslations({ locale, namespace: 'StationBoard' });
+  const tb = await getTranslations({ locale, namespace: 'DelayBand' });
   const header = await getTranslations({ locale, namespace: 'Header' });
   const labels = {
-    on_time: t('badge.on_time'),
-    cancelled: t('badge.cancelled'),
-    unknown: t('badge.unknown'),
-    late: (minutes: number) => t('badge.late', { minutes }),
+    on_time: tb('on_time'),
+    cancelled: tb('cancelled'),
+    unknown: tb('unknown'),
+    late: (minutes: number) => tb('late', { minutes }),
   };
   return stationOgImage(content, {
     appName: header('appName'),
