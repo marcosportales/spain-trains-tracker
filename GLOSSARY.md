@@ -61,6 +61,18 @@ _Avoid_: State
 How far a Run is behind its schedule at a given moment, in seconds.
 _Avoid_: Lateness, retraso (in code)
 
+**Delay band**:
+The plain-language bucket a Delay falls into, used everywhere a Run's punctuality is shown: On time (under 5 minutes), Late (5 to under 15 minutes), Severely late (15 minutes or more). A cancelled Run, or one with no known Delay, has no band.
+_Avoid_: Minor/major delay, badge
+
+**On time**:
+A Run whose Delay is under 5 minutes. The same threshold applies to a single Run and to Punctuality figures.
+_Avoid_: Punctual (as a loose synonym with a different threshold)
+
+**Punctuality**:
+The share of Runs on a Line, over a period, that reached their destination On time.
+_Avoid_: On-time percentage of observations
+
 **Station board**:
 The next 2 hours of scheduled departures and arrivals at a Station, with each Run's live Delay and Service status.
 _Avoid_: Timetable, schedule (the board is the timetable joined with live data)
