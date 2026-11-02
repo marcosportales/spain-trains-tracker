@@ -16,7 +16,9 @@ import { applyMapTheme, createMap } from './create-map';
 import { FilterPanel } from './filters/FilterPanel';
 import { matchesServiceTypes, toStreamFilters } from './filters/map-filters';
 import { useMapFilters } from './filters/use-map-filters';
+import { LiveIndicator } from './live/LiveIndicator';
 import { LiveRunsLayer } from './live/LiveRunsLayer';
+import { liveIndicator } from './live/live-indicator';
 import { runKey } from './live/live-runs';
 import { useLiveRuns } from './live/use-live-runs';
 import { SELECTED_ZOOM } from './map-config';
@@ -61,7 +63,7 @@ export function TrainMap({
     () => affectedLineCodes(alertsForLine(alerts, alertLine)),
     [alerts, alertLine],
   );
-  const streamed = useLiveRuns(toStreamFilters(filters));
+  const { runs: streamed, lastEventAt, openedAt } = useLiveRuns(toStreamFilters(filters));
   const runs = useMemo(
     () =>
       new Map(
@@ -75,6 +77,15 @@ export function TrainMap({
     () => [...new Set([...runs.values()].flatMap((r) => (r.lineCode ? [r.lineCode] : [])))].sort(),
     [runs],
   );
+
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    const check = () =>
+      setOffline(liveIndicator({ now: Date.now(), lastEventAt, openedAt }).state === 'offline');
+    check();
+    const id = setInterval(check, 1_000);
+    return () => clearInterval(id);
+  }, [lastEventAt, openedAt]);
 
   const { theme } = useTheme();
   const themeRef = useRef(theme);
@@ -139,9 +150,18 @@ export function TrainMap({
       </p>
       <TrackGeometryLayer map={map} track={track.collection} highlighted={highlighted} />
       <StationsLayer map={map} stations={stations} onSelect={openStation} />
-      <LiveRunsLayer map={map} runs={runs} paths={track.paths} onSelect={openRun} />
+      <LiveRunsLayer
+        map={map}
+        runs={runs}
+        paths={track.paths}
+        onSelect={openRun}
+        dimmed={offline}
+      />
       {!selected && (
         <>
+          <div className="pointer-events-none absolute bottom-3 left-3 z-10">
+            <LiveIndicator count={streamed.size} lastEventAt={lastEventAt} openedAt={openedAt} />
+          </div>
           <AlertsPanel alerts={alerts} line={alertLine} onLineChange={setAlertLine} />
           <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
         </>

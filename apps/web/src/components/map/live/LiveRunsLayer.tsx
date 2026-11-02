@@ -14,6 +14,7 @@ const SOURCE_ID = 'live-runs';
 const CIRCLE_LAYER_ID = 'live-runs-circles';
 const LABEL_LAYER_ID = 'live-runs-labels';
 const LABEL_MIN_ZOOM = 9;
+const DIMMED_OPACITY = 0.4;
 
 /** Dot fill by Service type; a Run with no known type is drawn in muted ink. */
 const colorExpression = (theme: Theme) =>
@@ -24,7 +25,7 @@ const colorExpression = (theme: Theme) =>
     COLORS[theme]['ink-3'],
   ] as unknown as string;
 
-function addLayers(map: MapLibreMap, theme: Theme) {
+function addLayers(map: MapLibreMap, theme: Theme, dimmed: boolean) {
   const colors = COLORS[theme];
   map.addSource(SOURCE_ID, {
     type: 'geojson',
@@ -39,7 +40,7 @@ function addLayers(map: MapLibreMap, theme: Theme) {
       'circle-color': colorExpression(theme),
       // Snapped positions (not real GPS) are drawn hollow, with a Service type stroke; the
       // others get the 1 px outline that keeps every dot legible on the basemap.
-      'circle-opacity': ['case', ['get', 'snapped'], 0, 1],
+      'circle-opacity': ['case', ['get', 'snapped'], 0, dimmed ? DIMMED_OPACITY : 1],
       'circle-stroke-color': [
         'case',
         ['get', 'snapped'],
@@ -47,6 +48,7 @@ function addLayers(map: MapLibreMap, theme: Theme) {
         colors['dot-outline'],
       ],
       'circle-stroke-width': ['case', ['get', 'snapped'], 2, 1],
+      'circle-stroke-opacity': dimmed ? DIMMED_OPACITY : 1,
     },
   });
   map.addLayer({
@@ -61,7 +63,12 @@ function addLayers(map: MapLibreMap, theme: Theme) {
       'text-offset': [0, 1.2],
       'text-allow-overlap': false,
     },
-    paint: { 'text-color': colors.ink, 'text-halo-color': colors.surface, 'text-halo-width': 1.5 },
+    paint: {
+      'text-color': colors.ink,
+      'text-halo-color': colors.surface,
+      'text-halo-width': 1.5,
+      'text-opacity': dimmed ? DIMMED_OPACITY : 1,
+    },
   });
 }
 
@@ -78,11 +85,14 @@ export function LiveRunsLayer({
   runs,
   paths,
   onSelect,
+  dimmed = false,
 }: {
   map: MapLibreMap | null;
   runs: MapRuns;
   paths?: ReadonlyMap<string, TrackPaths>;
   onSelect?: (id: RunId) => void;
+  /** Draws dots and labels at 40 % opacity: the positions are stale (the stream is offline). */
+  dimmed?: boolean;
 }) {
   // Rebuilt when the Track geometry arrives; Runs then restart from their reported positions.
   const motions = useMemo(
@@ -90,6 +100,8 @@ export function LiveRunsLayer({
     [paths],
   );
   const { theme } = useTheme();
+  const dimmedRef = useRef(dimmed);
+  dimmedRef.current = dimmed;
   const select = useRef(onSelect);
   select.current = onSelect;
 
@@ -127,7 +139,7 @@ export function LiveRunsLayer({
       frame = motions.isAnimating(now) ? requestAnimationFrame(draw) : undefined;
     };
     const sync = () => {
-      if (!map.getSource(SOURCE_ID)) addLayers(map, theme);
+      if (!map.getSource(SOURCE_ID)) addLayers(map, theme, dimmedRef.current);
       motions.update(runs, performance.now());
       draw(performance.now());
     };
@@ -137,6 +149,19 @@ export function LiveRunsLayer({
       if (frame !== undefined) cancelAnimationFrame(frame);
     };
   }, [map, runs, motions, theme]);
+
+  useEffect(() => {
+    if (!map?.getLayer(CIRCLE_LAYER_ID)) return;
+    const opacity = dimmed ? DIMMED_OPACITY : 1;
+    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', [
+      'case',
+      ['get', 'snapped'],
+      0,
+      opacity,
+    ]);
+    map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', opacity);
+    map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', opacity);
+  }, [map, dimmed]);
 
   return null;
 }
