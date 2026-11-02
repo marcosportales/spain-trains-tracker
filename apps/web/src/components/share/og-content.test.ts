@@ -9,6 +9,8 @@ const detail = (over: Partial<RunDetail> = {}): RunDetail =>
       serviceDate: '2026-10-31',
       serviceType: 'ave',
       lineCode: 'AVE-MAD-SEV',
+    },
+    position: {
       lat: 0,
       lon: 0,
       status: 'in_transit_to',

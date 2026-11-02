@@ -20,7 +20,7 @@ export type RunOgContent = {
 
 /** What the Run's Open Graph image shows: train number, Line and Delay. */
 export function runOgContent(detail: RunDetail): RunOgContent {
-  const delay = detail.delaySeconds ?? detail.run.delaySeconds;
+  const delay = detail.delaySeconds;
   return {
     serviceType: detail.run.serviceType,
     trainNumber: detail.run.trainNumber,

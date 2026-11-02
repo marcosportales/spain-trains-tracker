@@ -53,7 +53,13 @@ export default async function RunPage({ params }: { params: Params }) {
           label={t('mapLabel')}
           stationsHint={t('stationsHint')}
           selected={{ serviceDate: detail.run.serviceDate, trainNumber: detail.run.trainNumber }}
-          selectedFallback={detail.run}
+          selectedFallback={
+            detail.position && {
+              ...detail.run,
+              ...detail.position,
+              ...(detail.delaySeconds !== undefined && { delaySeconds: detail.delaySeconds }),
+            }
+          }
         />
       </Suspense>
       <RunDetailPanel detail={detail} history={history} />

@@ -33,7 +33,20 @@ export const RUN: LiveRun = {
 };
 
 export const RUN_DETAIL: RunDetail = {
-  run: RUN,
+  run: {
+    trainNumber: RUN.trainNumber,
+    serviceDate: RUN.serviceDate,
+    serviceType: RUN.serviceType,
+    ...(RUN.lineCode !== undefined && { lineCode: RUN.lineCode }),
+  },
+  position: {
+    lat: RUN.lat,
+    lon: RUN.lon,
+    status: RUN.status,
+    ...(RUN.nextStationCode !== undefined && { nextStationCode: RUN.nextStationCode }),
+    sources: RUN.sources,
+    observedAt: RUN.observedAt,
+  },
   originStationCode: STATION_CODE,
   destinationStationCode: '51003',
   serviceStatus: 'scheduled',
