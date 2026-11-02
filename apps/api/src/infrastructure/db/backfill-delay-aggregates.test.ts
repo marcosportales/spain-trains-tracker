@@ -29,6 +29,9 @@ describe('backfillDelayAggregates', () => {
     const [hourly] = await testDb.sql<{ on_time_pct: number }[]>`
       SELECT on_time_pct FROM delay_stats_hourly_v WHERE line_code = 'C1'`;
     expect(hourly?.on_time_pct).toBeCloseTo(50, 5);
+    const [final] = await testDb.sql<{ final_seconds: number }[]>`
+      SELECT final_seconds FROM run_final_delays WHERE train_number = '100'`;
+    expect(final?.final_seconds).toBe(300);
     const daily = await testDb.sql`SELECT 1 FROM delay_stats_daily_v WHERE line_code = 'C1'`;
     expect(daily).toHaveLength(1);
   });

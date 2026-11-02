@@ -17,8 +17,8 @@ export type MigrateOptions = {
 };
 
 /**
- * Materializes the hourly and daily Delay aggregates over the full range of `delays`.
- * Migration 0008 recreates them WITH NO DATA, and `refresh_continuous_aggregate` cannot run inside
+ * Materializes the Delay aggregates (hourly, daily and final Delay per Run) over the full range of
+ * `delays`. Migrations 0007 and 0008 create them WITH NO DATA, and `refresh_continuous_aggregate` cannot run inside
  * the migration transaction, so it runs here, after it. Repeating it is harmless.
  */
 export async function backfillDelayAggregates(sql: postgres.Sql): Promise<void> {
@@ -30,6 +30,8 @@ export async function backfillDelayAggregates(sql: postgres.Sql): Promise<void> 
   await sql`CALL refresh_continuous_aggregate('delay_stats_hourly',
     date_trunc('hour', ${first}::timestamptz), date_trunc('hour', ${last}::timestamptz) + INTERVAL '1 hour')`;
   await sql`CALL refresh_continuous_aggregate('delay_stats_daily',
+    date_trunc('day', ${first}::timestamptz), date_trunc('day', ${last}::timestamptz) + INTERVAL '1 day')`;
+  await sql`CALL refresh_continuous_aggregate('run_final_delays',
     date_trunc('day', ${first}::timestamptz), date_trunc('day', ${last}::timestamptz) + INTERVAL '1 day')`;
 }
 
