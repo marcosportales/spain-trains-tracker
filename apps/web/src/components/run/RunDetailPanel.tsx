@@ -3,7 +3,13 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { ShareButton } from '../share/ShareButton';
-import { type DelayBadge, delayBadge, delayMinutes, stopTimes } from './run-detail-view';
+import {
+  type DelayBadge,
+  delayBadge,
+  delayMinutes,
+  showsNoPositionBadge,
+  stopTimes,
+} from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
 
 const BADGE_CLASSES: Record<DelayBadge, string> = {
@@ -63,17 +69,26 @@ export function RunDetailPanel({
         </div>
       </div>
 
-      <p
-        data-testid="delay-badge"
-        data-badge={badge}
-        className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BADGE_CLASSES[badge]}`}
-      >
-        {badge === 'cancelled' || badge === 'unknown'
-          ? t(`badge.${badge}`)
-          : badge === 'on_time'
-            ? t('badge.on_time')
-            : t('badge.late', { minutes: delayMinutes(delay ?? 0) })}
-      </p>
+      {showsNoPositionBadge(detail) ? (
+        <p
+          data-testid="no-position-badge"
+          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BADGE_CLASSES.unknown}`}
+        >
+          {t('badge.noPosition')}
+        </p>
+      ) : (
+        <p
+          data-testid="delay-badge"
+          data-badge={badge}
+          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BADGE_CLASSES[badge]}`}
+        >
+          {badge === 'cancelled' || badge === 'unknown'
+            ? t(`badge.${badge}`)
+            : badge === 'on_time'
+              ? t('badge.on_time')
+              : t('badge.late', { minutes: delayMinutes(delay ?? 0) })}
+        </p>
+      )}
 
       <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         {nextStop && (

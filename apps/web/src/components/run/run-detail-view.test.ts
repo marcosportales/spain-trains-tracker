@@ -4,7 +4,9 @@ import {
   delayBadge,
   delayMinutes,
   formatMadridTime,
+  isScheduledRun,
   runDetailPath,
+  showsNoPositionBadge,
   stopTimes,
 } from './run-detail-view';
 
@@ -104,5 +106,21 @@ describe('runDetailPath', () => {
     expect(runDetailPath({ serviceDate: '2026-10-31', trainNumber: '03063' })).toBe(
       '/runs/2026-10-31/03063',
     );
+  });
+});
+
+describe('Scheduled Run presentation', () => {
+  const scheduled = (over: Partial<RunDetail> = {}) => detail({ position: undefined, ...over });
+
+  it('treats a Run without position as scheduled and one with position as tracked', () => {
+    expect(isScheduledRun(scheduled())).toBe(true);
+    expect(isScheduledRun(detail())).toBe(false);
+  });
+
+  it('shows the no-position badge for a plain Scheduled Run only', () => {
+    expect(showsNoPositionBadge(scheduled())).toBe(true);
+    expect(showsNoPositionBadge(detail())).toBe(false);
+    expect(showsNoPositionBadge(scheduled({ serviceStatus: 'cancelled' }))).toBe(false);
+    expect(showsNoPositionBadge(scheduled({ delaySeconds: 120 }))).toBe(false);
   });
 });

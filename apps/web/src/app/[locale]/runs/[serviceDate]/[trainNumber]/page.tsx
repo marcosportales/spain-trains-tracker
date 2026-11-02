@@ -53,6 +53,7 @@ export default async function RunPage({ params }: { params: Params }) {
           label={t('mapLabel')}
           stationsHint={t('stationsHint')}
           selected={{ serviceDate: detail.run.serviceDate, trainNumber: detail.run.trainNumber }}
+          fallbackStationCode={detail.originStationCode}
           selectedFallback={
             detail.position && {
               ...detail.run,

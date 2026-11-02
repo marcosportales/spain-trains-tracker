@@ -18,6 +18,15 @@ export function delayBadge(detail: RunDetail): DelayBadge {
   return badgeForDelay(detail.delaySeconds);
 }
 
+/** A Scheduled Run: known from the timetable only, with no live position yet. */
+export const isScheduledRun = (detail: RunDetail): boolean => detail.position === undefined;
+
+/** Whether the panel says "no live position yet" instead of a Delay badge (cancelled and known Delays win). */
+export const showsNoPositionBadge = (detail: RunDetail): boolean =>
+  isScheduledRun(detail) &&
+  detail.serviceStatus !== 'cancelled' &&
+  detail.delaySeconds === undefined;
+
 export const delayMinutes = (seconds: number): number => Math.round(seconds / 60);
 
 const MADRID_TIME = new Intl.DateTimeFormat('en-GB', {
