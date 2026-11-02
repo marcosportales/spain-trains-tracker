@@ -20,6 +20,8 @@ describe('@stt/contracts public entry', () => {
       'PunctualityRanking',
       'RunDetail',
       'RunId',
+      'RunIdentity',
+      'RunPosition',
       'RunSearchHit',
       'RunStatus',
       'RunStop',

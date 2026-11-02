@@ -11,7 +11,7 @@ import type { LiveRunStatus } from '../live/live-updates.publisher.js';
 import type { NetworkRepository } from '../network/network.repository.js';
 import type { RunDetailReader } from './run-detail.reader.js';
 
-/** No Run with that Train number and Service date is known, or none has ever been seen on the map. */
+/** No Run with that Train number and Service date is in the timetable or the live data. */
 export class RunNotFoundError extends Error {
   constructor(
     readonly trainNumber: string,
@@ -41,60 +41,63 @@ export class GetRunDetail {
     private readonly network: NetworkRepository,
   ) {}
 
-  /** `trainNumber` may omit leading zeros (`3063` finds Run `03063`). */
+  /**
+   * `trainNumber` may omit leading zeros (`3063` finds Run `03063`). A Run in the timetable but
+   * without a positioned Sighting is a Scheduled Run: it has stops and no `position`.
+   */
   async execute(rawTrainNumber: string, serviceDate: string): Promise<RunDetail> {
     const { trainNumber } = createRunId(rawTrainNumber, serviceDate);
     const stored = await this.reader.findRunDetail(trainNumber, serviceDate);
-    const position = stored && chooseLivePosition(stored.sightings);
-    const sighting = position?.sighting;
-    if (!stored || !position || sighting?.lat === undefined || sighting.lon === undefined) {
-      throw new RunNotFoundError(trainNumber, serviceDate);
-    }
-    const { run, delay } = stored;
+    const scheduled = await this.network.findScheduledRuns(trainNumber, serviceDate);
+    const lineCode = stored?.run.lineCode;
+    const trip = scheduled.find((s) => s.lineCode === lineCode) ?? scheduled[0];
+    const identity = stored?.run ?? trip;
+    if (!identity) throw new RunNotFoundError(trainNumber, serviceDate);
+
+    const delay = stored?.delay;
     const stops =
-      stored.stopEstimates.length > 0
+      stored && stored.stopEstimates.length > 0
         ? stored.stopEstimates.map(fromEstimate)
-        : await this.timetableStops(trainNumber, serviceDate, run.lineCode, delay?.seconds);
+        : trip
+          ? (await this.network.getScheduledStops(trip.tripId)).map((stop) =>
+              fromTimetable(stop, serviceDate, delay?.seconds),
+            )
+          : [];
     const first = stops[0];
     const last = stops.at(-1);
+    const run = stored?.run;
+    const live = stored && chooseLivePosition(stored.sightings);
+    const sighting = live?.sighting;
 
     return {
       run: {
-        trainNumber: run.id.trainNumber,
-        serviceDate: run.id.serviceDate,
-        serviceType: run.serviceType,
-        ...(run.lineCode !== undefined && { lineCode: run.lineCode }),
-        lat: sighting.lat,
-        lon: sighting.lon,
-        status: STATUS_OF[sighting.status],
-        ...(delay !== undefined && { delaySeconds: delay.seconds }),
-        ...(sighting.stationCode !== undefined && { nextStationCode: sighting.stationCode }),
-        sources: [...new Set(position.sources.map(toContractSource))],
-        observedAt: sighting.observedAt.toISOString(),
+        trainNumber,
+        serviceDate,
+        serviceType: identity.serviceType,
+        ...(identity.lineCode !== undefined && { lineCode: identity.lineCode }),
       },
+      ...(live &&
+        sighting?.lat !== undefined &&
+        sighting.lon !== undefined && {
+          position: {
+            lat: sighting.lat,
+            lon: sighting.lon,
+            status: STATUS_OF[sighting.status],
+            ...(sighting.stationCode !== undefined && { nextStationCode: sighting.stationCode }),
+            sources: [...new Set(live.sources.map(toContractSource))],
+            observedAt: sighting.observedAt.toISOString(),
+          },
+        }),
       ...(first && { originStationCode: first.stationCode }),
       ...(last && { destinationStationCode: last.stationCode }),
-      ...(run.status !== undefined && { serviceStatus: run.status }),
-      ...(run.wheelchairAccessible !== undefined && {
+      ...(run?.status !== undefined && { serviceStatus: run.status }),
+      ...(run?.wheelchairAccessible !== undefined && {
         wheelchairAccessible: run.wheelchairAccessible,
       }),
       stops,
       ...(delay !== undefined && { delaySeconds: delay.seconds }),
-      ...(run.rollingStock !== undefined && { rollingStock: run.rollingStock }),
+      ...(run?.rollingStock !== undefined && { rollingStock: run.rollingStock }),
     };
-  }
-
-  private async timetableStops(
-    trainNumber: string,
-    serviceDate: string,
-    lineCode: string | undefined,
-    delaySeconds: number | undefined,
-  ): Promise<RunStop[]> {
-    const scheduled = await this.network.findScheduledRuns(trainNumber, serviceDate);
-    const trip = scheduled.find((s) => s.lineCode === lineCode) ?? scheduled[0];
-    if (!trip) return [];
-    const stops = await this.network.getScheduledStops(trip.tripId);
-    return stops.map((stop) => fromTimetable(stop, serviceDate, delaySeconds));
   }
 }
 

@@ -13,6 +13,8 @@ const detail = (over: Partial<RunDetail> = {}): RunDetail => ({
     trainNumber: '03063',
     serviceDate: '2026-10-31',
     serviceType: 'ave',
+  },
+  position: {
     lat: 40,
     lon: -3,
     status: 'in_transit_to',
@@ -47,10 +49,9 @@ describe('delayBadge', () => {
     expect(delayBadge(detail())).toBe('unknown');
   });
 
-  it('falls back to the live Run Delay', () => {
-    const d = detail();
-    d.run.delaySeconds = 400;
-    expect(delayBadge(d)).toBe('major');
+  it('is unknown for a Scheduled Run with no Delay', () => {
+    const { position: _position, ...scheduled } = detail();
+    expect(delayBadge(scheduled)).toBe('unknown');
   });
 });
 

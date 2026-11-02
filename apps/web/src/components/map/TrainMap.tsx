@@ -39,7 +39,7 @@ type Props = {
   /** The Run whose detail is open: the map centres on it and follows it. */
   selected?: RunId;
   /** Server-known position of `selected`, used until the live stream delivers it. */
-  selectedFallback?: LiveRun;
+  selectedFallback?: LiveRun | undefined;
 };
 
 export function TrainMap({ label, stationsHint, selected, selectedFallback }: Props) {

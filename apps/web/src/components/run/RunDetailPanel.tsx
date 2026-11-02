@@ -26,8 +26,8 @@ export function RunDetailPanel({
   const t = useTranslations('RunDetail');
   const { run } = detail;
   const badge = delayBadge(detail);
-  const delay = detail.delaySeconds ?? run.delaySeconds;
-  const nextStop = run.nextStationCode;
+  const delay = detail.delaySeconds;
+  const nextStop = detail.position?.nextStationCode;
   const typical = history && typicalDelay(history);
 
   return (

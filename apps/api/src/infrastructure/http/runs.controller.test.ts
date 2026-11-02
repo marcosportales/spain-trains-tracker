@@ -136,13 +136,20 @@ describe('GET /runs/:serviceDate/:trainNumber', () => {
 
   const get = (path: string) => request(app.getHttpServer()).get(path);
 
-  it('answers 404 for an unknown Run', async () => {
-    await get('/runs/2026-10-31/03063').expect(404);
+  it('answers 200 for a Scheduled Run: in the timetable, never seen', async () => {
+    const res = await get('/runs/2026-10-31/3063').expect(200);
+    const detail = RunDetail.parse(res.body);
+    expect(detail.run).toMatchObject({ trainNumber: '03063', lineCode: 'AVE-MS' });
+    expect(detail.position).toBeUndefined();
+    expect(detail.stops.map((s) => s.stationCode)).toEqual(['60000', '51003', '71801']);
   });
 
-  it('answers 404 for a Run on another Service date', async () => {
-    await seedRun();
-    await get('/runs/2026-10-30/03063').expect(404);
+  it('answers 404 for an unknown Run', async () => {
+    await get('/runs/2026-10-31/99999').expect(404);
+  });
+
+  it('answers 404 for a Run outside its timetable dates', async () => {
+    await get('/runs/2027-03-01/03063').expect(404);
   });
 
   it.each([
@@ -169,7 +176,8 @@ describe('GET /runs/:serviceDate/:trainNumber', () => {
       wheelchairAccessible: true,
       originStationCode: '60000',
       destinationStationCode: '71801',
-      run: { trainNumber: '03063', lineCode: 'AVE-MS', nextStationCode: '51003' },
+      run: { trainNumber: '03063', lineCode: 'AVE-MS' },
+      position: { nextStationCode: '51003' },
     });
     // 2026-10-31 is CET (UTC+1): 08:00 local = 07:00Z; 10:00 local = 09:00Z, leaving at 10:05.
     expect(detail.stops).toEqual([

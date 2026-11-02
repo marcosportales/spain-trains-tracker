@@ -140,7 +140,7 @@ export function SearchBox() {
         role="listbox"
         aria-label={t('label')}
         hidden={!showPopup || options.length === 0}
-        className="absolute inset-x-0 top-full z-20 mt-1 max-h-[60dvh] overflow-y-auto rounded-xl border bg-white p-1 shadow-lg"
+        className="absolute inset-x-0 top-full z-30 mt-1 max-h-[60dvh] overflow-y-auto rounded-xl border bg-white p-1 shadow-lg"
       >
         {groups.map(({ kind, label }) => {
           const group = options.filter((o) => o.kind === kind);
@@ -175,7 +175,7 @@ export function SearchBox() {
         })}
       </div>
       {showPopup && message && (
-        <p className="absolute inset-x-0 top-full z-20 mt-1 rounded-xl border bg-white px-3 py-2 text-sm shadow-lg">
+        <p className="absolute inset-x-0 top-full z-30 mt-1 rounded-xl border bg-white px-3 py-2 text-sm shadow-lg">
           {message}
         </p>
       )}

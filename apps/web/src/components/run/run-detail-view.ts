@@ -15,7 +15,7 @@ export function badgeForDelay(delay: number | undefined): DelayBadge {
 
 export function delayBadge(detail: RunDetail): DelayBadge {
   if (detail.serviceStatus === 'cancelled') return 'cancelled';
-  return badgeForDelay(detail.delaySeconds ?? detail.run.delaySeconds);
+  return badgeForDelay(detail.delaySeconds);
 }
 
 export const delayMinutes = (seconds: number): number => Math.round(seconds / 60);
