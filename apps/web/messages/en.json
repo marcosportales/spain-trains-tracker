@@ -141,5 +141,11 @@
     "severely_late": "{minutes} min late",
     "cancelled": "Cancelled",
     "unknown": "No delay data"
+  },
+  "Theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
   }
 }
