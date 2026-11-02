@@ -42,6 +42,7 @@ packages/   # shared libraries (@stt/contracts, ...)
 | `pnpm db:up`     | Start the local database and wait until healthy     |
 | `pnpm db:down`   | Stop the local database (data volume is kept)        |
 | `pnpm dev:all`   | DB + migrations + API (:3002) + worker + web (:3000) |
+| `pnpm --filter web e2e:live` | Playwright e2e on the real stack, no mocks. Needs `pnpm dev:all` running (`WEB_PORT` overrides :3000); not part of `pnpm test` |
 | `pnpm --filter api db:migrate` | Apply Drizzle migrations to `DATABASE_URL` |
 | `pnpm --filter api db:generate` | Generate a migration from schema changes (`db:generate:custom` for raw SQL: hypertables, PostGIS) |
 
