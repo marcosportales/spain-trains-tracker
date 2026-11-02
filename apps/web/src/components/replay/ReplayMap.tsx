@@ -177,7 +177,7 @@ export function ReplayMap({ label }: { label: string }) {
             className="min-w-0 flex-1"
           />
         </div>
-        <p className="text-sm" aria-live="off">
+        <p className="text-sm tabular-nums" aria-live="off">
           {state.status === 'loading' && t('loading')}
           {state.status === 'error' && t('error')}
           {state.status === 'ready' &&

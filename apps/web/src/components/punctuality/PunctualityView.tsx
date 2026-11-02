@@ -128,11 +128,11 @@ export function PunctualityView({ initial }: { initial: Initial }) {
                   <th scope="row" className="py-1 pr-3 font-medium" title={line.name}>
                     {line.lineCode}
                   </th>
-                  <td className="py-1 pr-3">{line.onTimePct.toFixed(1)}%</td>
-                  <td className="py-1 pr-3">
+                  <td className="py-1 pr-3 tabular-nums">{line.onTimePct.toFixed(1)}%</td>
+                  <td className="py-1 pr-3 tabular-nums">
                     {t('minutes', { minutes: delayMinutes(line.avgSeconds) })}
                   </td>
-                  <td className="py-1 pr-3">{line.observations}</td>
+                  <td className="py-1 pr-3 tabular-nums">{line.observations}</td>
                   <td className="py-1">
                     <button
                       type="button"
