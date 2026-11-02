@@ -188,11 +188,7 @@
       "compositePrimaryKeys": {
         "run_stop_estimates_train_number_service_date_sequence_pk": {
           "name": "run_stop_estimates_train_number_service_date_sequence_pk",
-          "columns": [
-            "train_number",
-            "service_date",
-            "sequence"
-          ]
+          "columns": ["train_number", "service_date", "sequence"]
         }
       },
       "uniqueConstraints": {},
@@ -286,10 +282,7 @@
       "compositePrimaryKeys": {
         "runs_train_number_service_date_pk": {
           "name": "runs_train_number_service_date_pk",
-          "columns": [
-            "train_number",
-            "service_date"
-          ]
+          "columns": ["train_number", "service_date"]
         }
       },
       "uniqueConstraints": {},
@@ -552,13 +545,9 @@
         "lines_hub_code_hubs_code_fk": {
           "name": "lines_hub_code_hubs_code_fk",
           "tableFrom": "lines",
-          "columnsFrom": [
-            "hub_code"
-          ],
+          "columnsFrom": ["hub_code"],
           "tableTo": "hubs",
-          "columnsTo": [
-            "code"
-          ],
+          "columnsTo": ["code"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -631,39 +620,27 @@
         "scheduled_runs_line_code_lines_code_fk": {
           "name": "scheduled_runs_line_code_lines_code_fk",
           "tableFrom": "scheduled_runs",
-          "columnsFrom": [
-            "line_code"
-          ],
+          "columnsFrom": ["line_code"],
           "tableTo": "lines",
-          "columnsTo": [
-            "code"
-          ],
+          "columnsTo": ["code"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "scheduled_runs_service_id_service_calendars_service_id_fk": {
           "name": "scheduled_runs_service_id_service_calendars_service_id_fk",
           "tableFrom": "scheduled_runs",
-          "columnsFrom": [
-            "service_id"
-          ],
+          "columnsFrom": ["service_id"],
           "tableTo": "service_calendars",
-          "columnsTo": [
-            "service_id"
-          ],
+          "columnsTo": ["service_id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         },
         "scheduled_runs_shape_id_track_geometries_shape_id_fk": {
           "name": "scheduled_runs_shape_id_track_geometries_shape_id_fk",
           "tableFrom": "scheduled_runs",
-          "columnsFrom": [
-            "shape_id"
-          ],
+          "columnsFrom": ["shape_id"],
           "tableTo": "track_geometries",
-          "columnsTo": [
-            "shape_id"
-          ],
+          "columnsTo": ["shape_id"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -730,26 +707,18 @@
         "scheduled_stops_trip_id_scheduled_runs_trip_id_fk": {
           "name": "scheduled_stops_trip_id_scheduled_runs_trip_id_fk",
           "tableFrom": "scheduled_stops",
-          "columnsFrom": [
-            "trip_id"
-          ],
+          "columnsFrom": ["trip_id"],
           "tableTo": "scheduled_runs",
-          "columnsTo": [
-            "trip_id"
-          ],
+          "columnsTo": ["trip_id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         },
         "scheduled_stops_station_code_stations_code_fk": {
           "name": "scheduled_stops_station_code_stations_code_fk",
           "tableFrom": "scheduled_stops",
-          "columnsFrom": [
-            "station_code"
-          ],
+          "columnsFrom": ["station_code"],
           "tableTo": "stations",
-          "columnsTo": [
-            "code"
-          ],
+          "columnsTo": ["code"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -757,10 +726,7 @@
       "compositePrimaryKeys": {
         "scheduled_stops_trip_id_seq_pk": {
           "name": "scheduled_stops_trip_id_seq_pk",
-          "columns": [
-            "trip_id",
-            "seq"
-          ]
+          "columns": ["trip_id", "seq"]
         }
       },
       "uniqueConstraints": {},
@@ -796,13 +762,9 @@
         "service_calendar_dates_service_id_service_calendars_service_id_fk": {
           "name": "service_calendar_dates_service_id_service_calendars_service_id_fk",
           "tableFrom": "service_calendar_dates",
-          "columnsFrom": [
-            "service_id"
-          ],
+          "columnsFrom": ["service_id"],
           "tableTo": "service_calendars",
-          "columnsTo": [
-            "service_id"
-          ],
+          "columnsTo": ["service_id"],
           "onUpdate": "no action",
           "onDelete": "cascade"
         }
@@ -810,10 +772,7 @@
       "compositePrimaryKeys": {
         "service_calendar_dates_service_id_date_pk": {
           "name": "service_calendar_dates_service_id_date_pk",
-          "columns": [
-            "service_id",
-            "date"
-          ]
+          "columns": ["service_id", "date"]
         }
       },
       "uniqueConstraints": {},
@@ -994,13 +953,9 @@
         "stations_hub_code_hubs_code_fk": {
           "name": "stations_hub_code_hubs_code_fk",
           "tableFrom": "stations",
-          "columnsFrom": [
-            "hub_code"
-          ],
+          "columnsFrom": ["hub_code"],
           "tableTo": "hubs",
-          "columnsTo": [
-            "code"
-          ],
+          "columnsTo": ["code"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
@@ -1055,13 +1010,9 @@
         "track_geometries_line_code_lines_code_fk": {
           "name": "track_geometries_line_code_lines_code_fk",
           "tableFrom": "track_geometries",
-          "columnsFrom": [
-            "line_code"
-          ],
+          "columnsFrom": ["line_code"],
           "tableTo": "lines",
-          "columnsTo": [
-            "code"
-          ],
+          "columnsTo": ["code"],
           "onUpdate": "no action",
           "onDelete": "no action"
         }
