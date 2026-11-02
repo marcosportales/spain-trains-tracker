@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { DelayByHour, PunctualityRanking } from '@stt/contracts';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { withRefreshRetry } from '../../../test/support/refresh-aggregate.js';
 import { createTestDatabase, type TestDatabase } from '../../../test/support/test-database.js';
 import {
   GetDelayByHour,
@@ -38,8 +39,10 @@ describe('punctuality endpoints', () => {
   let testDb: TestDatabase;
 
   const refresh = () =>
-    testDb.sql.unsafe(
-      `CALL refresh_continuous_aggregate('delay_stats_hourly', '2026-10-01', '2026-11-30')`,
+    withRefreshRetry(() =>
+      testDb.sql.unsafe(
+        `CALL refresh_continuous_aggregate('delay_stats_hourly', '2026-10-01', '2026-11-30')`,
+      ),
     );
   let app: INestApplication;
 

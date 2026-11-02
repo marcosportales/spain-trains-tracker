@@ -1,7 +1,7 @@
 -- Punctuality statistics (Epic E6): continuous aggregates over `delays`, per Line, hour and day.
 -- Hand-written: Drizzle cannot express continuous aggregates. Rollback: drizzle/rollback/0006_delay_aggregates.down.sql
 -- Needs the TimescaleDB Toolkit (shipped in the timescale/timescaledb-ha image, ADR 0002) for p50/p90.
--- "On time" means a Delay of at most 300 s (5 min); a Delay can be negative (early), which counts as on time.
+-- "On time" means a Delay under 300 s (5 min), aligned in 0008; a Delay can be negative (early), which counts as on time.
 -- Delays of Runs without a Line are left out: the statistics are per Line.
 CREATE EXTENSION IF NOT EXISTS timescaledb_toolkit WITH SCHEMA public;--> statement-breakpoint
 CREATE MATERIALIZED VIEW delay_stats_hourly

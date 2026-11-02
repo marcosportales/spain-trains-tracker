@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { withRefreshRetry } from '../../../test/support/refresh-aggregate.js';
 import { createTestDatabase, type TestDatabase } from '../../../test/support/test-database.js';
 
 async function delay(
@@ -16,8 +17,10 @@ async function delay(
 
 async function refresh(db: TestDatabase): Promise<void> {
   // refresh_continuous_aggregate cannot run inside a transaction block.
-  await db.sql.unsafe(
-    `CALL refresh_continuous_aggregate('run_final_delays', '2026-10-01', '2026-11-30')`,
+  await withRefreshRetry(() =>
+    db.sql.unsafe(
+      `CALL refresh_continuous_aggregate('run_final_delays', '2026-10-01', '2026-11-30')`,
+    ),
   );
 }
 

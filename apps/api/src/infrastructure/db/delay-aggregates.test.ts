@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { withRefreshRetry } from '../../../test/support/refresh-aggregate.js';
 import { createTestDatabase, type TestDatabase } from '../../../test/support/test-database.js';
 
 /** Inserts one Delay for a Run; `observedAt` decides the hour and day bucket. */
@@ -15,11 +16,15 @@ async function delay(
 
 async function refresh(db: TestDatabase): Promise<void> {
   // refresh_continuous_aggregate cannot run inside a transaction block: one statement per call.
-  await db.sql.unsafe(
-    `CALL refresh_continuous_aggregate('delay_stats_hourly', '2026-10-01', '2026-11-30')`,
+  await withRefreshRetry(() =>
+    db.sql.unsafe(
+      `CALL refresh_continuous_aggregate('delay_stats_hourly', '2026-10-01', '2026-11-30')`,
+    ),
   );
-  await db.sql.unsafe(
-    `CALL refresh_continuous_aggregate('delay_stats_daily', '2026-10-01', '2026-11-30')`,
+  await withRefreshRetry(() =>
+    db.sql.unsafe(
+      `CALL refresh_continuous_aggregate('delay_stats_daily', '2026-10-01', '2026-11-30')`,
+    ),
   );
 }
 
@@ -75,12 +80,22 @@ describe('Delay continuous aggregates', () => {
     expect(eight).toMatchObject({ service_type: 'cercanias', hub_code: 'madrid' });
     expect(Number(eight?.observations)).toBe(4);
     expect(eight?.avg_seconds).toBeCloseTo(465, 5);
-    expect(eight?.on_time_pct).toBeCloseTo(50, 5); // 0 s and 60 s are on time (<= 5 min)
+    expect(eight?.on_time_pct).toBeCloseTo(50, 5); // 0 s and 60 s are on time (< 5 min)
     expect(eight?.p50).toBeGreaterThan(0);
     expect(eight?.p50).toBeLessThan(700);
     expect(eight?.p90).toBeGreaterThan(1000);
     expect(Number(nine?.observations)).toBe(1);
     expect(nine?.on_time_pct).toBeCloseTo(100, 5);
+  });
+
+  it('does not count a Delay of exactly 300 s as on time', async () => {
+    await delay(testDb, '100', '2026-10-30T08:05:00Z', 299);
+    await delay(testDb, '100', '2026-10-30T08:10:00Z', 300);
+    await refresh(testDb);
+
+    const [row] = await testDb.sql<{ on_time_pct: number }[]>`
+      SELECT on_time_pct FROM delay_stats_hourly_v WHERE line_code = 'C1'`;
+    expect(row?.on_time_pct).toBeCloseTo(50, 5);
   });
 
   it('keeps Lines without a Hub, split by Service type', async () => {
