@@ -48,9 +48,9 @@ export function splitTrack(
   const first = [...path.coordinates.slice(0, index + 1), point];
   const second = [point, ...path.coordinates.slice(index + 1)];
   // The far end of `first` is the path's start, of `second` its end.
-  const startKm = distance(path.coordinates[0] as Position, towards);
-  const endKm = distance(path.coordinates.at(-1) as Position, towards);
-  const [travelled, remaining] = endKm <= startKm ? [first, second] : [second, first];
+  const startDist = distance(path.coordinates[0] as Position, towards);
+  const endDist = distance(path.coordinates.at(-1) as Position, towards);
+  const [travelled, remaining] = endDist <= startDist ? [first, second] : [second, first];
   // A piece of a single point (the Run sits on the path's end) has nothing to draw.
   return {
     ...(travelled.length > 1 && { travelled: line(travelled) }),

@@ -22,18 +22,18 @@ export function RunTimeline({ detail, names }: { detail: RunDetail; names: Stati
           // biome-ignore lint/suspicious/noArrayIndexKey: stops have no id of their own
           <li key={i} className="relative">
             {onStop && marker.between && (
-              <div aria-hidden="false" className="relative h-5 pl-6">
+              <div className="relative h-5 pl-6">
                 <span className="absolute top-1 left-0 size-3 rounded-full bg-accent ring-4 ring-surface" />
                 {here}
               </div>
             )}
             <div
               aria-current={onStop ? 'step' : undefined}
-              className={`relative flex justify-between gap-2 py-1.5 pl-6 ${STATE_CLASSES[stop.state]}`}
+              className={`relative flex justify-between gap-2 py-2 pl-6 ${STATE_CLASSES[stop.state]}`}
             >
               <span
                 aria-hidden="true"
-                className={`absolute top-2.5 left-[1px] size-2 rounded-full ${
+                className={`absolute top-3.5 left-[1px] size-2 rounded-full ${
                   stop.state === 'current' ? 'bg-accent' : 'bg-line ring-2 ring-surface'
                 }`}
               />

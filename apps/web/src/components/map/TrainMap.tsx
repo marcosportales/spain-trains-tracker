@@ -184,7 +184,7 @@ export function TrainMap({
         paths={track.paths}
         onSelect={openRun}
         dimmed={offline}
-        selected={selectedRun ? selected : undefined}
+        selected={selected && runs.has(runKey(selected)) ? selected : undefined}
       />
       {!selected && (
         <>

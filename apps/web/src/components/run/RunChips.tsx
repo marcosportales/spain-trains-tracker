@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl';
 
 function Chip({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
   return (
-    <li className="inline-flex items-center gap-1.5 rounded-sm bg-surface-2 px-2 py-1 text-[13px] text-ink">
+    <li className="inline-flex items-center gap-2 rounded-sm bg-surface-2 px-2 py-1 text-[13px] text-ink">
       <Icon aria-hidden="true" size={14} className="shrink-0 text-ink-2" />
       {text}
     </li>
