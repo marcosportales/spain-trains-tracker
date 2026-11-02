@@ -105,3 +105,7 @@ export const DELAY_BAND_COLORS: Record<Theme, Record<DelayBand, DelayBandColors>
     unknown: { strong: '#8b919b', soft: '#2a2c31' },
   },
 };
+
+/** The CSS variable of a Service type's colour, for DOM swatches that follow the theme without JS. */
+export const serviceTypeVar = (type: ServiceType): string =>
+  `var(--color-service-${type.replaceAll('_', '-')})`;

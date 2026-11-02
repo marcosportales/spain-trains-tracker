@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
+import { SERVICE_TYPE_COLORS } from '@/theme/tokens';
 import type { DelayBand } from '../delay/delay-band';
-import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { OG_SIZE, type RunOgContent, type StationOgContent } from './og-content';
 
 const BADGE_COLORS: Record<DelayBand, { bg: string; fg: string }> = {
@@ -64,7 +64,7 @@ export function runOgImage(content: RunOgContent, labels: RunOgLabels): ImageRes
               height: 36,
               borderRadius: 999,
               marginRight: 20,
-              background: SERVICE_TYPE_COLORS[content.serviceType],
+              background: SERVICE_TYPE_COLORS.light[content.serviceType],
             }}
           />
           {labels.serviceType}
@@ -123,7 +123,7 @@ export function stationOgImage(content: StationOgContent, labels: StationOgLabel
                 height: 28,
                 borderRadius: 999,
                 marginRight: 16,
-                background: SERVICE_TYPE_COLORS[d.serviceType],
+                background: SERVICE_TYPE_COLORS.light[d.serviceType],
               }}
             />
             <div style={{ display: 'flex', fontWeight: 700, marginRight: 24 }}>{d.time}</div>

@@ -1,8 +1,8 @@
 import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { serviceTypeVar } from '@/theme/tokens';
 import { BAND_CLASSES, DelayBadge } from '../delay/DelayBadge';
-import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
 import { ShareButton } from '../share/ShareButton';
 import { delayBand, showsNoPositionBadge, stopTimes } from './run-detail-view';
 import { recentRuns, typicalDelay } from './train-history-view';
@@ -33,7 +33,7 @@ export function RunDetailPanel({
             <span
               aria-hidden="true"
               className="inline-block size-3 rounded-full"
-              style={{ backgroundColor: SERVICE_TYPE_COLORS[run.serviceType] }}
+              style={{ backgroundColor: serviceTypeVar(run.serviceType) }}
             />
             {t(`serviceTypes.${run.serviceType}`)} {run.trainNumber}
             {run.lineCode && <span className="text-sm font-normal">· {run.lineCode}</span>}

@@ -1,6 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { COLORS, DELAY_BAND_COLORS, SERVICE_TYPE_COLORS, type Theme } from './tokens';
+import {
+  COLORS,
+  DELAY_BAND_COLORS,
+  SERVICE_TYPE_COLORS,
+  SERVICE_TYPES,
+  serviceTypeVar,
+  type Theme,
+} from './tokens';
 
 const css = readFileSync(new URL('../app/globals.css', import.meta.url), 'utf8');
 
@@ -46,5 +53,14 @@ describe.each(['light', 'dark'] as const)('tokens.ts and globals.css agree (%s)'
     const match = new RegExp(`${name}:\\s*([^;]+);`).exec(BLOCKS[theme]);
     expect(match, `${name} missing from the ${theme} block`).not.toBeNull();
     expect(match?.[1]?.trim().toLowerCase()).toBe(value.toLowerCase());
+  });
+});
+
+describe('serviceTypeVar', () => {
+  it.each(SERVICE_TYPES)('%s points at a variable that exists in globals.css', (type) => {
+    const name = /var\((--[^)]+)\)/.exec(serviceTypeVar(type))?.[1];
+    expect(name).toBeDefined();
+    expect(BLOCKS.light).toContain(`${name}:`);
+    expect(BLOCKS.dark).toContain(`${name}:`);
   });
 });

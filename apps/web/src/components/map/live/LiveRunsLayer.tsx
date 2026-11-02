@@ -3,23 +3,29 @@
 import type { RunId } from '@stt/contracts';
 import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
 import { useEffect, useMemo, useRef } from 'react';
+import { COLORS, SERVICE_TYPE_COLORS, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/use-theme';
 import type { TrackPaths } from '../motion/interpolation';
 import { RunMotions } from '../motion/run-motions';
-import { type MapRuns, SERVICE_TYPE_COLORS, toFeatureCollection } from './live-runs';
+import { syncOnStyle } from '../sync-on-style';
+import { type MapRuns, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
 const CIRCLE_LAYER_ID = 'live-runs-circles';
 const LABEL_LAYER_ID = 'live-runs-labels';
 const LABEL_MIN_ZOOM = 9;
 
-const colorExpression = [
-  'match',
-  ['get', 'serviceType'],
-  ...Object.entries(SERVICE_TYPE_COLORS).flat(),
-  '#6b7280',
-] as unknown as string;
+/** Dot fill by Service type; a Run with no known type is drawn in muted ink. */
+const colorExpression = (theme: Theme) =>
+  [
+    'match',
+    ['get', 'serviceType'],
+    ...Object.entries(SERVICE_TYPE_COLORS[theme]).flat(),
+    COLORS[theme]['ink-3'],
+  ] as unknown as string;
 
-function addLayers(map: MapLibreMap) {
+function addLayers(map: MapLibreMap, theme: Theme) {
+  const colors = COLORS[theme];
   map.addSource(SOURCE_ID, {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] },
@@ -30,11 +36,17 @@ function addLayers(map: MapLibreMap) {
     source: SOURCE_ID,
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 3, 12, 8],
-      'circle-color': colorExpression,
-      // Snapped positions (not real GPS) are drawn hollow.
+      'circle-color': colorExpression(theme),
+      // Snapped positions (not real GPS) are drawn hollow, with a Service type stroke; the
+      // others get the 1 px outline that keeps every dot legible on the basemap.
       'circle-opacity': ['case', ['get', 'snapped'], 0, 1],
-      'circle-stroke-color': colorExpression,
-      'circle-stroke-width': 2,
+      'circle-stroke-color': [
+        'case',
+        ['get', 'snapped'],
+        colorExpression(theme),
+        colors['dot-outline'],
+      ],
+      'circle-stroke-width': ['case', ['get', 'snapped'], 2, 1],
     },
   });
   map.addLayer({
@@ -49,7 +61,7 @@ function addLayers(map: MapLibreMap) {
       'text-offset': [0, 1.2],
       'text-allow-overlap': false,
     },
-    paint: { 'text-color': '#111827', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 },
+    paint: { 'text-color': colors.ink, 'text-halo-color': colors.surface, 'text-halo-width': 1.5 },
   });
 }
 
@@ -77,6 +89,7 @@ export function LiveRunsLayer({
     () => new RunMotions({ ...(paths && { paths }), reducedMotion: prefersReducedMotion() }),
     [paths],
   );
+  const { theme } = useTheme();
   const select = useRef(onSelect);
   select.current = onSelect;
 
@@ -107,24 +120,23 @@ export function LiveRunsLayer({
     if (!map) return;
     let frame: number | undefined;
     const draw = (now: number) => {
-      const source = map.getSource(SOURCE_ID) as GeoJSONSource;
+      // Gone while a style change is loading; the `style.load` sync draws again.
+      const source = map.getSource(SOURCE_ID) as GeoJSONSource | undefined;
+      if (!source) return;
       source.setData(toFeatureCollection(runs, motions.positionsAt(now)));
       frame = motions.isAnimating(now) ? requestAnimationFrame(draw) : undefined;
     };
     const sync = () => {
-      if (!map.getSource(SOURCE_ID)) addLayers(map);
+      if (!map.getSource(SOURCE_ID)) addLayers(map, theme);
       motions.update(runs, performance.now());
       draw(performance.now());
     };
-    // `isStyleLoaded()` dips to false while a source reloads, so once the layers exist
-    // we push data straight away instead of waiting for a `load` that will not fire again.
-    if (map.getSource(SOURCE_ID) || map.isStyleLoaded()) sync();
-    else map.once('load', sync);
+    const unsubscribe = syncOnStyle(map, SOURCE_ID, sync);
     return () => {
-      map.off('load', sync);
+      unsubscribe();
       if (frame !== undefined) cancelAnimationFrame(frame);
     };
-  }, [map, runs, motions]);
+  }, [map, runs, motions, theme]);
 
   return null;
 }

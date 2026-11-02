@@ -1,4 +1,8 @@
-export const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+import type { Theme } from '@/theme/tokens';
+
+/** The OpenFreeMap basemap for a theme: `positron` (light) or `dark`. */
+export const mapStyleUrl = (theme: Theme): string =>
+  `https://tiles.openfreemap.org/styles/${theme === 'dark' ? 'dark' : 'positron'}`;
 
 export const SPAIN_VIEW = {
   center: [-3.7, 40.2] as [number, number],

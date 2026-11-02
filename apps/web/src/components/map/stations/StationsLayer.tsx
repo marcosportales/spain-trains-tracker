@@ -3,6 +3,9 @@
 import type { StationList } from '@stt/contracts';
 import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
+import { COLORS, type Theme } from '@/theme/tokens';
+import { useTheme } from '@/theme/use-theme';
+import { syncOnStyle } from '../sync-on-style';
 import { STATION_LABELS_MIN_ZOOM, STATIONS_MIN_ZOOM, toStationFeatures } from './stations';
 
 const SOURCE_ID = 'stations';
@@ -13,7 +16,8 @@ const RUNS_LAYER_ID = 'live-runs-circles';
 /** Fingertip-sized hit box around a Station dot, in pixels. */
 const TOUCH_RADIUS = 12;
 
-function addLayers(map: MapLibreMap) {
+function addLayers(map: MapLibreMap, theme: Theme) {
+  const colors = COLORS[theme];
   map.addSource(SOURCE_ID, {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] },
@@ -27,8 +31,8 @@ function addLayers(map: MapLibreMap) {
       minzoom: STATIONS_MIN_ZOOM,
       paint: {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], STATIONS_MIN_ZOOM, 3, 13, 6],
-        'circle-color': '#ffffff',
-        'circle-stroke-color': '#1f2937',
+        'circle-color': colors.surface,
+        'circle-stroke-color': colors.ink,
         'circle-stroke-width': 2,
       },
     },
@@ -47,7 +51,11 @@ function addLayers(map: MapLibreMap) {
         'text-offset': [0, -1.1],
         'text-anchor': 'bottom',
       },
-      paint: { 'text-color': '#1f2937', 'text-halo-color': '#ffffff', 'text-halo-width': 1.5 },
+      paint: {
+        'text-color': colors.ink,
+        'text-halo-color': colors.surface,
+        'text-halo-width': 1.5,
+      },
     },
     before,
   );
@@ -66,6 +74,7 @@ export function StationsLayer({
   stations: StationList;
   onSelect?: (code: string) => void;
 }) {
+  const { theme } = useTheme();
   const select = useRef(onSelect);
   select.current = onSelect;
 
@@ -101,15 +110,11 @@ export function StationsLayer({
   useEffect(() => {
     if (!map) return;
     const sync = () => {
-      if (!map.getSource(SOURCE_ID)) addLayers(map);
+      if (!map.getSource(SOURCE_ID)) addLayers(map, theme);
       (map.getSource(SOURCE_ID) as GeoJSONSource).setData(toStationFeatures(stations));
     };
-    if (map.getSource(SOURCE_ID) || map.isStyleLoaded()) sync();
-    else map.once('load', sync);
-    return () => {
-      map.off('load', sync);
-    };
-  }, [map, stations]);
+    return syncOnStyle(map, SOURCE_ID, sync);
+  }, [map, stations, theme]);
 
   return null;
 }
