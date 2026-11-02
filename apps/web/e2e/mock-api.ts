@@ -12,7 +12,7 @@ import {
 
 /**
  * The slice of the API the web app calls, served from the fixtures: no database, no worker.
- * `/live/stream` sends the snapshot and then idles, like an API between ingest cycles.
+ * `/live/stream` sends the snapshot and then a heartbeat every second, like an API between ingest cycles.
  */
 export function startMockApi(port: number): Promise<Server> {
   const server = createServer((req, res) => {
@@ -32,6 +32,8 @@ export function startMockApi(port: number): Promise<Server> {
       });
       const snapshot = { cycleId: 1, generatedAt: RUN.observedAt, runs: [RUN] };
       res.write(`event: snapshot\ndata: ${JSON.stringify(snapshot)}\n\n`);
+      const heartbeat = setInterval(() => res.write('event: heartbeat\ndata: {}\n\n'), 1000);
+      req.on('close', () => clearInterval(heartbeat));
       return;
     }
     if (url.pathname === '/stations') return json(STATIONS);

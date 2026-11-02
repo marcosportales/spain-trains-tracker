@@ -18,7 +18,7 @@ import {
 } from '../../application/live/get-live-snapshot.use-case.js';
 import { LiveStream } from '../../application/live/live-stream.js';
 
-/** Heartbeat comments keep idle connections open through proxies. */
+/** `heartbeat` events keep idle connections open through proxies and let clients time the stream. */
 export const LIVE_STREAM_HEARTBEAT_MS = Symbol('LIVE_STREAM_HEARTBEAT_MS');
 const DEFAULT_HEARTBEAT_MS = 15_000;
 
@@ -52,7 +52,8 @@ export class LiveController {
     return this.withKnownFilters(() => this.getLiveSnapshot.execute(parseQuery(rawQuery)));
   }
 
-  /** Server-sent events: a `snapshot` event, then a `diff` event per ingest cycle that changed Runs. */
+  /** Server-sent events: a `snapshot` event, then a `diff` event per ingest cycle that changed Runs,
+   * and a `heartbeat` event every 15 s so a quiet stream is told from a dead one. */
   @Get('stream')
   async stream(
     @Query() rawQuery: unknown,
@@ -96,7 +97,7 @@ export class LiveController {
     );
     if (closed) return unsubscribe();
     heartbeat = setInterval(
-      () => write(': heartbeat\n\n'),
+      () => write('event: heartbeat\ndata: {}\n\n'),
       this.heartbeatMs ?? DEFAULT_HEARTBEAT_MS,
     );
   }
