@@ -28,7 +28,7 @@ describe('runOgContent', () => {
       serviceType: 'ave',
       trainNumber: '03063',
       lineCode: 'AVE-MAD-SEV',
-      badge: 'major',
+      badge: 'late',
       delayMinutes: 7,
     });
   });

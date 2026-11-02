@@ -18,15 +18,16 @@ export default async function Image({
   if (!detail) notFound();
   const content = runOgContent(detail);
   const t = await getTranslations({ locale, namespace: 'RunDetail' });
+  const tb = await getTranslations({ locale, namespace: 'DelayBand' });
   const header = await getTranslations({ locale, namespace: 'Header' });
   return runOgImage(content, {
     appName: header('appName'),
     serviceType: t(`serviceTypes.${content.serviceType}`),
     badge: badgeText(content.badge, content.delayMinutes, {
-      on_time: t('badge.on_time'),
-      cancelled: t('badge.cancelled'),
-      unknown: t('badge.unknown'),
-      late: (minutes) => t('badge.late', { minutes }),
+      on_time: tb('on_time'),
+      cancelled: tb('cancelled'),
+      unknown: tb('unknown'),
+      late: (minutes) => tb('late', { minutes }),
     }),
   });
 }

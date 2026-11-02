@@ -47,14 +47,9 @@
     "history": "Delay history",
     "historyOnTime": "Usually on time (last {runs} runs)",
     "historyLate": "Usually {minutes} min late (last {runs} runs)",
-    "historyEarly": "Usually {minutes} min early (last {runs} runs)",
     "historyNone": "No history for this train yet",
     "historyRun": "{date}: {minutes} min on average, up to {maxMinutes} min",
     "badge": {
-      "on_time": "On time",
-      "late": "{minutes} min late",
-      "cancelled": "Cancelled",
-      "unknown": "Delay unknown",
       "noPosition": "No live position yet"
     },
     "serviceTypes": {
@@ -76,12 +71,6 @@
     "from": "From {station}",
     "empty": "No Runs in the next 2 hours",
     "stale": "Could not refresh; showing the last known board",
-    "badge": {
-      "on_time": "On time",
-      "late": "{minutes} min late",
-      "cancelled": "Cancelled",
-      "unknown": "Delay unknown"
-    },
     "description": "Next departures and arrivals at {station}"
   },
   "Share": {
@@ -145,5 +134,12 @@
     "error": "Could not load Sightings for this hour.",
     "empty": "No Sightings recorded for this hour.",
     "runs": "{count, plural, one {# train} other {# trains}}"
+  },
+  "DelayBand": {
+    "on_time": "On time",
+    "late": "{minutes} min late",
+    "severely_late": "{minutes} min late",
+    "cancelled": "Cancelled",
+    "unknown": "No delay data"
   }
 }

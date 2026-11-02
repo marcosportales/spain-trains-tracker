@@ -1,10 +1,9 @@
 import type { StationBoardEntry } from '@stt/contracts';
-import { badgeForDelay, type DelayBadge, formatMadridTime } from '../run/run-detail-view';
+import { type DelayBand, delayBandFor } from '../delay/delay-band';
+import { formatMadridTime } from '../run/run-detail-view';
 
-export function entryBadge(entry: StationBoardEntry): DelayBadge {
-  if (entry.serviceStatus === 'cancelled') return 'cancelled';
-  return badgeForDelay(entry.delaySeconds);
-}
+export const entryBand = (entry: StationBoardEntry): DelayBand =>
+  delayBandFor(entry.delaySeconds, entry.serviceStatus);
 
 export type EntryTimes = {
   scheduled: string;

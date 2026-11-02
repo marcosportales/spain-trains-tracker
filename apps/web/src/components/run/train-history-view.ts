@@ -1,22 +1,17 @@
 import type { TrainHistory } from '@stt/contracts';
-import { delayMinutes } from './run-detail-view';
-
-/** Typical Delay under this many seconds reads as "usually on time". */
-const ON_TIME_BELOW_S = 60;
+import { delayMinutes, ON_TIME_BELOW_S } from '../delay/delay-band';
 
 export type TypicalDelay =
   | { kind: 'on_time'; runs: number }
-  | { kind: 'late'; runs: number; minutes: number }
-  | { kind: 'early'; runs: number; minutes: number };
+  | { kind: 'late'; runs: number; minutes: number };
 
-/** The headline of the history: usually on time, X min late, or X min early. Undefined without data. */
+/** The headline of the history: usually on time or X min late. Undefined without data. */
 export function typicalDelay(history: TrainHistory): TypicalDelay | undefined {
   const { summary } = history;
   if (!summary) return undefined;
   const { typicalSeconds, runs } = summary;
-  if (Math.abs(typicalSeconds) < ON_TIME_BELOW_S) return { kind: 'on_time', runs };
-  const minutes = Math.abs(delayMinutes(typicalSeconds));
-  return typicalSeconds > 0 ? { kind: 'late', runs, minutes } : { kind: 'early', runs, minutes };
+  if (typicalSeconds < ON_TIME_BELOW_S) return { kind: 'on_time', runs };
+  return { kind: 'late', runs, minutes: delayMinutes(typicalSeconds) };
 }
 
 export type HistoryRow = {

@@ -1,11 +1,7 @@
 import type { RunDetail, ServiceType, StationBoard } from '@stt/contracts';
-import {
-  type DelayBadge,
-  delayBadge,
-  delayMinutes,
-  formatMadridTime,
-} from '../run/run-detail-view';
-import { entryBadge } from '../station/station-board-view';
+import { type DelayBand, delayMinutes } from '../delay/delay-band';
+import { delayBand, formatMadridTime } from '../run/run-detail-view';
+import { entryBand } from '../station/station-board-view';
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_DEPARTURES = 3;
@@ -14,7 +10,7 @@ export type RunOgContent = {
   serviceType: ServiceType;
   trainNumber: string;
   lineCode: string | undefined;
-  badge: DelayBadge;
+  badge: DelayBand;
   delayMinutes: number | undefined;
 };
 
@@ -25,7 +21,7 @@ export function runOgContent(detail: RunDetail): RunOgContent {
     serviceType: detail.run.serviceType,
     trainNumber: detail.run.trainNumber,
     lineCode: detail.run.lineCode,
-    badge: delayBadge(detail),
+    badge: delayBand(detail),
     delayMinutes: delay === undefined ? undefined : delayMinutes(delay),
   };
 }
@@ -38,7 +34,7 @@ export type StationOgContent = {
     lineCode: string | undefined;
     destinationCode: string;
     time: string;
-    badge: DelayBadge;
+    badge: DelayBand;
     delayMinutes: number | undefined;
   }[];
 };
@@ -53,7 +49,7 @@ export function stationOgContent(board: StationBoard): StationOgContent {
       lineCode: e.lineCode,
       destinationCode: e.counterpartStationCode,
       time: formatMadridTime(e.scheduledAt),
-      badge: entryBadge(e),
+      badge: entryBand(e),
       delayMinutes: e.delaySeconds === undefined ? undefined : delayMinutes(e.delaySeconds),
     })),
   };
@@ -67,7 +63,7 @@ export type BadgeLabels = {
 };
 
 /** Localised text for a Delay badge. */
-export function badgeText(badge: DelayBadge, minutes: number | undefined, l: BadgeLabels): string {
-  if (badge === 'on_time' || badge === 'cancelled' || badge === 'unknown') return l[badge];
-  return l.late(minutes ?? 0);
+export function badgeText(badge: DelayBand, minutes: number | undefined, l: BadgeLabels): string {
+  if (badge === 'late' || badge === 'severely_late') return l.late(minutes ?? 0);
+  return l[badge];
 }

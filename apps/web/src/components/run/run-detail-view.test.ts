@@ -1,8 +1,7 @@
 import type { RunDetail } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
 import {
-  delayBadge,
-  delayMinutes,
+  delayBand,
   formatMadridTime,
   isScheduledRun,
   runDetailPath,
@@ -27,40 +26,33 @@ const detail = (over: Partial<RunDetail> = {}): RunDetail => ({
   ...over,
 });
 
-describe('delayBadge', () => {
+describe('delayBand', () => {
   it('is cancelled whenever the Service status is cancelled', () => {
-    expect(delayBadge(detail({ serviceStatus: 'cancelled', delaySeconds: 0 }))).toBe('cancelled');
+    expect(delayBand(detail({ serviceStatus: 'cancelled', delaySeconds: 0 }))).toBe('cancelled');
   });
 
-  it('is on_time under one minute, including early Runs', () => {
-    expect(delayBadge(detail({ delaySeconds: 0 }))).toBe('on_time');
-    expect(delayBadge(detail({ delaySeconds: 59 }))).toBe('on_time');
-    expect(delayBadge(detail({ delaySeconds: -120 }))).toBe('on_time');
+  it('is on_time under five minutes, including early Runs', () => {
+    expect(delayBand(detail({ delaySeconds: 0 }))).toBe('on_time');
+    expect(delayBand(detail({ delaySeconds: 299 }))).toBe('on_time');
+    expect(delayBand(detail({ delaySeconds: -120 }))).toBe('on_time');
   });
 
-  it('is minor from one minute to just under five', () => {
-    expect(delayBadge(detail({ delaySeconds: 60 }))).toBe('minor');
-    expect(delayBadge(detail({ delaySeconds: 299 }))).toBe('minor');
+  it('is late from five minutes to just under fifteen', () => {
+    expect(delayBand(detail({ delaySeconds: 300 }))).toBe('late');
+    expect(delayBand(detail({ delaySeconds: 899 }))).toBe('late');
   });
 
-  it('is major from five minutes', () => {
-    expect(delayBadge(detail({ delaySeconds: 300 }))).toBe('major');
+  it('is severely_late from fifteen minutes', () => {
+    expect(delayBand(detail({ delaySeconds: 900 }))).toBe('severely_late');
   });
 
   it('is unknown without a Delay', () => {
-    expect(delayBadge(detail())).toBe('unknown');
+    expect(delayBand(detail())).toBe('unknown');
   });
 
   it('is unknown for a Scheduled Run with no Delay', () => {
     const { position: _position, ...scheduled } = detail();
-    expect(delayBadge(scheduled)).toBe('unknown');
-  });
-});
-
-describe('delayMinutes', () => {
-  it('rounds to whole minutes', () => {
-    expect(delayMinutes(330)).toBe(6);
-    expect(delayMinutes(-120)).toBe(-2);
+    expect(delayBand(scheduled)).toBe('unknown');
   });
 });
 

@@ -20,12 +20,13 @@ async function loadRun(params: Params) {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { locale, detail } = await loadRun(params);
   const t = await getTranslations({ locale, namespace: 'RunDetail' });
+  const tb = await getTranslations({ locale, namespace: 'DelayBand' });
   const content = runOgContent(detail);
   const badge = badgeText(content.badge, content.delayMinutes, {
-    on_time: t('badge.on_time'),
-    cancelled: t('badge.cancelled'),
-    unknown: t('badge.unknown'),
-    late: (minutes) => t('badge.late', { minutes }),
+    on_time: tb('on_time'),
+    cancelled: tb('cancelled'),
+    unknown: tb('unknown'),
+    late: (minutes) => tb('late', { minutes }),
   });
   const title = t('title', { trainNumber: detail.run.trainNumber });
   const description = t('description', {

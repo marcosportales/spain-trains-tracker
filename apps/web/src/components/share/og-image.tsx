@@ -1,12 +1,12 @@
 import { ImageResponse } from 'next/og';
+import type { DelayBand } from '../delay/delay-band';
 import { SERVICE_TYPE_COLORS } from '../map/live/live-runs';
-import type { DelayBadge } from '../run/run-detail-view';
 import { OG_SIZE, type RunOgContent, type StationOgContent } from './og-content';
 
-const BADGE_COLORS: Record<DelayBadge, { bg: string; fg: string }> = {
+const BADGE_COLORS: Record<DelayBand, { bg: string; fg: string }> = {
   on_time: { bg: '#dcfce7', fg: '#166534' },
-  minor: { bg: '#fef3c7', fg: '#92400e' },
-  major: { bg: '#fee2e2', fg: '#991b1b' },
+  late: { bg: '#fef3c7', fg: '#92400e' },
+  severely_late: { bg: '#fee2e2', fg: '#991b1b' },
   cancelled: { bg: '#1f2937', fg: '#ffffff' },
   unknown: { bg: '#f3f4f6', fg: '#374151' },
 };
@@ -22,7 +22,7 @@ const frame = {
   fontFamily: 'sans-serif',
 } as const;
 
-function Badge({ badge, text, size }: { badge: DelayBadge; text: string; size: number }) {
+function Badge({ badge, text, size }: { badge: DelayBand; text: string; size: number }) {
   const { bg, fg } = BADGE_COLORS[badge];
   return (
     <div
