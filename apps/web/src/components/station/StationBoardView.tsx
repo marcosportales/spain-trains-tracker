@@ -38,7 +38,7 @@ export function StationBoardView({ initial }: { initial: StationBoard }) {
   const entries = board[tab];
 
   return (
-    <div className="mx-auto h-full w-full max-w-2xl overflow-y-auto p-4">
+    <div className="mx-auto h-full w-full max-w-2xl overflow-y-auto px-4 pt-below-bar pb-4">
       <div className="flex items-start justify-between gap-2">
         <div>
           <h1 className="text-xl font-semibold">{board.stationName}</h1>

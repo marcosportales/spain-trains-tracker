@@ -24,7 +24,7 @@ export function AlertsPanel({ alerts, line, onLineChange }: Props) {
   const shown = alertsForLine(alerts, line);
 
   return (
-    <div className="pointer-events-none absolute top-3 right-14 z-10 flex max-w-[calc(100%-4.5rem)] flex-col items-end gap-2">
+    <div className="pointer-events-none absolute top-below-bar right-3 z-10 flex max-w-[calc(100%-1.5rem)] flex-col items-end gap-2">
       <button
         type="button"
         aria-expanded={open}

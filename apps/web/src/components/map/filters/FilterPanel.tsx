@@ -34,7 +34,7 @@ export function FilterPanel({ filters, lineOptions, onChange }: Props) {
       : lineOptions;
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-start gap-2 p-3 md:inset-x-auto md:top-3 md:bottom-auto md:left-3">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-start gap-2 p-3 md:inset-x-auto md:top-below-bar md:bottom-auto md:left-3">
       <button
         type="button"
         aria-expanded={open}

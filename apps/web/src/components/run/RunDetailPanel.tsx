@@ -25,7 +25,7 @@ export function RunDetailPanel({
   return (
     <aside
       aria-label={t('title', { trainNumber: run.trainNumber })}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 max-h-[60dvh] overflow-y-auto rounded-t-xl border bg-white p-4 shadow-lg md:inset-y-3 md:right-3 md:left-auto md:max-h-none md:w-96 md:rounded-xl"
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 max-h-[60dvh] overflow-y-auto rounded-t-xl border bg-white p-4 shadow-lg md:top-below-bar md:right-3 md:bottom-3 md:left-auto md:max-h-none md:w-96 md:rounded-xl"
     >
       <div className="flex items-start justify-between gap-2">
         <div>

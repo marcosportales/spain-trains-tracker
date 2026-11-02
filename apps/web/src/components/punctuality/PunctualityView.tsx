@@ -14,6 +14,7 @@ type Initial = { ranking: PunctualityRanking; byHour: DelayByHour };
 /** Line ranking and delay-by-hour chart over a selectable window of days. */
 export function PunctualityView({ initial }: { initial: Initial }) {
   const t = useTranslations('Punctuality');
+  const tFooter = useTranslations('Footer');
   const [days, setDays] = useState<number>(initial.ranking.days);
   const [lineCode, setLineCode] = useState<string | undefined>(undefined);
   const [ranking, setRanking] = useState(initial.ranking);
@@ -60,7 +61,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
   ];
 
   return (
-    <div className="mx-auto h-full w-full max-w-3xl overflow-y-auto p-4">
+    <div className="mx-auto h-full w-full max-w-3xl overflow-y-auto px-4 pt-below-bar pb-4">
       <h1 className="text-xl font-semibold">{t('title')}</h1>
       <p className="text-sm text-gray-600">{t('description')}</p>
 
@@ -183,6 +184,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
         <span>18</span>
         <span>23</span>
       </div>
+      <p className="mt-6 text-xs text-ink-3">{tFooter('attribution')}</p>
     </div>
   );
 }
