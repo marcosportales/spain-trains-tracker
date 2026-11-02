@@ -54,7 +54,8 @@
       "on_time": "Puntual",
       "late": "{minutes} min de retraso",
       "cancelled": "Cancelado",
-      "unknown": "Retraso desconocido"
+      "unknown": "Retraso desconocido",
+      "noPosition": "Sin posición en directo todavía"
     },
     "serviceTypes": {
       "cercanias": "Cercanías",

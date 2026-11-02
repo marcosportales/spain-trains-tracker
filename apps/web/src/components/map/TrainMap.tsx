@@ -40,9 +40,17 @@ type Props = {
   selected?: RunId;
   /** Server-known position of `selected`, used until the live stream delivers it. */
   selectedFallback?: LiveRun | undefined;
+  /** Station to centre on when `selected` has no live position (a Scheduled Run's origin). */
+  fallbackStationCode?: string | undefined;
 };
 
-export function TrainMap({ label, stationsHint, selected, selectedFallback }: Props) {
+export function TrainMap({
+  label,
+  stationsHint,
+  selected,
+  selectedFallback,
+  fallbackStationCode,
+}: Props) {
   const router = useRouter();
   const search = useSearchParams().toString();
   const container = useRef<HTMLElement>(null);
@@ -109,6 +117,17 @@ export function TrainMap({ label, stationsHint, selected, selectedFallback }: Pr
       map.easeTo({ center: [lon, lat] });
     }
   }, [map, followed, lon, lat]);
+
+  const fallbackStation = selectedRun
+    ? undefined
+    : stations.find((station) => station.code === fallbackStationCode);
+  const stationLon = fallbackStation?.lon;
+  const stationLat = fallbackStation?.lat;
+
+  useEffect(() => {
+    if (!map || stationLon === undefined || stationLat === undefined) return;
+    map.flyTo({ center: [stationLon, stationLat], zoom: Math.max(map.getZoom(), SELECTED_ZOOM) });
+  }, [map, stationLon, stationLat]);
 
   const openRun = (id: RunId) => router.push(`${runDetailPath(id)}${search ? `?${search}` : ''}`);
 

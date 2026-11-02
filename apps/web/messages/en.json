@@ -54,7 +54,8 @@
       "on_time": "On time",
       "late": "{minutes} min late",
       "cancelled": "Cancelled",
-      "unknown": "Delay unknown"
+      "unknown": "Delay unknown",
+      "noPosition": "No live position yet"
     },
     "serviceTypes": {
       "cercanias": "Cercanías",
