@@ -1,14 +1,12 @@
 import { ImageResponse } from 'next/og';
-import { SERVICE_TYPE_COLORS } from '@/theme/tokens';
+import { COLORS, DELAY_BAND_COLORS, SERVICE_TYPE_COLORS } from '@/theme/tokens';
 import type { DelayBand } from '../delay/delay-band';
 import { OG_SIZE, type RunOgContent, type StationOgContent } from './og-content';
 
-const BADGE_COLORS: Record<DelayBand, { bg: string; fg: string }> = {
-  on_time: { bg: '#dcfce7', fg: '#166534' },
-  late: { bg: '#fef3c7', fg: '#92400e' },
-  severely_late: { bg: '#fee2e2', fg: '#991b1b' },
-  cancelled: { bg: '#1f2937', fg: '#ffffff' },
-  unknown: { bg: '#f3f4f6', fg: '#374151' },
+/** Share images are always light. */
+const badgeColors = (band: DelayBand): { bg: string; fg: string } => {
+  const { soft, text } = DELAY_BAND_COLORS.light[band];
+  return { bg: soft, fg: text ?? COLORS.light.ink };
 };
 
 const frame = {
@@ -23,7 +21,7 @@ const frame = {
 } as const;
 
 function Badge({ badge, text, size }: { badge: DelayBand; text: string; size: number }) {
-  const { bg, fg } = BADGE_COLORS[badge];
+  const { bg, fg } = badgeColors(badge);
   return (
     <div
       style={{

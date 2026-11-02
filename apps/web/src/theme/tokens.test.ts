@@ -64,3 +64,23 @@ describe('serviceTypeVar', () => {
     expect(BLOCKS.dark).toContain(`${name}:`);
   });
 });
+
+/** WCAG 2.x contrast ratio of two `#rrggbb` colours. */
+function contrast(a: string, b: string): number {
+  const luminance = (hex: string) => {
+    const [r = 0, g = 0, bl = 0] = [1, 3, 5].map((i) => {
+      const c = Number.parseInt(hex.slice(i, i + 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05);
+}
+
+describe.each(['light', 'dark'] as const)('Delay band badge text contrast (%s)', (theme) => {
+  it.each(Object.entries(DELAY_BAND_COLORS[theme]))('%s reads at 4.5:1 or better', (_band, c) => {
+    // Badge text is `ink`, except Cancelled, which carries its own text colour.
+    expect(contrast(c.text ?? COLORS[theme].ink, c.soft)).toBeGreaterThanOrEqual(4.5);
+  });
+});

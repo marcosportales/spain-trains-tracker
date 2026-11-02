@@ -58,7 +58,7 @@ export function RunDetailPanel({
       {showsNoPositionBadge(detail) ? (
         <p
           data-testid="no-position-badge"
-          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium ${BAND_CLASSES.unknown}`}
+          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium tabular-nums ${BAND_CLASSES.unknown}`}
         >
           {t('badge.noPosition')}
         </p>
