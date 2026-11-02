@@ -6,6 +6,7 @@ import { DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
 import { DetailSurface } from '../ui/DetailSurface';
 import { HistoryBars } from './HistoryBars';
+import { RunChips } from './RunChips';
 import { RunCloseButton } from './RunCloseButton';
 import { RunTimeline } from './RunTimeline';
 import { delayBand, type RunHeadline, runHeadline } from './run-detail-view';
@@ -55,7 +56,6 @@ export function RunDetailPanel({
   const { run } = detail;
   const band = delayBand(detail);
   const headline = runHeadline(detail, names);
-  const nextStop = detail.position?.nextStationCode;
   const typical = history && typicalDelay(history);
 
   return (
@@ -106,26 +106,10 @@ export function RunDetailPanel({
         </div>
       }
     >
-      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        {nextStop && (
-          <>
-            <dt className="font-semibold">{t('nextStation')}</dt>
-            <dd>{names(nextStop)}</dd>
-          </>
-        )}
-        {detail.wheelchairAccessible !== undefined && (
-          <>
-            <dt className="font-semibold">{t('accessibility')}</dt>
-            <dd>{t(detail.wheelchairAccessible ? 'accessible' : 'notAccessible')}</dd>
-          </>
-        )}
-        {detail.rollingStock && (
-          <>
-            <dt className="font-semibold">{t('rollingStock')}</dt>
-            <dd>{detail.rollingStock}</dd>
-          </>
-        )}
-      </dl>
+      <RunChips
+        wheelchairAccessible={detail.wheelchairAccessible}
+        rollingStock={detail.rollingStock}
+      />
 
       <h2 className="mt-4 text-sm font-semibold">{t('stops')}</h2>
       <RunTimeline detail={detail} names={names} />
