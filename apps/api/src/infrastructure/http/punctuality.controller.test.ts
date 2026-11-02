@@ -35,15 +35,39 @@ async function observe(
   }
 }
 
+/** One Run on `lineCode` observed at `observedAt` with `delays` in order; the last is its final Delay. */
+async function runWithDelays(
+  db: TestDatabase,
+  lineCode: string,
+  observedAt: string,
+  delays: number[],
+  status: string | null = null,
+): Promise<void> {
+  const trainNumber = String(nextTrain++);
+  const serviceDate = observedAt.slice(0, 10);
+  await db.sql`
+    INSERT INTO runs (train_number, service_date, service_type, line_code, status, last_seen_at)
+    VALUES (${trainNumber}, ${serviceDate}, 'cercanias', ${lineCode}, ${status}, now())`;
+  for (const [index, seconds] of delays.entries()) {
+    const at = new Date(Date.parse(observedAt) + index * 60_000).toISOString();
+    await db.sql`
+      INSERT INTO delays (train_number, service_date, source, observed_at, seconds)
+      VALUES (${trainNumber}, ${serviceDate}, 'gtfsrt_ld', ${at}, ${seconds})`;
+  }
+}
+
 describe('punctuality endpoints', () => {
   let testDb: TestDatabase;
 
-  const refresh = () =>
-    withRefreshRetry(() =>
-      testDb.sql.unsafe(
-        `CALL refresh_continuous_aggregate('delay_stats_hourly', '2026-10-01', '2026-11-30')`,
-      ),
-    );
+  const refresh = async () => {
+    for (const aggregate of ['delay_stats_hourly', 'run_final_delays']) {
+      await withRefreshRetry(() =>
+        testDb.sql.unsafe(
+          `CALL refresh_continuous_aggregate('${aggregate}', '2026-10-01', '2026-11-30')`,
+        ),
+      );
+    }
+  };
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -80,11 +104,17 @@ describe('punctuality endpoints', () => {
   });
 
   describe('GET /stats/punctuality', () => {
-    it('ranks Lines from least to most punctual and leaves out Lines with too few observations', async () => {
-      // C1: 3 of 4 on time (<= 300 s); C2: 1 of 3; C3: 2 observations only.
-      await observe(testDb, 'C1', '2026-10-30T08:10:00Z', [0, 60, -120, 900]);
-      await observe(testDb, 'C2', '2026-10-30T08:10:00Z', [600, 900, 120]);
-      await observe(testDb, 'C3', '2026-10-30T08:10:00Z', [0, 0]);
+    it('ranks Lines by Runs, each counted once by its final Delay, and leaves out Lines with too few Runs', async () => {
+      // C1: 3 of 4 Runs finish on time; C2: 1 of 3; C3: 2 Runs only. Early observations do not matter.
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [900, 400, 0]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [60]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [-120]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0, 900]);
+      await runWithDelays(testDb, 'C2', '2026-10-30T08:10:00Z', [600]);
+      await runWithDelays(testDb, 'C2', '2026-10-30T08:10:00Z', [900]);
+      await runWithDelays(testDb, 'C2', '2026-10-30T08:10:00Z', [120]);
+      await runWithDelays(testDb, 'C3', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C3', '2026-10-30T08:10:00Z', [0]);
       await refresh();
 
       const res = await request(app.getHttpServer()).get('/stats/punctuality').expect(200);
@@ -97,30 +127,47 @@ describe('punctuality endpoints', () => {
         name: 'C2 Guadalajara',
         serviceType: 'cercanias',
         hubCode: 'madrid',
-        observations: 3,
+        runs: 3,
       });
       expect(body.lines[0]?.onTimePct).toBeCloseTo(33.3, 1);
       expect(body.lines[0]?.avgSeconds).toBeCloseTo(540, 5);
-      expect(body.lines[1]?.onTimePct).toBe(75);
+      expect(body.lines[1]).toMatchObject({ runs: 4, onTimePct: 75 });
+      expect(body.overall?.runs).toBe(7);
+      expect(body.overall?.onTimePct).toBeCloseTo((100 * 4) / 7, 5);
     });
 
-    it('only counts observations inside the requested window', async () => {
-      await observe(testDb, 'C1', '2026-10-30T08:10:00Z', [0, 0, 0]);
-      await observe(testDb, 'C1', '2026-10-10T08:10:00Z', [900, 900, 900]);
+    it('leaves out cancelled Runs', async () => {
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [900], 'cancelled');
+      await refresh();
+
+      const res = await request(app.getHttpServer()).get('/stats/punctuality').expect(200);
+      expect(res.body.lines[0]).toMatchObject({ runs: 3, onTimePct: 100 });
+    });
+
+    it('only counts Runs whose Service date is inside the requested window', async () => {
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C1', '2026-10-30T08:10:00Z', [0]);
+      await runWithDelays(testDb, 'C1', '2026-10-10T08:10:00Z', [900]);
+      await runWithDelays(testDb, 'C1', '2026-10-10T08:10:00Z', [900]);
+      await runWithDelays(testDb, 'C1', '2026-10-10T08:10:00Z', [900]);
       await refresh();
 
       const week = await request(app.getHttpServer()).get('/stats/punctuality').expect(200);
-      expect(week.body.lines[0]).toMatchObject({ observations: 3, onTimePct: 100 });
+      expect(week.body.lines[0]).toMatchObject({ runs: 3, onTimePct: 100 });
       const month = await request(app.getHttpServer())
         .get('/stats/punctuality?days=30')
         .expect(200);
       expect(month.body).toMatchObject({ days: 30 });
-      expect(month.body.lines[0]).toMatchObject({ observations: 6, onTimePct: 50 });
+      expect(month.body.lines[0]).toMatchObject({ runs: 6, onTimePct: 50 });
     });
 
     it('is empty when nothing was observed', async () => {
       const res = await request(app.getHttpServer()).get('/stats/punctuality').expect(200);
-      expect(res.body).toEqual({ days: 7, lines: [] });
+      expect(res.body).toEqual({ days: 7, overall: null, lines: [] });
     });
 
     it.each(['days=0', 'days=91', 'days=abc', 'foo=1'])('rejects ?%s with 400', async (qs) => {

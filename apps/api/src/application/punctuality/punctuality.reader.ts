@@ -1,17 +1,5 @@
 import type { ServiceType } from '../../domain/network/index.js';
 
-/** Delay observations of one Line over a window, as stored sums. */
-export interface LineDelayTotals {
-  readonly lineCode: string;
-  readonly name: string;
-  readonly serviceType: ServiceType;
-  readonly hubCode?: string;
-  readonly observations: number;
-  readonly totalSeconds: number;
-  /** Observations with a Delay of at most 5 min. */
-  readonly onTimeObservations: number;
-}
-
 /** Runs of one Line over a window, counted once each by their final Delay (ADR 0007). */
 export interface LineRunTotals {
   readonly lineCode: string;
@@ -33,11 +21,8 @@ export interface HourDelayTotals {
   readonly onTimeObservations: number;
 }
 
-/** Read side of the punctuality statistics, over the Delay aggregates (hourly buckets). */
+/** Read side of the punctuality statistics, over the Delay aggregates: Runs by final Delay, observations by hour. */
 export abstract class PunctualityReader {
-  /** Per-Line sums of the hourly buckets starting at or after `since`. Lines with no data are absent. */
-  abstract lineTotals(since: Date): Promise<LineDelayTotals[]>;
-
   /** Per-Line Run counts for Runs whose Service date is `sinceServiceDate` (`YYYY-MM-DD`) or later. Lines with no Runs are absent. */
   abstract lineRunTotals(sinceServiceDate: string): Promise<LineRunTotals[]>;
 
