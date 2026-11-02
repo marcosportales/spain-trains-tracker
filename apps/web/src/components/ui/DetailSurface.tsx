@@ -32,7 +32,7 @@ function SidePanel({ label, headline, children, actions }: Props) {
   return (
     <aside
       aria-label={label}
-      className="absolute top-3 right-3 bottom-3 z-10 flex w-[400px] flex-col overflow-hidden rounded-lg bg-surface text-ink shadow-2"
+      className="absolute top-below-bar right-3 bottom-3 z-10 flex w-[400px] flex-col overflow-hidden rounded-lg bg-surface text-ink shadow-2"
     >
       <div className="flex items-start gap-2 p-4 pb-2">
         <div className="min-w-0 flex-1 text-xl font-semibold">{headline}</div>
