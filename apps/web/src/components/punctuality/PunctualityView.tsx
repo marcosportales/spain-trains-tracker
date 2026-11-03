@@ -5,16 +5,16 @@ import { Info } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { fetchDelayByHour, fetchPunctualityRanking } from '@/lib/punctuality-api';
-import { delayMinutes } from '../delay/delay-band';
+import { type DelayBand, delayMinutes } from '../delay/delay-band';
 import { Popover } from '../ui/Popover';
 import { SegmentedControl } from '../ui/SegmentedControl';
-import {
-  hourBars,
-  punctualityHeadline,
-  type SortDirection,
-  type SortKey,
-  sortLines,
-} from './punctuality-view';
+import { hourBars, punctualityHeadline, rankingBars } from './punctuality-view';
+
+const BAND_BAR: Partial<Record<DelayBand, string>> = {
+  on_time: 'bg-band-on-time',
+  late: 'bg-band-late',
+  severely_late: 'bg-band-severely-late',
+};
 
 const DAY_OPTIONS = [7, 30, 90] as const;
 type WindowDays = `${(typeof DAY_OPTIONS)[number]}`;
@@ -30,10 +30,6 @@ export function PunctualityView({ initial }: { initial: Initial }) {
   const [lineCode, setLineCode] = useState<string | undefined>(undefined);
   const [ranking, setRanking] = useState(initial.ranking);
   const [byHour, setByHour] = useState(initial.byHour);
-  const [sort, setSort] = useState<{ key: SortKey; direction: SortDirection }>({
-    key: 'onTimePct',
-    direction: 'asc',
-  });
   const [failed, setFailed] = useState(false);
 
   // Refetch when the window or selected Line differs from what is shown.
@@ -56,22 +52,11 @@ export function PunctualityView({ initial }: { initial: Initial }) {
     };
   }, [days, lineCode, ranking, byHour.lineCode]);
 
-  const lines = sortLines(ranking.lines, sort.key, sort.direction);
+  const rows = rankingBars(ranking.lines);
   const headline = punctualityHeadline(ranking);
   const percent = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
   const bars = hourBars(byHour.hours);
   const selected = ranking.lines.find((line) => line.lineCode === lineCode);
-  const toggleSort = (key: SortKey) =>
-    setSort((s) => ({
-      key,
-      direction: s.key === key && s.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  const columns: [SortKey, string][] = [
-    ['lineCode', t('line')],
-    ['onTimePct', t('onTime')],
-    ['avgSeconds', t('avgDelay')],
-    ['runs', t('runs')],
-  ];
 
   return (
     <div className="mx-auto h-full w-full max-w-3xl overflow-y-auto px-4 pt-below-bar pb-4">
@@ -115,71 +100,49 @@ export function PunctualityView({ initial }: { initial: Initial }) {
       )}
 
       <h2 className="mt-5 text-lg font-semibold">{t('ranking')}</h2>
-      {lines.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="mt-2 text-sm text-gray-600">{t('empty')}</p>
       ) : (
-        <div className="mt-2 overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b">
-                {columns.map(([key, label]) => (
-                  <th
-                    key={key}
-                    scope="col"
-                    aria-sort={
-                      sort.key === key
-                        ? sort.direction === 'asc'
-                          ? 'ascending'
-                          : 'descending'
-                        : 'none'
-                    }
-                    className="py-1 pr-3"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => toggleSort(key)}
-                      className="min-h-11 font-medium"
-                    >
-                      {label}
-                    </button>
-                  </th>
-                ))}
-                <th scope="col" className="py-1">
-                  <span className="sr-only">{t('showHours')}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line) => (
-                <tr
-                  key={line.lineCode}
-                  className={`border-b ${line.lineCode === lineCode ? 'bg-gray-100' : ''}`}
+        <ol aria-label={t('ranking')} className="mt-2 flex flex-col">
+          {rows.map(({ line, widthPct, band }) => {
+            const summary = t('lineSummary', {
+              line: line.lineCode,
+              pct: percent.format(line.onTimePct / 100),
+              minutes: delayMinutes(line.avgSeconds),
+              count: line.runs,
+            });
+            return (
+              <li key={line.lineCode}>
+                <button
+                  type="button"
+                  aria-pressed={line.lineCode === lineCode}
+                  title={summary}
+                  onClick={() =>
+                    setLineCode(line.lineCode === lineCode ? undefined : line.lineCode)
+                  }
+                  className={`flex min-h-11 w-full items-center gap-3 rounded-md px-2 text-left text-sm hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent ${
+                    line.lineCode === lineCode ? 'bg-surface-2' : ''
+                  }`}
                 >
-                  <th scope="row" className="py-1 pr-3 font-medium" title={line.name}>
-                    {line.lineCode}
-                  </th>
-                  <td className="py-1 pr-3 tabular-nums">{line.onTimePct.toFixed(1)}%</td>
-                  <td className="py-1 pr-3 tabular-nums">
-                    {t('minutes', { minutes: delayMinutes(line.avgSeconds) })}
-                  </td>
-                  <td className="py-1 pr-3 tabular-nums">{line.runs}</td>
-                  <td className="py-1">
-                    <button
-                      type="button"
-                      aria-pressed={line.lineCode === lineCode}
-                      onClick={() =>
-                        setLineCode(line.lineCode === lineCode ? undefined : line.lineCode)
-                      }
-                      className="min-h-11 rounded border px-2 text-xs"
-                    >
-                      {t('showHours')}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  <span className="w-28 min-w-0 shrink-0 truncate sm:w-44">
+                    <span className="font-semibold">{line.lineCode}</span>{' '}
+                    <span className="text-ink-2">{line.name}</span>
+                  </span>
+                  <span aria-hidden className="h-3 flex-1 rounded-full bg-surface-3">
+                    <span
+                      className={`block h-full rounded-full ${BAND_BAR[band] ?? 'bg-band-unknown'}`}
+                      style={{ width: `${widthPct}%` }}
+                    />
+                  </span>
+                  <span aria-hidden className="w-12 shrink-0 text-right tabular-nums">
+                    {percent.format(line.onTimePct / 100)}
+                  </span>
+                  <span className="sr-only">{summary}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       )}
 
       <h2 className="mt-5 text-lg font-semibold">{t('byHour')}</h2>

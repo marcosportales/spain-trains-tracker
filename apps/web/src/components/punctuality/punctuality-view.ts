@@ -1,5 +1,5 @@
 import type { HourPunctuality, LinePunctuality, PunctualityRanking } from '@stt/contracts';
-import { delayMinutes } from '../delay/delay-band';
+import { type DelayBand, delayBandFor, delayMinutes } from '../delay/delay-band';
 
 export const punctualityPath = '/punctuality';
 
@@ -12,20 +12,23 @@ export function punctualityHeadline(ranking: PunctualityRanking): PunctualityHea
     : { kind: 'per_run', pct: ranking.overall.onTimePct / 100 };
 }
 
-export type SortKey = 'lineCode' | 'onTimePct' | 'avgSeconds' | 'runs';
-export type SortDirection = 'asc' | 'desc';
+export type RankingBar = {
+  line: LinePunctuality;
+  /** Bar length as a share of the track, 0–100. */
+  widthPct: number;
+  /** Delay band of the Line's average Delay; it colours the bar. */
+  band: DelayBand;
+};
 
-/** The ranking sorted by a column. Ties keep Line code order. */
-export function sortLines(
-  lines: readonly LinePunctuality[],
-  key: SortKey,
-  direction: SortDirection,
-): LinePunctuality[] {
-  const sign = direction === 'asc' ? 1 : -1;
-  return [...lines].sort((a, b) => {
-    const diff = key === 'lineCode' ? a.lineCode.localeCompare(b.lineCode) : a[key] - b[key];
-    return sign * diff || a.lineCode.localeCompare(b.lineCode);
-  });
+/** The ranking worst to best (lowest On time share first); ties keep the API order. */
+export function rankingBars(lines: readonly LinePunctuality[]): RankingBar[] {
+  return [...lines]
+    .sort((a, b) => a.onTimePct - b.onTimePct)
+    .map((line) => ({
+      line,
+      widthPct: line.onTimePct,
+      band: delayBandFor(line.avgSeconds),
+    }));
 }
 
 export type HourBar = {

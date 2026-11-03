@@ -1,6 +1,6 @@
 import type { HourPunctuality, LinePunctuality, PunctualityRanking } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
-import { hourBars, punctualityHeadline, punctualityPath, sortLines } from './punctuality-view';
+import { hourBars, punctualityHeadline, punctualityPath, rankingBars } from './punctuality-view';
 
 const line = (lineCode: string, onTimePct: number, avgSeconds = 0, runs = 100) =>
   ({
@@ -12,23 +12,23 @@ const line = (lineCode: string, onTimePct: number, avgSeconds = 0, runs = 100) =
     runs,
   }) satisfies LinePunctuality;
 
-describe('sortLines', () => {
-  const lines = [line('C2', 90, 30, 500), line('C1', 70, 400, 100), line('C3', 80, 100, 300)];
-  const codes = (sorted: LinePunctuality[]) => sorted.map((l) => l.lineCode);
-
-  it('puts the least punctual Line first by default', () =>
-    expect(codes(sortLines(lines, 'onTimePct', 'asc'))).toEqual(['C1', 'C3', 'C2']));
-  it('can put the most punctual first', () =>
-    expect(codes(sortLines(lines, 'onTimePct', 'desc'))).toEqual(['C2', 'C3', 'C1']));
-  it('sorts by average Delay', () =>
-    expect(codes(sortLines(lines, 'avgSeconds', 'desc'))).toEqual(['C1', 'C3', 'C2']));
-  it('sorts by Runs', () =>
-    expect(codes(sortLines(lines, 'runs', 'desc'))).toEqual(['C2', 'C3', 'C1']));
-  it('sorts by Line code', () =>
-    expect(codes(sortLines(lines, 'lineCode', 'asc'))).toEqual(['C1', 'C2', 'C3']));
+describe('rankingBars', () => {
+  it('orders worst to best, ties keeping the API order', () => {
+    const bars = rankingBars([line('C2', 90), line('C1', 70), line('C4', 80), line('C3', 80)]);
+    expect(bars.map((b) => b.line.lineCode)).toEqual(['C1', 'C4', 'C3', 'C2']);
+  });
+  it('sets the bar width to the on time share', () =>
+    expect(rankingBars([line('C1', 87.4)])[0]?.widthPct).toBe(87.4));
+  it('colours each bar by the band of the Line average Delay', () => {
+    const bands = rankingBars([line('A', 90, 120), line('B', 90, 400), line('C', 90, 1000)]).map(
+      (b) => b.band,
+    );
+    expect(bands).toEqual(['on_time', 'late', 'severely_late']);
+  });
   it('does not mutate its input', () => {
-    sortLines(lines, 'onTimePct', 'asc');
-    expect(codes(lines)).toEqual(['C2', 'C1', 'C3']);
+    const lines = [line('C2', 90), line('C1', 70)];
+    rankingBars(lines);
+    expect(lines.map((l) => l.lineCode)).toEqual(['C2', 'C1']);
   });
 });
 
