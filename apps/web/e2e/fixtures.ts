@@ -97,7 +97,19 @@ export function search(query: string): SearchResult {
   const hit = STATIONS.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()));
   return {
     query,
-    runs: [],
+    runs:
+      query.toLowerCase() === 'atocha'
+        ? [
+            {
+              trainNumber: RUN.trainNumber,
+              serviceDate: RUN.serviceDate,
+              serviceType: RUN.serviceType,
+              lineCode: RUN.lineCode,
+              originName: 'Madrid Atocha',
+              destinationName: 'Sevilla-Santa Justa',
+            },
+          ]
+        : [],
     lines: [],
     stations: hit.map((s) => ({ stationCode: s.code, name: s.name })),
   };
