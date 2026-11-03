@@ -1,7 +1,9 @@
 import { createServer, type Server } from 'node:http';
 import {
   ALERT,
+  DELAY_BY_HOUR,
   NO_TRACK,
+  PUNCTUALITY_RANKING,
   RUN,
   RUN_DETAIL,
   SERVICE_DATE,
@@ -44,6 +46,8 @@ export function startMockApi(port: number): Promise<Server> {
     }
     if (url.pathname === '/stations') return json(STATIONS);
     if (url.pathname === '/lines/geometry') return json(NO_TRACK);
+    if (url.pathname === '/stats/punctuality') return json(PUNCTUALITY_RANKING);
+    if (url.pathname === '/stats/delay-by-hour') return json(DELAY_BY_HOUR);
     if (url.pathname === '/alerts') return json([ALERT]);
     if (url.pathname === '/search') return json(search(url.searchParams.get('q') ?? ''));
     if (url.pathname === `/runs/${SERVICE_DATE}/${RUN.trainNumber}`) return json(RUN_DETAIL);

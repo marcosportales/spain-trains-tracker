@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { RUN, STATION_NAME } from './fixtures.js';
+import { PUNCTUALITY_LINE, RUN, STATION_NAME } from './fixtures.js';
 
 // A bare style keeps the map off the network: the tests need the Run layer, not the tiles.
 const BLANK_STYLE = {
@@ -115,4 +115,19 @@ test.describe('on a phone', () => {
     await expect(page).toHaveURL(/\/en\/replay$/);
     await expect(page.getByRole('link', { name: 'Replay' })).toBeHidden();
   });
+});
+
+test('punctuality page shows the headline, a ranking bar and the by-hour summary', async ({
+  page,
+}) => {
+  await page.goto('/en/punctuality');
+
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'In the last 7 days, 87% of trains reached their destination less than 5 min late',
+  );
+  const ranking = page.getByRole('list', { name: 'Line ranking' });
+  await expect(
+    ranking.getByRole('button', { name: new RegExp(PUNCTUALITY_LINE.code) }),
+  ).toBeVisible();
+  await expect(page.getByText('Delays cluster between 8:00 and 10:00')).toBeVisible();
 });
