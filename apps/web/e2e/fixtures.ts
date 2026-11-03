@@ -4,6 +4,7 @@ import type {
   PunctualityRanking,
   RunDetail,
   SearchResult,
+  SightingWindow,
   StationBoard,
   StationList,
   TrackFeatureCollection,
@@ -136,3 +137,31 @@ export const DELAY_BY_HOUR: DelayByHour = {
     return { hour, observations: 20, avgSeconds: peak ? 420 : 60, onTimePct: peak ? 50 : 95 };
   }),
 };
+
+/** The Replay window starting at `from`: empty for the last full hour, one Sighting for the hour before it. */
+export function sightingWindow(from: Date, now = new Date()): SightingWindow {
+  const lastFull = new Date(now);
+  lastFull.setUTCMinutes(0, 0, 0);
+  const withData = lastFull.getTime() - 2 * 3_600_000;
+  const observedAt = new Date(from.getTime() + 60_000).toISOString();
+  return {
+    from: from.toISOString(),
+    to: new Date(from.getTime() + 3_600_000).toISOString(),
+    stepSeconds: 60,
+    sightings:
+      from.getTime() === withData
+        ? [
+            {
+              trainNumber: RUN.trainNumber,
+              serviceDate: RUN.serviceDate,
+              source: 'official',
+              observedAt,
+              lat: RUN.lat,
+              lon: RUN.lon,
+              status: RUN.status,
+              positionIsSnapped: false,
+            },
+          ]
+        : [],
+  };
+}

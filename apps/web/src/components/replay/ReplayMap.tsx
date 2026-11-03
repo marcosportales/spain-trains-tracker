@@ -2,7 +2,7 @@
 
 import type { RunId } from '@stt/contracts';
 import { type Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useRouter } from '@/i18n/navigation';
@@ -11,44 +11,57 @@ import { applyMapTheme, createMap } from '../map/create-map';
 import { LiveRunsLayer } from '../map/live/LiveRunsLayer';
 import { TrackGeometryLayer } from '../map/track/TrackGeometryLayer';
 import { useTrackGeometry } from '../map/track/use-track-geometry';
-import { runDetailPath } from '../run/run-detail-view';
+import {
+  formatMadridClock,
+  formatMadridDateTime,
+  formatMadridHourMinute,
+  runDetailPath,
+} from '../run/run-detail-view';
+import { ReplayControls, type ReplayControlsView } from './ReplayControls';
 import {
   advance,
   DEFAULT_SPEED,
   defaultWindowStart,
+  fromMadridInputValue,
   indexSightings,
+  LOOKBACK_HOURS,
   replayRuns,
-  SPEEDS,
+  toMadridInputValue,
   WINDOW_MS,
 } from './replay-view';
+import { useLatestWindow } from './use-latest-window';
 import { useSightingWindow } from './use-sighting-window';
 
 setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href);
 
-const SCRUB_STEP_MS = 60_000;
-
-/** `datetime-local` values are in local time without an offset. */
-const toInputValue = (date: Date): string =>
-  new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-
 /** Replays a past hour of Sightings on the map, with a play/pause button, speed and a scrubber. */
 export function ReplayMap({ label }: { label: string }) {
-  const t = useTranslations('Replay');
+  const locale = useLocale();
   const router = useRouter();
   const container = useRef<HTMLElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const track = useTrackGeometry();
-  const [from, setFrom] = useState(() => defaultWindowStart());
+  const [searchAttempt, setSearchAttempt] = useState(0);
+  const [windowAttempt, setWindowAttempt] = useState(0);
+  const latest = useLatestWindow(searchAttempt);
+  const [picked, setPicked] = useState<Date | null>(null);
+  // The hour picked by hand wins; otherwise the latest hour with data (none until it is found).
+  const from = picked ?? (latest.status === 'found' ? latest.from : null);
+  const pickerValue = from ?? defaultWindowStart();
   const [position, setPosition] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>(DEFAULT_SPEED);
-  const state = useSightingWindow(from);
+  const state = useSightingWindow(
+    from,
+    latest.status === 'found' ? latest : undefined,
+    windowAttempt,
+  );
 
   const index = useMemo(
     () => (state.status === 'ready' ? indexSightings(state.window) : undefined),
     [state],
   );
-  const instant = from.getTime() + position;
+  const instant = (from?.getTime() ?? 0) + position;
   const runs = useMemo(() => (index ? replayRuns(index, instant) : new Map()), [index, instant]);
 
   const { theme } = useTheme();
@@ -74,7 +87,7 @@ export function ReplayMap({ label }: { label: string }) {
   useEffect(() => {
     setPosition(0);
     setPlaying(false);
-  }, [from]);
+  }, [from?.getTime()]);
 
   const positionRef = useRef(0);
   positionRef.current = position;
@@ -103,81 +116,54 @@ export function ReplayMap({ label }: { label: string }) {
     setPlaying((p) => !p);
   };
   const openRun = (id: RunId) => router.push(runDetailPath(id));
-  const clock = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'medium',
-  }).format(instant);
+  const picking = latest.status === 'found' || picked !== null;
+  const view: ReplayControlsView =
+    latest.status === 'searching'
+      ? 'loading'
+      : !picking
+        ? latest.status === 'error'
+          ? 'error'
+          : 'none'
+        : state.status === 'loading'
+          ? 'loading'
+          : state.status === 'error'
+            ? 'error'
+            : state.window.sightings.length === 0
+              ? 'empty'
+              : 'ready';
+  const earlier = () => setPicked(new Date((from ?? pickerValue).getTime() - WINDOW_MS));
+  // A failed search starts over; a failed hour is fetched again, without searching.
+  const retry = () => (picking ? setWindowAttempt : setSearchAttempt)((n) => n + 1);
 
   return (
     <>
       <section ref={container} aria-label={label} className="h-full w-full" />
       <TrackGeometryLayer map={map} track={track.collection} />
       <LiveRunsLayer map={map} runs={runs} paths={track.paths} onSelect={openRun} />
-      <section
-        aria-label={t('controls')}
-        className="pointer-events-auto absolute inset-x-0 bottom-0 z-10 space-y-2 border-t bg-white p-3 shadow-lg md:inset-x-auto md:bottom-3 md:left-3 md:w-[28rem] md:rounded-xl md:border"
-      >
-        <div className="flex flex-wrap items-center gap-3 text-sm">
-          <label className="flex items-center gap-2">
-            {t('start')}
-            <input
-              type="datetime-local"
-              step={3600}
-              value={toInputValue(from)}
-              max={toInputValue(new Date())}
-              onChange={(e) => {
-                const next = new Date(e.target.value);
-                if (!Number.isNaN(next.getTime())) setFrom(next);
-              }}
-              className="rounded border px-2 py-1"
-            />
-          </label>
-          <label className="flex items-center gap-2">
-            {t('speed')}
-            <select
-              value={speed}
-              onChange={(e) => setSpeed(Number(e.target.value))}
-              className="rounded border px-2 py-1"
-            >
-              {SPEEDS.map((s) => (
-                <option key={s} value={s}>
-                  {t('speedOption', { speed: s })}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={togglePlay}
-            disabled={state.status !== 'ready'}
-            className="rounded-full border px-4 py-1 text-sm font-medium disabled:opacity-50"
-          >
-            {playing ? t('pause') : t('play')}
-          </button>
-          <input
-            type="range"
-            aria-label={t('scrubber')}
-            aria-valuetext={clock}
-            min={0}
-            max={WINDOW_MS}
-            step={SCRUB_STEP_MS}
-            value={position}
-            disabled={state.status !== 'ready'}
-            onChange={(e) => setPosition(Number(e.target.value))}
-            className="min-w-0 flex-1"
-          />
-        </div>
-        <p className="text-sm tabular-nums" aria-live="off">
-          {state.status === 'loading' && t('loading')}
-          {state.status === 'error' && t('error')}
-          {state.status === 'ready' &&
-            (state.window.sightings.length === 0
-              ? t('empty')
-              : `${clock} · ${t('runs', { count: runs.size })}`)}
-        </p>
-      </section>
+      <ReplayControls
+        view={view}
+        hours={LOOKBACK_HOURS}
+        onEarlier={earlier}
+        onRetry={retry}
+        playing={playing}
+        onTogglePlay={togglePlay}
+        position={position}
+        onScrub={setPosition}
+        clock={formatMadridClock(instant, locale)}
+        clockText={formatMadridDateTime(instant, locale)}
+        startLabel={from ? formatMadridHourMinute(from, locale) : ''}
+        endLabel={from ? formatMadridHourMinute(from.getTime() + WINDOW_MS, locale) : ''}
+        disabled={view !== 'ready'}
+        speed={speed}
+        onSpeed={setSpeed}
+        pickerValue={toMadridInputValue(pickerValue)}
+        pickerMax={toMadridInputValue(new Date())}
+        onPick={(value) => {
+          const next = fromMadridInputValue(value);
+          if (next) setPicked(next);
+        }}
+        runCount={state.status === 'ready' && index ? runs.size : undefined}
+      />
     </>
   );
 }

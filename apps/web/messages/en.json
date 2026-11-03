@@ -152,10 +152,14 @@
     "play": "Play",
     "pause": "Pause",
     "scrubber": "Replay time",
-    "loading": "Loading Sightings…",
-    "error": "Could not load Sightings for this hour.",
-    "empty": "No Sightings recorded for this hour.",
-    "runs": "{count, plural, one {# train} other {# trains}}"
+    "loading": "Finding the latest hour with positions…",
+    "noRecentData": "No positions in the last {hours} hours.",
+    "error": "Could not load the positions for this hour.",
+    "empty": "No positions saved for this hour.",
+    "runs": "{count, plural, one {# train} other {# trains}}",
+    "explainer": "Watch how trains moved during a past hour.",
+    "emptyAction": "Try an hour earlier",
+    "retry": "Retry"
   },
   "DelayBand": {
     "on_time": "On time",

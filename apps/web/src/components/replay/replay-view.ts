@@ -81,3 +81,105 @@ export function defaultWindowStart(now = new Date()): Date {
   start.setUTCHours(start.getUTCHours() - 1);
   return start;
 }
+
+/** How many past hours the Replay looks back through to find one with data. */
+export const LOOKBACK_HOURS = 6;
+
+/** Window starts to try, newest first: the last full hour, then each hour before it. */
+export function candidateStarts(now: Date, hours = LOOKBACK_HOURS): Date[] {
+  const latest = defaultWindowStart(now).getTime();
+  return Array.from({ length: hours }, (_, i) => new Date(latest - i * WINDOW_MS));
+}
+
+export type LatestWindowResult =
+  | { status: 'found'; from: Date; window: SightingWindow }
+  | { status: 'none' }
+  | { status: 'error' }
+  | { status: 'aborted' };
+
+/**
+ * Tries each start in order, one request at a time (a window can be large), and stops at the
+ * first with Sightings. A failed request is an error, not a reason to try the next hour.
+ */
+export async function findLatestWindow(
+  fetchWindow: (from: Date, signal?: AbortSignal) => Promise<SightingWindow>,
+  starts: readonly Date[],
+  signal?: AbortSignal,
+): Promise<LatestWindowResult> {
+  for (const from of starts) {
+    if (signal?.aborted) return { status: 'aborted' };
+    let window: SightingWindow;
+    try {
+      window = await fetchWindow(from, signal);
+    } catch {
+      return signal?.aborted ? { status: 'aborted' } : { status: 'error' };
+    }
+    if (signal?.aborted) return { status: 'aborted' };
+    if (window.sightings.length > 0) return { status: 'found', from, window };
+  }
+  return { status: 'none' };
+}
+
+/** Fetches the Sightings of the hour starting at `from`. */
+export async function fetchSightingWindow(
+  from: Date,
+  signal?: AbortSignal,
+): Promise<SightingWindow> {
+  const res = await fetch(sightingWindowUrl(from), {
+    cache: 'no-store',
+    ...(signal && { signal }),
+  });
+  if (!res.ok) throw new Error(`Sighting window request failed: ${res.status}`);
+  return (await res.json()) as SightingWindow;
+}
+
+const MADRID_PARTS = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/Madrid',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+});
+
+/** Madrid's wall-clock fields at `instant`, read back as if they were UTC (epoch ms). */
+const madridWallClock = (instant: number): number => {
+  const part = Object.fromEntries(
+    MADRID_PARTS.formatToParts(instant).map((p) => [p.type, Number(p.value)]),
+  ) as Record<string, number>;
+  return Date.UTC(
+    part.year as number,
+    (part.month as number) - 1,
+    part.day as number,
+    part.hour as number,
+    part.minute as number,
+    part.second as number,
+  );
+};
+
+/** Madrid's offset from UTC at `instant`, in ms (+1 h in winter, +2 h in summer). */
+const madridOffset = (instant: number): number =>
+  madridWallClock(Math.floor(instant / 1000) * 1000) - Math.floor(instant / 1000) * 1000;
+
+/** A `datetime-local` value ("2026-10-31T10:00") showing `date` in Madrid time. */
+export const toMadridInputValue = (date: Date): string =>
+  new Date(madridWallClock(date.getTime())).toISOString().slice(0, 16);
+
+/**
+ * The instant for a `datetime-local` value read as Madrid time, or `null` if it is not a value.
+ * In the repeated hour of the October change it picks the first occurrence.
+ */
+export function fromMadridInputValue(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return null;
+  const wall = Date.parse(`${value}:00Z`);
+  if (Number.isNaN(wall)) return null;
+  // Try both offsets around the instant, so the hour that repeats resolves to its first pass.
+  const candidates = [madridOffset(wall - 3 * 3_600_000), madridOffset(wall + 3 * 3_600_000)]
+    .map((offset) => wall - offset)
+    .filter((utc) => madridWallClock(utc) === wall)
+    .sort((a, b) => a - b);
+  const utc = candidates[0];
+  return utc === undefined ? null : new Date(utc);
+}

@@ -11,6 +11,7 @@ import {
   STATION_CODE,
   STATIONS,
   search,
+  sightingWindow,
 } from './fixtures.js';
 
 /**
@@ -44,6 +45,8 @@ export function startMockApi(port: number): Promise<Server> {
       req.on('close', () => clearInterval(heartbeat));
       return;
     }
+    if (url.pathname === '/sightings')
+      return json(sightingWindow(new Date(url.searchParams.get('from') ?? 0)));
     if (url.pathname === '/stations') return json(STATIONS);
     if (url.pathname === '/lines/geometry') return json(NO_TRACK);
     if (url.pathname === '/stats/punctuality') return json(PUNCTUALITY_RANKING);
