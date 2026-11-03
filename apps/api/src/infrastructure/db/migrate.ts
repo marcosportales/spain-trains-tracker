@@ -22,6 +22,11 @@ export type MigrateOptions = {
  * the migration transaction, so it runs here, after it. Repeating it is harmless.
  */
 export async function backfillDelayAggregates(sql: postgres.Sql): Promise<void> {
+  // Migration folders without the Delay schema (e.g. test fixtures) have nothing to materialize.
+  const [table] = await sql<
+    { found: boolean }[]
+  >`SELECT to_regclass('delays') IS NOT NULL AS found`;
+  if (!table?.found) return;
   const [range] = await sql<{ first: Date | null; last: Date | null }[]>`
     SELECT min(observed_at) AS first, max(observed_at) AS last FROM delays`;
   if (!range?.first || !range.last) return;
