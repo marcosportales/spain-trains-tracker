@@ -120,7 +120,7 @@
     "title": "Punctuality",
     "description": "Which Lines run on time, and when delays happen. Based on the Delays Renfe reports.",
     "window": "Time window",
-    "lastDays": "Last {days} days",
+    "windowDays": "{days} days",
     "ranking": "Line ranking",
     "empty": "Not enough data yet to rank Lines",
     "line": "Line",

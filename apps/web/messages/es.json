@@ -120,7 +120,7 @@
     "title": "Puntualidad",
     "description": "Qué líneas circulan a su hora y cuándo se producen los retrasos. Basado en los retrasos que informa Renfe.",
     "window": "Periodo",
-    "lastDays": "Últimos {days} días",
+    "windowDays": "{days} días",
     "ranking": "Ranking de líneas",
     "empty": "Aún no hay datos suficientes para ordenar las líneas",
     "line": "Línea",

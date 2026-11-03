@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { fetchDelayByHour, fetchPunctualityRanking } from '@/lib/punctuality-api';
 import { delayMinutes } from '../delay/delay-band';
 import { Popover } from '../ui/Popover';
+import { SegmentedControl } from '../ui/SegmentedControl';
 import {
   hourBars,
   punctualityHeadline,
@@ -16,6 +17,7 @@ import {
 } from './punctuality-view';
 
 const DAY_OPTIONS = [7, 30, 90] as const;
+type WindowDays = `${(typeof DAY_OPTIONS)[number]}`;
 
 type Initial = { ranking: PunctualityRanking; byHour: DelayByHour };
 
@@ -95,20 +97,17 @@ export function PunctualityView({ initial }: { initial: Initial }) {
         </Popover>
       </p>
 
-      <fieldset className="mt-3 flex gap-2 border-0 p-0">
-        <legend className="sr-only">{t('window')}</legend>
-        {DAY_OPTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            aria-pressed={days === option}
-            onClick={() => setDays(option)}
-            className={`min-h-11 flex-1 rounded border px-3 text-sm font-medium ${days === option ? 'bg-gray-900 text-white' : 'bg-white'}`}
-          >
-            {t('lastDays', { days: option })}
-          </button>
-        ))}
-      </fieldset>
+      <div className="mt-3">
+        <SegmentedControl<WindowDays>
+          aria-label={t('window')}
+          value={String(days) as WindowDays}
+          onChange={(value) => setDays(Number(value))}
+          options={DAY_OPTIONS.map((option) => ({
+            value: String(option) as WindowDays,
+            label: t('windowDays', { days: option }),
+          }))}
+        />
+      </div>
       {failed && (
         <p role="status" className="mt-2 text-sm text-amber-800">
           {t('error')}
