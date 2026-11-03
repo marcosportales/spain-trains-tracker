@@ -6,7 +6,10 @@ import { DelayBadge } from '../delay/DelayBadge';
 import { runDetailPath } from '../run/run-detail-view';
 import { entryBand, entryTimes, type Tab } from './station-board-view';
 
-/** Departures/arrivals table: Time | Destination (Origin) | Train | Status. One link per row. */
+/**
+ * Departures/arrivals table: Time | Destination (Origin) | Train | Status. One link per row.
+ * The fixed columns stay narrow so the station name keeps most of the 400 px side panel.
+ */
 export function BoardTable({
   entries,
   tab,
@@ -17,21 +20,22 @@ export function BoardTable({
   names: (code: string) => string;
 }) {
   const t = useTranslations('StationBoard');
-  const th = 'px-3 py-2 text-left text-xs font-medium text-ink-2';
+  const cell = 'px-2 py-2';
+  const th = `${cell} truncate text-left text-xs font-medium text-ink-2`;
   return (
     <table className="w-full table-fixed border-collapse text-sm">
       <thead>
         <tr className="border-b border-line">
-          <th scope="col" className={`${th} w-24`}>
+          <th scope="col" className={`${th} w-16`}>
             {t('columns.time')}
           </th>
           <th scope="col" className={th}>
             {t(tab === 'departures' ? 'columns.destination' : 'columns.origin')}
           </th>
-          <th scope="col" className={`${th} w-32`}>
+          <th scope="col" className={`${th} w-20`}>
             {t('columns.train')}
           </th>
-          <th scope="col" className={`${th} w-32`}>
+          <th scope="col" className={`${th} w-28`}>
             {t('columns.status')}
           </th>
         </tr>
@@ -45,7 +49,7 @@ export function BoardTable({
               key={`${entry.serviceDate}/${entry.trainNumber}`}
               className="relative h-11 border-b border-line hover:bg-surface-2"
             >
-              <td className="px-3 py-2 tabular-nums">
+              <td className={`${cell} tabular-nums`}>
                 {times.changed ? (
                   <>
                     <s className="text-ink-3">{times.scheduled}</s>{' '}
@@ -55,10 +59,10 @@ export function BoardTable({
                   times.scheduled
                 )}
               </td>
-              <td className="truncate px-3 py-2" title={station}>
+              <td className={`${cell} truncate`} title={station}>
                 {station}
               </td>
-              <td className="px-3 py-2">
+              <td className={cell}>
                 <span className="flex items-center gap-1.5">
                   <span
                     aria-hidden="true"
@@ -67,18 +71,22 @@ export function BoardTable({
                   />
                   <Link
                     href={runDetailPath(entry)}
-                    className="truncate after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-accent"
+                    aria-label={t('train', { trainNumber: entry.trainNumber })}
+                    className="truncate tabular-nums after:absolute after:inset-0 focus-visible:outline-2 focus-visible:outline-accent"
                   >
-                    {t('train', { trainNumber: entry.trainNumber })}
+                    {entry.trainNumber}
                   </Link>
-                  {entry.lineCode && (
-                    <span className="shrink-0 rounded-sm bg-surface-2 px-1.5 text-xs">
-                      {entry.lineCode}
-                    </span>
-                  )}
                 </span>
+                {entry.lineCode && (
+                  <span
+                    title={entry.lineCode}
+                    className="mt-0.5 inline-block max-w-full truncate rounded-sm bg-surface-2 px-1.5 text-xs"
+                  >
+                    {entry.lineCode}
+                  </span>
+                )}
               </td>
-              <td className="px-3 py-2">
+              <td className={cell}>
                 <DelayBadge
                   band={entryBand(entry)}
                   delaySeconds={entry.delaySeconds}

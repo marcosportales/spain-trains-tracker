@@ -42,8 +42,12 @@ describe('BoardTable', () => {
   it('has exactly one link per row, the train cell, and the line chip', () => {
     const html = render([entry({ lineCode: 'C1' }), entry({ trainNumber: '03064' })]);
     expect(html.match(/<a /g)).toHaveLength(2);
-    expect(html).toContain('Train 03063');
+    expect(html).toContain('aria-label="Train 03063"');
     expect(html).toContain('>C1<');
+  });
+
+  it('shows the bare train number in the train cell', () => {
+    expect(render([entry()])).toMatch(/<a [^>]*>03063<\/a>/);
   });
 
   it('titles the truncated station name', () => {
