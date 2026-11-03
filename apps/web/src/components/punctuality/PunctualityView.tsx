@@ -6,8 +6,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { fetchDelayByHour, fetchPunctualityRanking } from '@/lib/punctuality-api';
 import { type DelayBand, delayMinutes } from '../delay/delay-band';
+import { formatMadridTime } from '../run/run-detail-view';
+import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
 import { Popover } from '../ui/Popover';
 import { SegmentedControl } from '../ui/SegmentedControl';
+import { Skeleton } from '../ui/Skeleton';
 import { byHourSummary, hourBars, punctualityHeadline, rankingBars } from './punctuality-view';
 
 const BAND_BAR: Partial<Record<DelayBand, string>> = {
@@ -18,6 +22,11 @@ const BAND_BAR: Partial<Record<DelayBand, string>> = {
 
 const DAY_OPTIONS = [7, 30, 90] as const;
 type WindowDays = `${(typeof DAY_OPTIONS)[number]}`;
+
+const RANKING_SKELETON = [0, 1, 2, 3, 4, 5];
+const HOURS_SKELETON = Array.from({ length: 24 }, (_, hour) => hour);
+const SKELETON_HEIGHTS = ['h-10', 'h-16', 'h-24', 'h-12', 'h-20'];
+const NEXT_WINDOW: Record<number, number> = { 7: 30, 30: 90 };
 
 type Initial = { ranking: PunctualityRanking; byHour: DelayByHour };
 
@@ -31,10 +40,11 @@ export function PunctualityView({ initial }: { initial: Initial }) {
   const [ranking, setRanking] = useState(initial.ranking);
   const [byHour, setByHour] = useState(initial.byHour);
   const [failed, setFailed] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(() => Date.now());
 
   // Refetch when the window or selected Line differs from what is shown.
   useEffect(() => {
-    if (days === ranking.days && lineCode === byHour.lineCode) return;
+    if (failed || (days === ranking.days && lineCode === byHour.lineCode)) return;
     let cancelled = false;
     Promise.all([
       days === ranking.days ? ranking : fetchPunctualityRanking(days),
@@ -45,13 +55,19 @@ export function PunctualityView({ initial }: { initial: Initial }) {
         setRanking(nextRanking);
         setByHour(nextByHour);
         setFailed(false);
+        setUpdatedAt(Date.now());
       })
       .catch(() => !cancelled && setFailed(true));
     return () => {
       cancelled = true;
     };
-  }, [days, lineCode, ranking, byHour.lineCode]);
+  }, [days, lineCode, ranking, byHour.lineCode, failed]);
 
+  // A request is in flight when what is asked for differs from what is shown and nothing failed.
+  const rankingLoading = !failed && days !== ranking.days;
+  const loading = !failed && (days !== ranking.days || lineCode !== byHour.lineCode);
+
+  const nextWindow = NEXT_WINDOW[ranking.days];
   const rows = rankingBars(ranking.lines);
   const headline = punctualityHeadline(ranking);
   const percent = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
@@ -95,14 +111,39 @@ export function PunctualityView({ initial }: { initial: Initial }) {
         />
       </div>
       {failed && (
-        <p role="status" className="mt-2 text-sm text-amber-800">
-          {t('error')}
-        </p>
+        <div role="status" className="mt-2 flex items-center gap-2 text-sm text-ink-2">
+          <span>
+            {t('refreshFailed', { time: formatMadridTime(new Date(updatedAt).toISOString()) })}
+          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setFailed(false);
+            }}
+          >
+            {t('retry')}
+          </Button>
+        </div>
       )}
 
       <h2 className="mt-5 text-lg font-semibold">{t('ranking')}</h2>
-      {rows.length === 0 ? (
-        <p className="mt-2 text-sm text-gray-600">{t('empty')}</p>
+      {rankingLoading ? (
+        <div className="mt-2 flex flex-col gap-3" aria-busy="true">
+          {RANKING_SKELETON.map((id) => (
+            <Skeleton key={id} className="h-5" />
+          ))}
+        </div>
+      ) : rows.length === 0 ? (
+        <EmptyState
+          message={t('emptyRanking', { days: ranking.days })}
+          {...(nextWindow !== undefined && {
+            action: {
+              label: t('emptyAction', { days: nextWindow }),
+              onAction: () => setDays(nextWindow),
+            },
+          })}
+        />
       ) : (
         <ol aria-label={t('ranking')} className="mt-2 flex flex-col">
           {rows.map(({ line, widthPct, band }) => {
@@ -157,32 +198,46 @@ export function PunctualityView({ initial }: { initial: Initial }) {
             ? t('byHourCalm')
             : t('byHourPeak', { from: summary.from, to: summary.to })}
       </p>
-      <ol
-        aria-label={t('byHour')}
-        className="mt-3 flex h-40 items-end gap-0.5 border-b border-surface-3"
-      >
-        {bars.map((bar) => {
-          const label =
-            bar.minutes === undefined
-              ? t('noData', { hour: bar.label })
-              : t('hourTitle', { hour: bar.label, minutes: bar.minutes, count: bar.count });
-          return (
-            <li
-              key={bar.hour}
-              className="flex h-full min-w-0 flex-1 flex-col justify-end"
-              title={label}
-            >
-              {bar.minutes !== undefined && (
-                <div
-                  className={`w-full rounded-t ${BAND_BAR[bar.band] ?? 'bg-band-unknown'}`}
-                  style={{ height: `${bar.heightPct}%` }}
-                />
-              )}
-              <span className="sr-only">{label}</span>
-            </li>
-          );
-        })}
-      </ol>
+      {loading ? (
+        <div
+          className="mt-3 flex h-40 items-end gap-0.5 border-b border-surface-3"
+          aria-busy="true"
+        >
+          {HOURS_SKELETON.map((hour) => (
+            <Skeleton
+              key={hour}
+              className={`min-w-0 flex-1 ${SKELETON_HEIGHTS[hour % SKELETON_HEIGHTS.length]}`}
+            />
+          ))}
+        </div>
+      ) : (
+        <ol
+          aria-label={t('byHour')}
+          className="mt-3 flex h-40 items-end gap-0.5 border-b border-surface-3"
+        >
+          {bars.map((bar) => {
+            const label =
+              bar.minutes === undefined
+                ? t('noData', { hour: bar.label })
+                : t('hourTitle', { hour: bar.label, minutes: bar.minutes, count: bar.count });
+            return (
+              <li
+                key={bar.hour}
+                className="flex h-full min-w-0 flex-1 flex-col justify-end"
+                title={label}
+              >
+                {bar.minutes !== undefined && (
+                  <div
+                    className={`w-full rounded-t ${BAND_BAR[bar.band] ?? 'bg-band-unknown'}`}
+                    style={{ height: `${bar.heightPct}%` }}
+                  />
+                )}
+                <span className="sr-only">{label}</span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
       <div aria-hidden className="mt-1 flex justify-between text-xs text-gray-600">
         <span>00</span>
         <span>06</span>

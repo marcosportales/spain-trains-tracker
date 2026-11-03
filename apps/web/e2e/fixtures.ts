@@ -1,5 +1,7 @@
 import type {
+  DelayByHour,
   LiveRun,
+  PunctualityRanking,
   RunDetail,
   SearchResult,
   StationBoard,
@@ -107,4 +109,30 @@ export const ALERT = {
   header: 'Reduced service',
   description: 'Works between Atocha and Chamartín.',
   activeFrom: '2026-07-01T10:05:00Z',
+};
+
+export const PUNCTUALITY_LINE = { code: 'C-3', name: 'Cercanías Madrid C-3' };
+
+export const PUNCTUALITY_RANKING: PunctualityRanking = {
+  days: 7,
+  overall: { runs: 400, onTimePct: 87 },
+  lines: [
+    {
+      lineCode: PUNCTUALITY_LINE.code,
+      name: PUNCTUALITY_LINE.name,
+      serviceType: 'cercanias',
+      runs: 400,
+      onTimePct: 87,
+      avgSeconds: 240,
+    },
+  ],
+};
+
+/** Delays peak at 8:00 and 9:00; the other hours run on time. */
+export const DELAY_BY_HOUR: DelayByHour = {
+  days: 7,
+  hours: Array.from({ length: 24 }, (_, hour) => {
+    const peak = hour === 8 || hour === 9;
+    return { hour, observations: 20, avgSeconds: peak ? 420 : 60, onTimePct: peak ? 50 : 95 };
+  }),
 };
