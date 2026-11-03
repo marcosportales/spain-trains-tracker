@@ -81,6 +81,16 @@ _Avoid_: Timetable, schedule (the board is the timetable joined with live data)
 An official notice from Renfe about a disruption that affects one or more Lines.
 _Avoid_: Incident, aviso (in code)
 
+## Search
+
+**Suggestion**:
+A Run, Station or Line offered in the search panel before the user has typed anything.
+_Avoid_: Recommendation, popular result
+
+**Recent**:
+A search result the user chose before, remembered only in their own browser.
+_Avoid_: History (that word is the Sightings), favourite
+
 ## Data provenance
 
 **Source**:
