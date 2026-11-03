@@ -68,14 +68,30 @@
   },
   "StationBoard": {
     "title": "Panel de {station}",
+    "label": "Salidas y llegadas · {station}",
+    "close": "Cerrar",
     "window": "Próximas 2 horas",
     "tabs": "Tipo de panel",
+    "columns": {
+      "time": "Hora",
+      "destination": "Destino",
+      "origin": "Origen",
+      "train": "Tren",
+      "status": "Estado"
+    },
+    "train": "Tren {trainNumber}",
     "departures": "Salidas",
     "arrivals": "Llegadas",
-    "to": "A {station}",
-    "from": "De {station}",
-    "empty": "No hay circulaciones en las próximas 2 horas",
-    "stale": "No se pudo actualizar; mostrando el último panel conocido",
+    "updated": "{unit, select, s {actualizado hace {value} s} other {actualizado hace {value} min}}",
+    "refreshFailed": "No se pudo actualizar · últimos datos de las {time}",
+    "retry": "Reintentar",
+    "headline": {
+      "nextDepartures": "Próxima salida: {time} a {station}",
+      "nextArrivals": "Próxima llegada: {time} desde {station}",
+      "late": " · {count, plural, one {# con retraso} other {# con retraso}}",
+      "emptyDepartures": "No hay salidas en las próximas 2 horas",
+      "emptyArrivals": "No hay llegadas en las próximas 2 horas"
+    },
     "description": "Próximas salidas y llegadas en {station}"
   },
   "Share": {

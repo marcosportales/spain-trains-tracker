@@ -68,14 +68,30 @@
   },
   "StationBoard": {
     "title": "{station} board",
+    "label": "Departures and arrivals · {station}",
+    "close": "Close",
     "window": "Next 2 hours",
     "tabs": "Board type",
+    "columns": {
+      "time": "Time",
+      "destination": "Destination",
+      "origin": "Origin",
+      "train": "Train",
+      "status": "Status"
+    },
+    "train": "Train {trainNumber}",
     "departures": "Departures",
     "arrivals": "Arrivals",
-    "to": "To {station}",
-    "from": "From {station}",
-    "empty": "No Runs in the next 2 hours",
-    "stale": "Could not refresh; showing the last known board",
+    "updated": "{unit, select, s {updated {value} s ago} other {updated {value} min ago}}",
+    "refreshFailed": "Could not refresh · last data from {time}",
+    "retry": "Retry",
+    "headline": {
+      "nextDepartures": "Next departure: {time} to {station}",
+      "nextArrivals": "Next arrival: {time} from {station}",
+      "late": " · {count} late",
+      "emptyDepartures": "No departures in the next 2 hours",
+      "emptyArrivals": "No arrivals in the next 2 hours"
+    },
     "description": "Next departures and arrivals at {station}"
   },
   "Share": {

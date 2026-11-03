@@ -44,8 +44,11 @@ type Props = {
   selected?: RunId;
   /** Server-known position of `selected`, used until the live stream delivers it. */
   selectedFallback?: LiveRun | undefined;
-  /** Station to centre on when `selected` has no live position (a Scheduled Run's origin). */
-  fallbackStationCode?: string | undefined;
+  /**
+   * Station to centre on and ring: a Station board's Station, or a Scheduled Run's origin when
+   * `selected` has no live position.
+   */
+  focusStationCode?: string | undefined;
 };
 
 export function TrainMap({
@@ -53,7 +56,7 @@ export function TrainMap({
   stationsHint,
   selected,
   selectedFallback,
-  fallbackStationCode,
+  focusStationCode,
 }: Props) {
   const router = useRouter();
   const tFilters = useTranslations('Filters');
@@ -145,11 +148,11 @@ export function TrainMap({
     return splitTrack(paths, [lon, lat], towards);
   }, [track.paths, lineCode, lon, lat, nextLon, nextLat]);
 
-  const fallbackStation = selectedRun
+  const focusStation = selectedRun
     ? undefined
-    : stations.find((station) => station.code === fallbackStationCode);
-  const stationLon = fallbackStation?.lon;
-  const stationLat = fallbackStation?.lat;
+    : stations.find((station) => station.code === focusStationCode);
+  const stationLon = focusStation?.lon;
+  const stationLat = focusStation?.lat;
 
   useEffect(() => {
     if (!map || stationLon === undefined || stationLat === undefined) return;
@@ -177,7 +180,12 @@ export function TrainMap({
         highlighted={highlighted}
         selectedTrack={selectedTrack}
       />
-      <StationsLayer map={map} stations={stations} onSelect={openStation} />
+      <StationsLayer
+        map={map}
+        stations={stations}
+        onSelect={openStation}
+        selectedCode={selected ? undefined : focusStationCode}
+      />
       <LiveRunsLayer
         map={map}
         runs={runs}
@@ -192,14 +200,16 @@ export function TrainMap({
             <Legend filters={filters} counts={counts} onChange={setFilters} loading={!loaded} />
             <div className="flex flex-wrap items-center gap-2">
               <LiveIndicator count={streamed.size} lastEventAt={lastEventAt} openedAt={openedAt} />
-              <AlertsChip
-                alerts={alerts}
-                highlightedId={highlightedAlertId}
-                onHighlight={setHighlightedAlertId}
-              />
+              {!focusStationCode && (
+                <AlertsChip
+                  alerts={alerts}
+                  highlightedId={highlightedAlertId}
+                  onHighlight={setHighlightedAlertId}
+                />
+              )}
             </div>
           </div>
-          {noMatch && (
+          {noMatch && !focusStationCode && (
             <div className="pointer-events-none absolute top-20 left-1/2 z-10 -translate-x-1/2">
               <div className="pointer-events-auto rounded-lg bg-surface shadow-2">
                 <EmptyState
@@ -212,7 +222,9 @@ export function TrainMap({
               </div>
             </div>
           )}
-          <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
+          {!focusStationCode && (
+            <FilterPanel filters={filters} lineOptions={lineOptions} onChange={setFilters} />
+          )}
         </>
       )}
     </>

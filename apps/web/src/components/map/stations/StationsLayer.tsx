@@ -1,7 +1,12 @@
 'use client';
 
 import type { StationList } from '@stt/contracts';
-import type { GeoJSONSource, MapLayerMouseEvent, Map as MapLibreMap } from 'maplibre-gl';
+import type {
+  ExpressionSpecification,
+  GeoJSONSource,
+  MapLayerMouseEvent,
+  Map as MapLibreMap,
+} from 'maplibre-gl';
 import { useEffect, useRef } from 'react';
 import { COLORS, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
@@ -10,13 +15,20 @@ import { STATION_LABELS_MIN_ZOOM, STATIONS_MIN_ZOOM, toStationFeatures } from '.
 
 const SOURCE_ID = 'stations';
 const CIRCLE_LAYER_ID = 'stations-circles';
+const RING_LAYER_ID = 'stations-selected';
 const LABEL_LAYER_ID = 'stations-labels';
 /** Runs are drawn above Stations, so a click on a Run never reaches the Station underneath. */
 const RUNS_LAYER_ID = 'live-runs-circles';
 /** Fingertip-sized hit box around a Station dot, in pixels. */
 const TOUCH_RADIUS = 12;
 
-function addLayers(map: MapLibreMap, theme: Theme) {
+const ringFilter = (code: string | undefined): ExpressionSpecification => [
+  '==',
+  ['get', 'code'],
+  code ?? '',
+];
+
+function addLayers(map: MapLibreMap, theme: Theme, selectedCode: string | undefined) {
   const colors = COLORS[theme];
   map.addSource(SOURCE_ID, {
     type: 'geojson',
@@ -33,6 +45,23 @@ function addLayers(map: MapLibreMap, theme: Theme) {
         'circle-radius': ['interpolate', ['linear'], ['zoom'], STATIONS_MIN_ZOOM, 3, 13, 6],
         'circle-color': colors.surface,
         'circle-stroke-color': colors.ink,
+        'circle-stroke-width': 2,
+      },
+    },
+    before,
+  );
+  // The selected Station: a 2 px accent ring just outside the dot.
+  map.addLayer(
+    {
+      id: RING_LAYER_ID,
+      type: 'circle',
+      source: SOURCE_ID,
+      minzoom: STATIONS_MIN_ZOOM,
+      filter: ringFilter(selectedCode),
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], STATIONS_MIN_ZOOM, 6, 13, 10],
+        'circle-color': 'rgba(0,0,0,0)',
+        'circle-stroke-color': colors.accent,
         'circle-stroke-width': 2,
       },
     },
@@ -69,14 +98,19 @@ export function StationsLayer({
   map,
   stations,
   onSelect,
+  selectedCode,
 }: {
   map: MapLibreMap | null;
   stations: StationList;
   onSelect?: (code: string) => void;
+  /** The Station whose board is open: drawn with an accent ring. */
+  selectedCode?: string | undefined;
 }) {
   const { theme } = useTheme();
   const select = useRef(onSelect);
   select.current = onSelect;
+  const selectedRef = useRef(selectedCode);
+  selectedRef.current = selectedCode;
 
   useEffect(() => {
     if (!map) return;
@@ -110,11 +144,19 @@ export function StationsLayer({
   useEffect(() => {
     if (!map) return;
     const sync = () => {
-      if (!map.getSource(SOURCE_ID)) addLayers(map, theme);
+      if (!map.getSource(SOURCE_ID)) addLayers(map, theme, selectedRef.current);
       (map.getSource(SOURCE_ID) as GeoJSONSource).setData(toStationFeatures(stations));
     };
     return syncOnStyle(map, SOURCE_ID, sync);
   }, [map, stations, theme]);
+
+  useEffect(() => {
+    if (!map) return;
+    const sync = () => {
+      if (map.getLayer(RING_LAYER_ID)) map.setFilter(RING_LAYER_ID, ringFilter(selectedCode));
+    };
+    return syncOnStyle(map, SOURCE_ID, sync);
+  }, [map, selectedCode]);
 
   return null;
 }
