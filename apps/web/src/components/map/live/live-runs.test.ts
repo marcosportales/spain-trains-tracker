@@ -108,6 +108,18 @@ describe('toFeatureCollection', () => {
   });
 });
 
+describe('toFeatureCollection icons', () => {
+  it.each([
+    [run('1', { serviceType: 'ave' }), 'run-ave'],
+    [run('1', { status: 'stopped_at' }), 'run-hollow-cercanias'],
+    [{ ...run('1'), serviceType: undefined }, 'run-unknown'],
+    [{ ...run('1', { status: 'incoming_at' }), serviceType: undefined }, 'run-hollow-unknown'],
+  ])('draws the Run with the matching badge (%#)', (r, icon) => {
+    const fc = toFeatureCollection(new Map([[runKey(r), r]]));
+    expect(fc.features[0]?.properties.icon).toBe(icon);
+  });
+});
+
 describe('toFeatureCollection positions', () => {
   it('draws a Run at its animated position when one is given', () => {
     const runs = liveRunsReducer(initialLiveRuns, { type: 'snapshot', runs: [run('1')] });

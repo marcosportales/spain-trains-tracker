@@ -1,6 +1,7 @@
 import type { LiveRun, RunId, ServiceType } from '@stt/contracts';
 import type { Feature, FeatureCollection, Point } from 'geojson';
 import { type DelayBand, delayBandFor } from '@/components/delay/delay-band';
+import { runIconId } from '../icons/marker-icons';
 
 /** A Run as drawn on the map. Replayed Sightings carry no Service type, so it is optional. */
 export type MapRun = Omit<LiveRun, 'serviceType'> & { serviceType?: ServiceType | undefined };
@@ -42,6 +43,8 @@ export type LiveRunProperties = {
   serviceType?: ServiceType | undefined;
   label: string;
   snapped: boolean;
+  /** The map image the Run is drawn with (see `marker-icons.ts`). */
+  icon: string;
   /** Live Runs have no Service status, so `cancelled` never applies here. */
   band: DelayBand;
 } & RunId;
@@ -61,6 +64,7 @@ export function toFeatureCollection(
         serviceType: run.serviceType,
         label: run.lineCode ?? run.trainNumber,
         snapped: isSnapped(run),
+        icon: runIconId(run.serviceType, isSnapped(run)),
         band: delayBandFor(run.delaySeconds),
         serviceDate: run.serviceDate,
         trainNumber: run.trainNumber,

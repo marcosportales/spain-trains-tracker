@@ -9,56 +9,36 @@ import type {
   Map as MapLibreMap,
 } from 'maplibre-gl';
 import { useEffect, useMemo, useRef } from 'react';
-import { COLORS, DELAY_BAND_COLORS, SERVICE_TYPE_COLORS, type Theme } from '@/theme/tokens';
+import { COLORS, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
+import { ALWAYS_SHOWN, addMarkerImages } from '../icons/marker-icons';
 import type { TrackPaths } from '../motion/interpolation';
 import { RunMotions } from '../motion/run-motions';
 import { syncOnStyle } from '../sync-on-style';
 import { type MapRuns, toFeatureCollection } from './live-runs';
 
 const SOURCE_ID = 'live-runs';
-const CIRCLE_LAYER_ID = 'live-runs-circles';
+/** The Run badges; other layers anchor to and hit-test against this id. */
+export const RUNS_ICON_LAYER_ID = 'live-runs-icons';
 const RING_LAYER_ID = 'live-runs-rings';
 const LABEL_LAYER_ID = 'live-runs-labels';
 const LABEL_MIN_ZOOM = 9;
-const HALO_LAYER_ID = 'live-runs-halo';
+/** The lowest Run layer: Stations are drawn under it. */
+export const RUNS_HALO_LAYER_ID = 'live-runs-halo';
 const DIMMED_OPACITY = 0.4;
 /** The other Runs while one is selected. */
 const UNSELECTED_OPACITY = 0.35;
-/** The selected Run's dot is this much bigger, with a halo of this radius beyond its edge. */
+/** The selected Run's badge is this much bigger, over an accent halo (see `marker-icons.ts`). */
 const SELECTED_SCALE = 1.7;
-const HALO_RADIUS = 9;
 const HALO_OPACITY = 0.35;
-const DOT_RADIUS = 4;
-const DOT_RADIUS_MOBILE = 4.4;
+const ICON_SIZE = 1;
+const ICON_SIZE_MOBILE = 1.1;
 const MOBILE_QUERY = '(max-width: 767px)';
-/** The Delay ring sits this far outside the dot's edge. */
-const RING_GAP = 2.6;
-const RING_WIDTH = 2.2;
 
-const dotRadius = (): number =>
+const iconSize = (): number =>
   typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches
-    ? DOT_RADIUS_MOBILE
-    : DOT_RADIUS;
-
-/** Ring stroke by Delay band; only `late` and `severely_late` are ever drawn. */
-const ringColorExpression = (theme: Theme) =>
-  [
-    'match',
-    ['get', 'band'],
-    'severely_late',
-    DELAY_BAND_COLORS[theme].severely_late.strong,
-    DELAY_BAND_COLORS[theme].late.strong,
-  ] as unknown as string;
-
-/** Dot fill by Service type; a Run with no known type is drawn in muted ink. */
-const colorExpression = (theme: Theme) =>
-  [
-    'match',
-    ['get', 'serviceType'],
-    ...Object.entries(SERVICE_TYPE_COLORS[theme]).flat(),
-    COLORS[theme]['ink-3'],
-  ] as unknown as string;
+    ? ICON_SIZE_MOBILE
+    : ICON_SIZE;
 
 /** Whether a feature is the selected Run; never true without one. */
 const isSelectedExpression = (selected: RunId | undefined) =>
@@ -74,11 +54,11 @@ type PaintState = { dimmed: boolean; selected: RunId | undefined };
 
 /**
  * Sets everything that depends on the state of the map: stale (dimmed) positions, and the
- * selected Run, which grows and gets a halo while the others fade.
+ * selected Run, which grows over a halo and is drawn on top while the others fade.
  */
 function applyPaint(map: MapLibreMap, { dimmed, selected }: PaintState) {
-  if (!map.getLayer(CIRCLE_LAYER_ID)) return;
-  const radius = dotRadius();
+  if (!map.getLayer(RUNS_ICON_LAYER_ID)) return;
+  const size = iconSize();
   const base = dimmed ? DIMMED_OPACITY : 1;
   const isSelected = isSelectedExpression(selected);
   const opacity = (value: number): number | ExpressionSpecification =>
@@ -95,72 +75,54 @@ function applyPaint(map: MapLibreMap, { dimmed, selected }: PaintState) {
       ? (['case', isSelected, value * SELECTED_SCALE, value] as unknown as ExpressionSpecification)
       : value;
 
-  map.setFilter(HALO_LAYER_ID, isSelected as unknown as FilterSpecification);
-  map.setPaintProperty(HALO_LAYER_ID, 'circle-radius', radius * SELECTED_SCALE + HALO_RADIUS);
+  map.setFilter(RUNS_HALO_LAYER_ID, isSelected as unknown as FilterSpecification);
+  map.setLayoutProperty(RUNS_HALO_LAYER_ID, 'icon-size', size * SELECTED_SCALE);
   map.setPaintProperty(
-    HALO_LAYER_ID,
-    'circle-opacity',
+    RUNS_HALO_LAYER_ID,
+    'icon-opacity',
     dimmed ? Math.min(HALO_OPACITY, DIMMED_OPACITY) : HALO_OPACITY,
   );
-  map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-radius', scaled(radius));
-  map.setPaintProperty(RING_LAYER_ID, 'circle-radius', scaled(radius + RING_GAP));
-  map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-opacity', [
-    'case',
-    ['get', 'snapped'],
-    0,
-    opacity(base),
-  ]);
-  map.setPaintProperty(CIRCLE_LAYER_ID, 'circle-stroke-opacity', opacity(base));
-  map.setPaintProperty(RING_LAYER_ID, 'circle-stroke-opacity', opacity(base));
+  for (const layer of [RUNS_ICON_LAYER_ID, RING_LAYER_ID]) {
+    map.setLayoutProperty(layer, 'icon-size', scaled(size));
+    map.setLayoutProperty(
+      layer,
+      'symbol-sort-key',
+      selected ? (['case', isSelected, 1, 0] as unknown as ExpressionSpecification) : 0,
+    );
+    map.setPaintProperty(layer, 'icon-opacity', opacity(base));
+  }
   map.setPaintProperty(LABEL_LAYER_ID, 'text-opacity', opacity(base));
 }
 
 function addLayers(map: MapLibreMap, theme: Theme, paint: PaintState) {
   const colors = COLORS[theme];
+  addMarkerImages(map, theme, 'run-');
   map.addSource(SOURCE_ID, {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] },
   });
   // Under everything else: the selected Run's halo.
   map.addLayer({
-    id: HALO_LAYER_ID,
-    type: 'circle',
+    id: RUNS_HALO_LAYER_ID,
+    type: 'symbol',
     source: SOURCE_ID,
-    paint: { 'circle-color': colors.accent, 'circle-radius': 0, 'circle-opacity': HALO_OPACITY },
+    layout: { ...ALWAYS_SHOWN, 'icon-image': 'run-halo' },
+    paint: { 'icon-opacity': HALO_OPACITY },
   });
-  // Under the dots, and only for late Runs: on time and unknown ones get no ring.
+  // Under the badges, and only for late Runs: on time and unknown ones get no frame.
   map.addLayer({
     id: RING_LAYER_ID,
-    type: 'circle',
+    type: 'symbol',
     source: SOURCE_ID,
     filter: ['in', ['get', 'band'], ['literal', ['late', 'severely_late']]],
-    paint: {
-      'circle-radius': dotRadius() + RING_GAP,
-      'circle-color': 'rgba(0, 0, 0, 0)',
-      'circle-stroke-color': ringColorExpression(theme),
-      'circle-stroke-width': RING_WIDTH,
-      'circle-stroke-opacity': 1,
-    },
+    layout: { ...ALWAYS_SHOWN, 'icon-image': ['concat', 'run-ring-', ['get', 'band']] },
   });
+  // Snapped positions (not real GPS) have their own hollow badge; see `runIconId`.
   map.addLayer({
-    id: CIRCLE_LAYER_ID,
-    type: 'circle',
+    id: RUNS_ICON_LAYER_ID,
+    type: 'symbol',
     source: SOURCE_ID,
-    paint: {
-      'circle-radius': dotRadius(),
-      'circle-color': colorExpression(theme),
-      // Snapped positions (not real GPS) are drawn hollow, with a Service type stroke; the
-      // others get the 1 px outline that keeps every dot legible on the basemap.
-      'circle-opacity': ['case', ['get', 'snapped'], 0, 1],
-      'circle-stroke-color': [
-        'case',
-        ['get', 'snapped'],
-        colorExpression(theme),
-        colors['dot-outline'],
-      ],
-      'circle-stroke-width': ['case', ['get', 'snapped'], 2, 1],
-      'circle-stroke-opacity': 1,
-    },
+    layout: { ...ALWAYS_SHOWN, 'icon-image': ['get', 'icon'] },
   });
   map.addLayer({
     id: LABEL_LAYER_ID,
@@ -171,7 +133,9 @@ function addLayers(map: MapLibreMap, theme: Theme, paint: PaintState) {
       'text-field': ['get', 'label'],
       'text-font': ['Noto Sans Bold'],
       'text-size': 11,
-      'text-offset': [0, 1.2],
+      // Just below the badge.
+      'text-anchor': 'top',
+      'text-offset': [0, 0.9],
       'text-allow-overlap': false,
     },
     paint: {
@@ -204,7 +168,7 @@ export function LiveRunsLayer({
   runs: MapRuns;
   paths?: ReadonlyMap<string, TrackPaths>;
   onSelect?: (id: RunId) => void;
-  /** Draws dots and labels at 40 % opacity: the positions are stale (the stream is offline). */
+  /** Draws badges and labels at 40 % opacity: the positions are stale (the stream is offline). */
   dimmed?: boolean;
   /** The Run whose detail is open: drawn bigger with a halo, while every other Run fades. */
   selected?: RunId | undefined;
@@ -233,8 +197,8 @@ export function LiveRunsLayer({
     const reset = () => {
       map.getCanvas().style.cursor = '';
     };
-    // A ring is part of its Run: clicking it opens the Run like clicking the dot.
-    const layers = [CIRCLE_LAYER_ID, RING_LAYER_ID];
+    // A frame is part of its Run: clicking it opens the Run like clicking the badge.
+    const layers = [RUNS_ICON_LAYER_ID, RING_LAYER_ID];
     for (const layer of layers) {
       map.on('click', layer, onClick);
       map.on('mouseenter', layer, pointer);
@@ -277,7 +241,7 @@ export function LiveRunsLayer({
     if (map) applyPaint(map, { dimmed, selected });
   }, [map, dimmed, selectedKey]);
 
-  // Dots grow slightly on narrow viewports.
+  // Badges grow slightly on narrow viewports.
   useEffect(() => {
     if (!map) return;
     const query = window.matchMedia(MOBILE_QUERY);
