@@ -60,8 +60,8 @@ Stations are always shown by **name**, never by code.
 
 ## Map
 
-- **Dots are coloured by Service type.** A Run that is Late or Severely late gets an amber or red ring (halo); On time Runs have no ring.
-- **Legend**, always visible: each Service type with its live count ("● Cercanías 214"). Tapping one hides or shows it, which replaces the Service type checkboxes in the filter panel. Below it is one line: "◯ ámbar = retraso · ◯ rojo = retraso grave". On mobile it collapses into a scrollable chip row.
+- **Runs are badges coloured by Service type:** a small rounded square with a white train front, like a metro sign (`components/map/icons/marker-icons.ts`). A snapped position (not real GPS) is drawn hollow. A Run that is Late or Severely late gets an amber or red rounded-square frame; On time Runs have no frame. Stations are ink badges with a station building in the surface colour, drawn under every Run layer and framed in accent when selected.
+- **Legend**, always visible: each Service type with its live count ("[tren] Cercanías 214", with the same badge as the map). Tapping one hides or shows it, which replaces the Service type checkboxes in the filter panel. Below it is one line: "▢ ámbar = retraso · ▢ rojo = retraso grave" (frames drawn like the map's). On mobile it collapses into a scrollable chip row.
 - **Live indicator**, next to the legend:
   - "● En directo · 312 trenes · hace 4 s" (green): normal.
   - "Reconectando…" (amber): more than 30 s without data.
@@ -69,7 +69,7 @@ Stations are always shown by **name**, never by code.
   - The thresholds are tuned to the stream's real cadence during implementation.
 - **Service alerts:** a "⚠ 3 avisos" chip beside the live indicator, hidden when there are none. It opens a list; each alert says in one sentence which Lines it affects, and tapping one highlights those Lines on the map.
 - **Filters panel** keeps only Red de Cercanías and Línea.
-- **Selected Run:** its dot grows and gets a halo, its Track geometry is drawn (the travelled part dimmed, the remaining part strong), and the other trains are dimmed.
+- **Selected Run:** its badge grows over an accent halo, its Track geometry is drawn (the travelled part dimmed, the remaining part strong), and the other trains are dimmed.
 
 ## Run detail: "¿dónde va mi tren?"
 
@@ -140,7 +140,7 @@ Settled by the prototype, approved by the owner on 2026-11-02.
 | `on-ink` | `#ffffff` | `#18181b` | Text on a primary (ink) button |
 | `accent` | `#2563eb` | `#6ea8fe` | Focus rings, selection, links, alert highlight on the map |
 | `accent-soft` | `#dbe6fd` | `#1c2c47` | Selected item background |
-| `dot-outline` | `#18181b` @ 55 % | `#f4f4f5` @ 50 % | 1 px outline on every train dot |
+| `dot-outline` | `#18181b` @ 55 % | `#f4f4f5` @ 50 % | 1 px outline on every Run badge |
 
 ### Service type palette
 
@@ -169,9 +169,9 @@ dark, surface #16181b
   [WARN] Contrast vs surface  #7943aa 2.71, #a04b00 2.97 — relief required
 ```
 
-The contrast WARN is structural, not a tuning miss: a search over each hue family found no five-hue palette that passes CVD separation, the normal-vision floor and 3:1 contrast at once on the light basemap. CVD separation was kept fully passing, since identity on the map depends on it, and the contrast relief is mandatory in implementation: every dot carries the `dot-outline`, the legend always names each type in text, and Run detail names the type.
+The contrast WARN is structural, not a tuning miss: a search over each hue family found no five-hue palette that passes CVD separation, the normal-vision floor and 3:1 contrast at once on the light basemap. CVD separation was kept fully passing, since identity on the map depends on it, and the contrast relief is mandatory in implementation: every Run badge carries the `dot-outline`, the legend always names each type in text, and Run detail names the type.
 
-Every Service type colour is at least ΔE 15 (OKLab ×100) from every Delay band strong colour in both themes, so dots never read as a Delay band.
+Every Service type colour is at least ΔE 15 (OKLab ×100) from every Delay band strong colour in both themes, so Run badges never read as a Delay band.
 
 ### Delay band colours
 
@@ -193,7 +193,7 @@ Checks: strong vs basemap 3.10 / 3.05 / 4.22 / 3.04 (light) and 7.55 / 8.77 / 5.
 - **Radius:** 6 (small controls), 10 (buttons, inputs, menus), 14 (panels, cards, top bar), 20 (bottom sheet top corners), pill 999.
 - **Shadow:** `shadow-1` `0 1px 2px rgba(20,22,28,.06), 0 2px 8px rgba(20,22,28,.06)` for cards; `shadow-2` `0 2px 6px rgba(20,22,28,.08), 0 12px 32px rgba(20,22,28,.14)` for floating chrome over the map. Dark: `0 1px 2px rgba(0,0,0,.4), 0 2px 8px rgba(0,0,0,.3)` and `0 2px 6px rgba(0,0,0,.45), 0 12px 32px rgba(0,0,0,.5)`.
 - **Type** (Inter, tabular figures on every time and count): 12 / 13 / 14 (body) / 16 / 20 / 24 / 30 px. Run detail and Station board headline 22 px desktop, 20 px mobile, weight 600; Punctuality headline 30 px desktop, 24 px mobile.
-- **Layout sizes:** top bar 52 px high (48 mobile); desktop side panel 400 px wide; map dot radius 4 px (4.4 mobile), Delay ring 2.2 px stroke at +2.6 px; selected dot ×1.7 with a 9 px halo.
+- **Layout sizes:** top bar 52 px high (48 mobile); desktop side panel 400 px wide; Run badge 16 px (×1.1 mobile), Delay frame 2.2 px stroke at +2 px; selected badge ×1.7 with a 9 px halo; Station badge 14 px, scaled ×0.65 at zoom 8 to ×1.15 at zoom 13.
 - **Sheet snap points (mobile):** peek ≈ 150 px of headline, half at 42 % of the viewport height, full up to just under the top bar.
 
 ### Decisions the prototype changed or added
