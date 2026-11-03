@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { fetchStationBoard } from '@/lib/station-board-api';
+import type { StationNames } from '@/lib/station-names';
 import { serviceTypeVar } from '@/theme/tokens';
 import { DelayBadge } from '../delay/DelayBadge';
 import { runDetailPath } from '../run/run-detail-view';
@@ -16,7 +17,13 @@ export const REFRESH_MS = 30_000;
 type Tab = 'departures' | 'arrivals';
 
 /** Station board with departures/arrivals tabs, refreshed every 30 s from the API. */
-export function StationBoardView({ initial }: { initial: StationBoard }) {
+export function StationBoardView({
+  initial,
+  names,
+}: {
+  initial: StationBoard;
+  names: StationNames;
+}) {
   const t = useTranslations('StationBoard');
   const [board, setBoard] = useState(initial);
   const [tab, setTab] = useState<Tab>('departures');
@@ -97,7 +104,7 @@ export function StationBoardView({ initial }: { initial: StationBoard }) {
                       </span>
                       <span className="block truncate text-sm text-gray-600">
                         {t(tab === 'departures' ? 'to' : 'from', {
-                          station: entry.counterpartStationCode,
+                          station: names(entry.counterpartStationCode),
                         })}
                       </span>
                     </span>
