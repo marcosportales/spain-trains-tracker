@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { TopBar } from '@/components/top-bar/TopBar';
 import { routing } from '@/i18n/routing';
+import { ThemeSync } from '@/theme/ThemeSync';
 import { THEME_SCRIPT } from '@/theme/theme-script';
 import '../globals.css';
 
@@ -48,6 +49,7 @@ export default async function LocaleLayout({
       </head>
       <body>
         <NextIntlClientProvider>
+          <ThemeSync />
           <TopBar />
           <main className="relative h-dvh">{children}</main>
         </NextIntlClientProvider>
