@@ -9,6 +9,8 @@ export const RunSearchHit = z.object({
   serviceDate: ServiceDate,
   serviceType: ServiceType,
   lineCode: LineCode.optional(),
+  originName: z.string().min(1).optional(),
+  destinationName: z.string().min(1).optional(),
 });
 export type RunSearchHit = z.infer<typeof RunSearchHit>;
 

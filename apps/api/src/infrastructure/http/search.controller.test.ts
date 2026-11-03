@@ -112,6 +112,29 @@ describe('GET /search', () => {
     ]);
   });
 
+  it('carries origin and destination names on a Run that has them', async () => {
+    await testDb.sql.unsafe(
+      "UPDATE runs SET origin_station_code = '1', destination_station_code = '2' WHERE train_number = '23579'",
+    );
+    const [run] = (await search('23579')).runs;
+    expect(run).toMatchObject({
+      originName: 'Madrid-Puerta de Atocha',
+      destinationName: 'Barcelona-Sants',
+    });
+  });
+
+  it('omits origin and destination names when unknown or unmatched', async () => {
+    await testDb.sql.unsafe(
+      "UPDATE runs SET origin_station_code = '1', destination_station_code = 'nope' WHERE train_number = '23580'",
+    );
+    const [plain] = (await search('23579')).runs;
+    expect(plain).not.toHaveProperty('originName');
+    expect(plain).not.toHaveProperty('destinationName');
+    const [partial] = (await search('23580')).runs;
+    expect(partial).toHaveProperty('originName', 'Madrid-Puerta de Atocha');
+    expect(partial).not.toHaveProperty('destinationName');
+  });
+
   it('matches Train numbers by prefix and skips inactive Runs', async () => {
     expect((await search('235')).runs.map((r) => r.trainNumber)).toEqual(['23579', '23580']);
     expect((await search('239')).runs).toEqual([]);

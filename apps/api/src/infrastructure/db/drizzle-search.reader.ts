@@ -31,18 +31,25 @@ export class DrizzleSearchReader extends SearchReader {
       service_date: string;
       service_type: string;
       line_code: string | null;
+      origin_name: string | null;
+      destination_name: string | null;
     }>(sql`
-      SELECT train_number, service_date::text AS service_date, service_type, line_code
-      FROM ${t.runs}
-      WHERE train_number LIKE ${`${likeEscape(query)}%`}
-        AND last_seen_at >= ${since.toISOString()}::timestamptz
-      ORDER BY (train_number = ${query}) DESC, service_date DESC, train_number
+      SELECT r.train_number, r.service_date::text AS service_date, r.service_type, r.line_code,
+        o.name AS origin_name, d.name AS destination_name
+      FROM ${t.runs} r
+      LEFT JOIN ${t.stations} o ON o.code = r.origin_station_code
+      LEFT JOIN ${t.stations} d ON d.code = r.destination_station_code
+      WHERE r.train_number LIKE ${`${likeEscape(query)}%`}
+        AND r.last_seen_at >= ${since.toISOString()}::timestamptz
+      ORDER BY (r.train_number = ${query}) DESC, r.service_date DESC, r.train_number
       LIMIT ${limit}`);
     return rows.map((row) => ({
       trainNumber: row.train_number,
       serviceDate: row.service_date,
       serviceType: row.service_type as ServiceType,
       ...(row.line_code !== null && { lineCode: row.line_code }),
+      ...(row.origin_name !== null && { originName: row.origin_name }),
+      ...(row.destination_name !== null && { destinationName: row.destination_name }),
     }));
   }
 
