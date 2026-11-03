@@ -48,9 +48,29 @@ describe('ReplayControls', () => {
     expect(html).toContain('600×');
   });
 
-  it('disables play and the scrubber, and shows the status sentence', () => {
-    const html = render({ disabled: true, status: 'Could not load the positions for this hour.' });
+  it('shows skeletons instead of the controls while loading, keeping the explanation', () => {
+    const html = render({ view: 'loading', disabled: true });
+    expect(html).toContain('Watch how trains moved');
+    expect(html).toContain('animate-pulse');
+    expect(html).not.toContain('type="range"');
+  });
+
+  it('offers an earlier hour when a picked hour is empty', () => {
+    const html = render({ view: 'empty', disabled: true, onEarlier: () => {} });
+    expect(html).toContain('No positions saved for this hour.');
+    expect(html).toContain('Try an hour earlier');
     expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(html).toContain('role="status"');
+  });
+
+  it('says what failed and offers a retry', () => {
+    const html = render({ view: 'error', disabled: true, onRetry: () => {} });
+    expect(html).toContain('Could not load the positions for this hour.');
+    expect(html).toContain('Retry');
+  });
+
+  it('says there is no recent data, with the picker still enabled', () => {
+    const html = render({ view: 'none', hours: 6, disabled: true });
+    expect(html).toContain('No positions in the last 6 hours.');
+    expect(html).toContain('type="datetime-local"');
   });
 });

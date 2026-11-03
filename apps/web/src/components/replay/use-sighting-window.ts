@@ -16,13 +16,17 @@ export type SightingWindowState =
 export function useSightingWindow(
   from: Date | null,
   initial?: { from: Date; window: SightingWindow },
+  /** Bump to fetch the same window again after an error. */
+  attempt = 0,
 ): SightingWindowState {
   const key = from?.getTime() ?? null;
-  const seeded = initial && initial.from.getTime() === key ? initial.window : undefined;
+  const seeded =
+    attempt === 0 && initial && initial.from.getTime() === key ? initial.window : undefined;
   const [state, setState] = useState<SightingWindowState>(
     seeded ? { status: 'ready', window: seeded } : { status: 'loading' },
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` refetches the same window
   useEffect(() => {
     if (key === null) {
       setState({ status: 'loading' });
@@ -40,7 +44,7 @@ export function useSightingWindow(
         if (!controller.signal.aborted) setState({ status: 'error' });
       });
     return () => controller.abort();
-  }, [key, seeded]);
+  }, [key, seeded, attempt]);
 
   return state;
 }

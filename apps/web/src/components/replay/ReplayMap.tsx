@@ -2,7 +2,7 @@
 
 import type { RunId } from '@stt/contracts';
 import { type Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useRouter } from '@/i18n/navigation';
@@ -17,7 +17,7 @@ import {
   formatMadridHourMinute,
   runDetailPath,
 } from '../run/run-detail-view';
-import { ReplayControls } from './ReplayControls';
+import { ReplayControls, type ReplayControlsView } from './ReplayControls';
 import {
   advance,
   DEFAULT_SPEED,
@@ -36,13 +36,14 @@ setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url)
 
 /** Replays a past hour of Sightings on the map, with a play/pause button, speed and a scrubber. */
 export function ReplayMap({ label }: { label: string }) {
-  const t = useTranslations('Replay');
   const locale = useLocale();
   const router = useRouter();
   const container = useRef<HTMLElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const track = useTrackGeometry();
-  const latest = useLatestWindow();
+  const [searchAttempt, setSearchAttempt] = useState(0);
+  const [windowAttempt, setWindowAttempt] = useState(0);
+  const latest = useLatestWindow(searchAttempt);
   const [picked, setPicked] = useState<Date | null>(null);
   // The hour picked by hand wins; otherwise the latest hour with data (none until it is found).
   const from = picked ?? (latest.status === 'found' ? latest.from : null);
@@ -50,7 +51,11 @@ export function ReplayMap({ label }: { label: string }) {
   const [position, setPosition] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>(DEFAULT_SPEED);
-  const state = useSightingWindow(from, latest.status === 'found' ? latest : undefined);
+  const state = useSightingWindow(
+    from,
+    latest.status === 'found' ? latest : undefined,
+    windowAttempt,
+  );
 
   const index = useMemo(
     () => (state.status === 'ready' ? indexSightings(state.window) : undefined),
@@ -112,20 +117,23 @@ export function ReplayMap({ label }: { label: string }) {
   };
   const openRun = (id: RunId) => router.push(runDetailPath(id));
   const picking = latest.status === 'found' || picked !== null;
-  const status =
+  const view: ReplayControlsView =
     latest.status === 'searching'
-      ? t('loading')
+      ? 'loading'
       : !picking
         ? latest.status === 'error'
-          ? t('error')
-          : t('noRecentData', { hours: LOOKBACK_HOURS })
+          ? 'error'
+          : 'none'
         : state.status === 'loading'
-          ? t('loading')
+          ? 'loading'
           : state.status === 'error'
-            ? t('error')
-            : state.status === 'ready' && state.window.sightings.length === 0
-              ? t('empty')
-              : undefined;
+            ? 'error'
+            : state.window.sightings.length === 0
+              ? 'empty'
+              : 'ready';
+  const earlier = () => setPicked(new Date((from ?? pickerValue).getTime() - WINDOW_MS));
+  // A failed search starts over; a failed hour is fetched again, without searching.
+  const retry = () => (picking ? setWindowAttempt : setSearchAttempt)((n) => n + 1);
 
   return (
     <>
@@ -133,7 +141,10 @@ export function ReplayMap({ label }: { label: string }) {
       <TrackGeometryLayer map={map} track={track.collection} />
       <LiveRunsLayer map={map} runs={runs} paths={track.paths} onSelect={openRun} />
       <ReplayControls
-        status={status}
+        view={view}
+        hours={LOOKBACK_HOURS}
+        onEarlier={earlier}
+        onRetry={retry}
         playing={playing}
         onTogglePlay={togglePlay}
         position={position}
@@ -142,7 +153,7 @@ export function ReplayMap({ label }: { label: string }) {
         clockText={formatMadridDateTime(instant, locale)}
         startLabel={from ? formatMadridHourMinute(from, locale) : ''}
         endLabel={from ? formatMadridHourMinute(from.getTime() + WINDOW_MS, locale) : ''}
-        disabled={state.status !== 'ready'}
+        disabled={view !== 'ready'}
         speed={speed}
         onSpeed={setSpeed}
         pickerValue={toMadridInputValue(pickerValue)}
