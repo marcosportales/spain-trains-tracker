@@ -1,6 +1,12 @@
 import type { StationBoardEntry } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
-import { boardHeadline, entryBand, entryTimes, stationBoardPath } from './station-board-view';
+import {
+  boardHeadline,
+  entryBand,
+  entryTimes,
+  stationBoardPath,
+  updatedAgo,
+} from './station-board-view';
 
 const entry = (over: Partial<StationBoardEntry> = {}): StationBoardEntry => ({
   trainNumber: '03063',
@@ -94,5 +100,19 @@ describe('boardHeadline', () => {
       tab: 'arrivals',
       station: 'Name 9',
     });
+  });
+});
+
+describe('updatedAgo', () => {
+  const at = (seconds: number) => updatedAgo(seconds * 1000, 0);
+
+  it('counts seconds under a minute', () => {
+    expect(at(0)).toEqual({ unit: 's', value: 0 });
+    expect(at(59)).toEqual({ unit: 's', value: 59 });
+  });
+
+  it('switches to whole minutes from 60 s', () => {
+    expect(at(60)).toEqual({ unit: 'min', value: 1 });
+    expect(at(125)).toEqual({ unit: 'min', value: 2 });
   });
 });

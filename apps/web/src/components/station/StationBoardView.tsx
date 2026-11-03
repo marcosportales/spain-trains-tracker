@@ -3,18 +3,20 @@
 import type { StationBoard, StationList } from '@stt/contracts';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { fetchStationBoard } from '@/lib/station-board-api';
 import { stationNames } from '@/lib/station-names';
+import { formatMadridTime } from '../run/run-detail-view';
 import { ShareButton } from '../share/ShareButton';
 import { Button } from '../ui/Button';
 import { DetailSurface } from '../ui/DetailSurface';
 import { EmptyState } from '../ui/EmptyState';
 import { BoardTable } from './BoardTable';
-import { boardHeadline, type Tab } from './station-board-view';
+import { boardHeadline, type Tab, updatedAgo } from './station-board-view';
 
 export const REFRESH_MS = 30_000;
+const TICK_MS = 10_000;
 
 /** Station board with departures/arrivals tabs, refreshed every 30 s from the API. */
 export function StationBoardView({
@@ -30,20 +32,38 @@ export function StationBoardView({
   const router = useRouter();
   const [board, setBoard] = useState(initial);
   const [tab, setTab] = useState<Tab>('departures');
-  const [stale, setStale] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(() => Date.now());
+  const [now, setNow] = useState(updatedAt);
+  const [failed, setFailed] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      const next = await fetchStationBoard(initial.stationCode);
+      if (!next) {
+        setFailed(true);
+        return;
+      }
+      const at = Date.now();
+      setBoard(next);
+      setUpdatedAt(at);
+      setNow(at);
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    }
+  }, [initial.stationCode]);
 
   useEffect(() => {
-    const id = setInterval(async () => {
-      try {
-        const next = await fetchStationBoard(initial.stationCode);
-        if (next) setBoard(next);
-        setStale(!next);
-      } catch {
-        setStale(true);
-      }
-    }, REFRESH_MS);
+    const id = setInterval(refresh, REFRESH_MS);
     return () => clearInterval(id);
-  }, [initial.stationCode]);
+  }, [refresh]);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  const ago = updatedAgo(now, updatedAt);
 
   const entries = board[tab];
   const headline = boardHeadline(entries, tab, names);
@@ -75,15 +95,26 @@ export function StationBoardView({
             {board.stationName}
           </h1>
           <p className="mt-1 text-sm font-normal tabular-nums text-ink-2">{headlineText}</p>
+          {failed ? (
+            <div
+              role="status"
+              className="mt-1 flex items-center gap-2 text-sm font-normal text-ink-2"
+            >
+              <span>
+                {t('refreshFailed', { time: formatMadridTime(new Date(updatedAt).toISOString()) })}
+              </span>
+              <Button variant="secondary" size="sm" onClick={refresh}>
+                {t('retry')}
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-1 text-xs font-normal tabular-nums text-ink-3">
+              {t('updated', { unit: ago.unit, value: ago.value })}
+            </p>
+          )}
         </div>
       }
     >
-      {stale && (
-        <p role="status" className="mt-2 text-sm text-amber-800">
-          {t('stale')}
-        </p>
-      )}
-
       <div
         role="tablist"
         aria-label={t('tabs')}

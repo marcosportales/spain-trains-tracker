@@ -82,7 +82,9 @@
     "train": "Tren {trainNumber}",
     "departures": "Salidas",
     "arrivals": "Llegadas",
-    "stale": "No se pudo actualizar; mostrando el último panel conocido",
+    "updated": "{unit, select, s {actualizado hace {value} s} other {actualizado hace {value} min}}",
+    "refreshFailed": "No se pudo actualizar · últimos datos de las {time}",
+    "retry": "Reintentar",
     "headline": {
       "nextDepartures": "Próxima salida: {time} a {station}",
       "nextArrivals": "Próxima llegada: {time} desde {station}",

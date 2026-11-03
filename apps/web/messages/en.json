@@ -82,7 +82,9 @@
     "train": "Train {trainNumber}",
     "departures": "Departures",
     "arrivals": "Arrivals",
-    "stale": "Could not refresh; showing the last known board",
+    "updated": "{unit, select, s {updated {value} s ago} other {updated {value} min ago}}",
+    "refreshFailed": "Could not refresh · last data from {time}",
+    "retry": "Retry",
     "headline": {
       "nextDepartures": "Next departure: {time} to {station}",
       "nextArrivals": "Next arrival: {time} from {station}",

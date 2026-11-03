@@ -48,3 +48,13 @@ export function boardHeadline(
     lateCount,
   };
 }
+
+export type UpdatedAgo = { unit: 's' | 'min'; value: number };
+
+/** How long ago the board was refreshed: seconds under a minute, whole minutes after. */
+export function updatedAgo(now: number, updatedAt: number): UpdatedAgo {
+  const seconds = Math.max(0, Math.floor((now - updatedAt) / 1000));
+  return seconds < 60
+    ? { unit: 's', value: seconds }
+    : { unit: 'min', value: Math.floor(seconds / 60) };
+}
