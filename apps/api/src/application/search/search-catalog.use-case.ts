@@ -1,10 +1,11 @@
-import type { SearchResult } from '@stt/contracts';
+import type { SearchResult, SearchSuggestions } from '@stt/contracts';
 import type { SearchReader } from './search.reader.js';
 
 /** A Run is searchable while it was seen within this long. */
 export const SEARCH_ACTIVE_WINDOW_MS = 60 * 60 * 1000;
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 export const SEARCH_GROUP_LIMIT = 10;
+export const SEARCH_SUGGESTION_LIMIT = 4;
 
 /** Finds active Runs by Train number, Stations by name and Lines by name or code. */
 export class SearchCatalog {
@@ -22,5 +23,11 @@ export class SearchCatalog {
       this.reader.findLines(query, SEARCH_GROUP_LIMIT),
     ]);
     return { query, runs, stations, lines };
+  }
+
+  /** The active Runs with the largest Delay right now. */
+  async suggestions(): Promise<SearchSuggestions> {
+    const since = new Date(this.now().getTime() - SEARCH_ACTIVE_WINDOW_MS);
+    return { runs: await this.reader.findMostDelayedRuns(since, SEARCH_SUGGESTION_LIMIT) };
   }
 }

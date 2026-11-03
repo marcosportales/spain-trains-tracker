@@ -1,5 +1,5 @@
 import { BadRequestException, Controller, Get, Inject, Query } from '@nestjs/common';
-import type { SearchResult } from '@stt/contracts';
+import type { SearchResult, SearchSuggestions } from '@stt/contracts';
 import { z } from 'zod';
 import {
   SEARCH_MIN_QUERY_LENGTH,
@@ -13,6 +13,11 @@ const SearchQuery = z.strictObject({
 @Controller('search')
 export class SearchController {
   constructor(@Inject(SearchCatalog) private readonly searchCatalog: SearchCatalog) {}
+
+  @Get('suggestions')
+  suggestions(): Promise<SearchSuggestions> {
+    return this.searchCatalog.suggestions();
+  }
 
   @Get()
   search(@Query() rawQuery: unknown): Promise<SearchResult> {

@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { SearchResult } from '@stt/contracts';
+import { SearchResult, SearchSuggestions } from '@stt/contracts';
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createTestDatabase, type TestDatabase } from '../../../test/support/test-database.js';
@@ -162,5 +162,113 @@ describe('GET /search', () => {
 
   it('echoes the trimmed query', async () => {
     expect((await search('  atocha ')).query).toBe('atocha');
+  });
+});
+
+describe('GET /search/suggestions', () => {
+  let testDb: TestDatabase;
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    testDb = await createTestDatabase();
+    const moduleRef = await Test.createTestingModule({
+      controllers: [SearchController],
+      providers: [
+        {
+          provide: SearchCatalog,
+          useValue: new SearchCatalog(new DrizzleSearchReader(testDb.db), () => NOW),
+        },
+      ],
+    }).compile();
+    app = moduleRef.createNestApplication();
+    await app.init();
+  });
+  afterAll(async () => {
+    await app.close();
+    await testDb.close();
+  });
+  beforeEach(async () => {
+    await testDb.sql.unsafe(
+      'TRUNCATE sightings, delays, runs, run_stop_estimates, stations CASCADE',
+    );
+  });
+
+  const addRun = (trainNumber: string, lastSeenAt = '2026-10-31T06:59:00Z') =>
+    testDb.sql.unsafe(
+      `INSERT INTO runs (train_number, service_date, service_type, last_seen_at)
+       VALUES ('${trainNumber}', '2026-10-31', 'cercanias', '${lastSeenAt}')`,
+    );
+  const addDelay = (trainNumber: string, seconds: number, observedAt = '2026-10-31T06:50:00Z') =>
+    testDb.sql.unsafe(
+      `INSERT INTO delays (train_number, service_date, source, observed_at, seconds)
+       VALUES ('${trainNumber}', '2026-10-31', 'test', '${observedAt}', ${seconds})`,
+    );
+  const suggestions = async () =>
+    SearchSuggestions.parse(
+      (await request(app.getHttpServer()).get('/search/suggestions').expect(200)).body,
+    );
+  const trains = async () => (await suggestions()).runs.map((r) => r.trainNumber);
+
+  it('returns an empty list when there are no Tracked Runs', async () => {
+    expect(await suggestions()).toEqual({ runs: [] });
+  });
+
+  it('orders Runs by Delay, largest first', async () => {
+    for (const [n, s] of [
+      ['10001', 300],
+      ['10002', 1800],
+      ['10003', 900],
+    ] as const) {
+      await addRun(n);
+      await addDelay(n, s);
+    }
+    expect(await trains()).toEqual(['10002', '10003', '10001']);
+  });
+
+  it('caps the list at 4', async () => {
+    for (let i = 1; i <= 6; i++) {
+      await addRun(`1000${i}`);
+      await addDelay(`1000${i}`, i * 100);
+    }
+    expect(await trains()).toEqual(['10006', '10005', '10004', '10003']);
+  });
+
+  it('ranks Runs with no known Delay after those with one', async () => {
+    await addRun('10001');
+    await addRun('10002');
+    await addDelay('10002', -60);
+    expect(await trains()).toEqual(['10002', '10001']);
+  });
+
+  it('uses the latest Delay of a Run', async () => {
+    await addRun('10001');
+    await addDelay('10001', 3000, '2026-10-31T06:00:00Z');
+    await addDelay('10001', 60, '2026-10-31T06:50:00Z');
+    await addRun('10002');
+    await addDelay('10002', 600);
+    expect(await trains()).toEqual(['10002', '10001']);
+  });
+
+  it('skips Runs no longer active', async () => {
+    await addRun('10001', '2026-10-30T01:00:00Z');
+    await addDelay('10001', 3000);
+    expect(await trains()).toEqual([]);
+  });
+
+  it('carries origin and destination names', async () => {
+    await testDb.sql.unsafe(
+      `INSERT INTO stations (code, name, location, service_types) VALUES
+       ('1', 'Madrid-Puerta de Atocha', 'POINT(-3 40)', '{cercanias}'),
+       ('2', 'Barcelona-Sants', 'POINT(2 41)', '{cercanias}')`,
+    );
+    await addRun('10001');
+    await testDb.sql.unsafe(
+      "UPDATE runs SET origin_station_code = '1', destination_station_code = '2'",
+    );
+    const [run] = (await suggestions()).runs;
+    expect(run).toMatchObject({
+      originName: 'Madrid-Puerta de Atocha',
+      destinationName: 'Barcelona-Sants',
+    });
   });
 });
