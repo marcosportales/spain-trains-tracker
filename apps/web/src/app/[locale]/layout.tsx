@@ -6,8 +6,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
 import { TopBar } from '@/components/top-bar/TopBar';
 import { routing } from '@/i18n/routing';
+import { ThemeScript } from '@/theme/ThemeScript';
 import { ThemeSync } from '@/theme/ThemeSync';
-import { THEME_SCRIPT } from '@/theme/theme-script';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
@@ -44,8 +44,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={inter.className} suppressHydrationWarning>
       <head>
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: a constant script, no user input; it must run before first paint */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <ThemeScript />
       </head>
       <body>
         <NextIntlClientProvider>
