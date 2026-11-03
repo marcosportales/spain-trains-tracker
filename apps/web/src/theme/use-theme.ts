@@ -18,7 +18,7 @@ function readPreference(): ThemePreference {
 const systemPrefersDark = (): boolean => window.matchMedia(DARK_QUERY).matches;
 
 /** Puts the resolved theme on `<html>`. The inline script did it once before first paint. */
-function applyTheme() {
+export function applyTheme() {
   document.documentElement.setAttribute(
     'data-theme',
     resolveTheme(readPreference(), systemPrefersDark()),
