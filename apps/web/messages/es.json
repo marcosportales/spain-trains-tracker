@@ -68,6 +68,8 @@
   },
   "StationBoard": {
     "title": "Panel de {station}",
+    "label": "Salidas y llegadas · {station}",
+    "close": "Cerrar",
     "window": "Próximas 2 horas",
     "tabs": "Tipo de panel",
     "departures": "Salidas",

@@ -68,6 +68,8 @@
   },
   "StationBoard": {
     "title": "{station} board",
+    "label": "Departures and arrivals · {station}",
+    "close": "Close",
     "window": "Next 2 hours",
     "tabs": "Board type",
     "departures": "Departures",
