@@ -6,6 +6,8 @@ import type { FilterSpecification, GeoJSONSource, Map as MapLibreMap } from 'map
 import { useEffect } from 'react';
 import { COLORS, type Theme } from '@/theme/tokens';
 import { useTheme } from '@/theme/use-theme';
+import { RUNS_HALO_LAYER_ID } from '../live/LiveRunsLayer';
+import { STATIONS_ICON_LAYER_ID } from '../stations/StationsLayer';
 import { syncOnStyle } from '../sync-on-style';
 import type { SplitTrack } from './split-track';
 
@@ -18,7 +20,7 @@ const REMAINING_LAYER_ID = 'track-selected-remaining';
 const SELECTED_WIDTH = 4;
 const TRAVELLED_OPACITY = 0.4;
 /** Track geometry sits under Stations and Runs; whichever of them exists first is the anchor. */
-const ABOVE_LAYER_IDS = ['stations-circles', 'live-runs-circles'];
+const ABOVE_LAYER_IDS = [STATIONS_ICON_LAYER_ID, RUNS_HALO_LAYER_ID];
 
 function addLayer(map: MapLibreMap, theme: Theme) {
   const colors = COLORS[theme];

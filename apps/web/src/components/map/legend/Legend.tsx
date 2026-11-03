@@ -7,6 +7,7 @@ import { Popover } from '@/components/ui/Popover';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SERVICE_TYPES, serviceTypeVar } from '@/theme/tokens';
 import type { MapFilters } from '../filters/map-filters';
+import { MarkerBadge } from '../icons/MarkerBadge';
 import { toggleServiceType } from './legend-view';
 
 type Props = {
@@ -20,16 +21,17 @@ type Props = {
 const isShown = (filters: MapFilters, type: ServiceType) =>
   filters.serviceTypes.length === 0 || filters.serviceTypes.includes(type);
 
+/** The rounded-square frame drawn around a late Run's badge. */
 function Ring({ className }: { className: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`inline-block size-3 rounded-full border-2 align-middle ${className}`}
+      className={`inline-block size-4 rounded-[5px] border-2 align-middle ${className}`}
     />
   );
 }
 
-/** Explains the Delay rings drawn around late Runs. */
+/** Explains the Delay frames drawn around late Runs. */
 function RingsKey() {
   const t = useTranslations('Legend');
   return (
@@ -43,7 +45,7 @@ function RingsKey() {
   );
 }
 
-/** Service types with live counts; each button shows or hides that type's dots. */
+/** Service types with live counts; each button shows or hides that type's Runs. */
 export function Legend({ filters, counts, onChange, loading = false }: Props) {
   const t = useTranslations('Legend');
 
@@ -69,10 +71,9 @@ export function Legend({ filters, counts, onChange, loading = false }: Props) {
                   onClick={() => onChange(toggleServiceType(filters, type))}
                   className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 text-sm hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent aria-pressed:font-medium aria-[pressed=false]:text-ink-3"
                 >
-                  <span
-                    aria-hidden="true"
-                    className={`inline-block size-3 rounded-full ${shown ? '' : 'opacity-40'}`}
-                    style={{ backgroundColor: serviceTypeVar(type) }}
+                  <MarkerBadge
+                    color={serviceTypeVar(type)}
+                    className={`size-4 ${shown ? '' : 'opacity-40'}`}
                   />
                   <span aria-hidden="true">{t(`types.${type}`)}</span>
                   <span aria-hidden="true" className="ml-auto pl-2 tabular-nums text-ink-2">
