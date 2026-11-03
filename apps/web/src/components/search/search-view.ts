@@ -1,4 +1,10 @@
-import type { LineSearchHit, RunSearchHit, SearchResult, StationSearchHit } from '@stt/contracts';
+import type {
+  LineSearchHit,
+  RunSearchHit,
+  SearchResult,
+  SearchSuggestions,
+  StationSearchHit,
+} from '@stt/contracts';
 import { runDetailPath } from '../run/run-detail-view';
 import { stationBoardPath } from '../station/station-board-view';
 
@@ -34,6 +40,30 @@ export function searchOptions(result: SearchResult): SearchOption[] {
     ...result.lines
       .slice(0, SEARCH_GROUP_LIMIT)
       .map((hit): SearchOption => ({ kind: 'line', id: `line:${hit.lineCode}`, hit })),
+  ];
+}
+
+/** The four main Stations offered as Suggestions before the user types. */
+export const FIXED_STATIONS: readonly StationSearchHit[] = [
+  { stationCode: '60000', name: 'Madrid Atocha' },
+  { stationCode: '17000', name: 'Madrid Chamartín' },
+  { stationCode: '71801', name: 'Barcelona Sants' },
+  { stationCode: '51003', name: 'Sevilla-Santa Justa' },
+];
+
+/** The empty-state list: the suggested Runs (none yet if loading or failed), then the fixed Stations. */
+export function suggestionOptions(suggestions: SearchSuggestions | undefined): SearchOption[] {
+  return [
+    ...(suggestions?.runs.slice(0, SEARCH_GROUP_LIMIT) ?? []).map(
+      (hit): SearchOption => ({
+        kind: 'run',
+        id: `run:${hit.serviceDate}:${hit.trainNumber}`,
+        hit,
+      }),
+    ),
+    ...FIXED_STATIONS.map(
+      (hit): SearchOption => ({ kind: 'station', id: `station:${hit.stationCode}`, hit }),
+    ),
   ];
 }
 

@@ -10,6 +10,7 @@ import {
   STATION_BOARD,
   STATION_CODE,
   STATIONS,
+  SUGGESTIONS,
   search,
   sightingWindow,
 } from './fixtures.js';
@@ -52,6 +53,7 @@ export function startMockApi(port: number): Promise<Server> {
     if (url.pathname === '/stats/punctuality') return json(PUNCTUALITY_RANKING);
     if (url.pathname === '/stats/delay-by-hour') return json(DELAY_BY_HOUR);
     if (url.pathname === '/alerts') return json([ALERT]);
+    if (url.pathname === '/search/suggestions') return json(SUGGESTIONS);
     if (url.pathname === '/search') return json(search(url.searchParams.get('q') ?? ''));
     if (url.pathname === `/runs/${SERVICE_DATE}/${RUN.trainNumber}`) return json(RUN_DETAIL);
     if (url.pathname === `/stations/${STATION_CODE}/board`) return json(STATION_BOARD);

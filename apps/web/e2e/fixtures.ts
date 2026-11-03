@@ -4,6 +4,7 @@ import type {
   PunctualityRanking,
   RunDetail,
   SearchResult,
+  SearchSuggestions,
   SightingWindow,
   StationBoard,
   StationList,
@@ -92,6 +93,20 @@ export const STATION_BOARD: StationBoard = {
 };
 
 export const NO_TRACK: TrackFeatureCollection = { type: 'FeatureCollection', features: [] };
+
+/** The most delayed tracked Runs, offered when the search bar is focused and empty. */
+export const SUGGESTIONS: SearchSuggestions = {
+  runs: [
+    {
+      trainNumber: RUN.trainNumber,
+      serviceDate: RUN.serviceDate,
+      serviceType: RUN.serviceType,
+      lineCode: RUN.lineCode,
+      originName: 'Madrid Atocha',
+      destinationName: 'Sevilla-Santa Justa',
+    },
+  ],
+};
 
 export function search(query: string): SearchResult {
   const hit = STATIONS.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()));

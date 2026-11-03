@@ -108,6 +108,7 @@
     "run": "Tren {trainNumber}",
     "noResults": "Sin resultados",
     "error": "La búsqueda no está disponible ahora",
+    "loadingRuns": "Cargando trenes…",
     "count": "{count, plural, one {# resultado} other {# resultados}}"
   },
   "Alerts": {

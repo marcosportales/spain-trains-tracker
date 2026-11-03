@@ -108,6 +108,7 @@
     "run": "Run {trainNumber}",
     "noResults": "No results",
     "error": "Search is unavailable right now",
+    "loadingRuns": "Loading trains…",
     "count": "{count, plural, one {# result} other {# results}}"
   },
   "Alerts": {
