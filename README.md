@@ -3,6 +3,31 @@
 Live and historical view of Renfe trains across Spain, built from Renfe's open data feeds.
 See [`GLOSSARY.md`](./GLOSSARY.md) for domain language and [`docs/adr/`](./docs/adr) for architecture decisions.
 
+## Preview
+
+<table>
+  <tr>
+    <td width="50%">
+      <a href="./docs/screenshots/live-map.png"><img src="./docs/screenshots/live-map.png" alt="Live map of Spain with every running train drawn as a badge, coloured by service and framed amber or red when delayed"></a>
+      <p align="center"><b>Live map</b>: every running train, coloured by service, with delays highlighted</p>
+    </td>
+    <td width="50%">
+      <a href="./docs/screenshots/train-detail.png"><img src="./docs/screenshots/train-detail.png" alt="Detail panel of an Alvia train running 108 minutes late, with its stops, scheduled and expected times, and delay history"></a>
+      <p align="center"><b>Train detail</b>: current delay, next stop, every stop's times and delay history</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <a href="./docs/screenshots/punctuality.png"><img src="./docs/screenshots/punctuality.png" alt="Punctuality page showing the share of trains on time over the last 7 days and a ranking of lines"></a>
+      <p align="center"><b>Punctuality</b>: on-time share over 7, 30 or 90 days, and a ranking of lines</p>
+    </td>
+    <td width="50%">
+      <a href="./docs/screenshots/replay.png"><img src="./docs/screenshots/replay.png" alt="Replay page with a timeline player to watch how trains moved during a past hour"></a>
+      <p align="center"><b>Replay</b>: watch how trains moved during any past hour, at up to 600× speed</p>
+    </td>
+  </tr>
+</table>
+
 ## Getting started
 
 ### Prerequisites
