@@ -78,6 +78,13 @@
     "from": "De {station}",
     "empty": "No hay circulaciones en las próximas 2 horas",
     "stale": "No se pudo actualizar; mostrando el último panel conocido",
+    "headline": {
+      "nextDepartures": "Próxima salida: {time} a {station}",
+      "nextArrivals": "Próxima llegada: {time} desde {station}",
+      "late": " · {count, plural, one {# con retraso} other {# con retraso}}",
+      "emptyDepartures": "No hay salidas en las próximas 2 horas",
+      "emptyArrivals": "No hay llegadas en las próximas 2 horas"
+    },
     "description": "Próximas salidas y llegadas en {station}"
   },
   "Share": {

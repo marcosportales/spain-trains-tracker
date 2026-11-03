@@ -13,11 +13,9 @@ import { runDetailPath } from '../run/run-detail-view';
 import { ShareButton } from '../share/ShareButton';
 import { Button } from '../ui/Button';
 import { DetailSurface } from '../ui/DetailSurface';
-import { entryBand, entryTimes } from './station-board-view';
+import { boardHeadline, entryBand, entryTimes, type Tab } from './station-board-view';
 
 export const REFRESH_MS = 30_000;
-
-type Tab = 'departures' | 'arrivals';
 
 /** Station board with departures/arrivals tabs, refreshed every 30 s from the API. */
 export function StationBoardView({
@@ -49,6 +47,14 @@ export function StationBoardView({
   }, [initial.stationCode]);
 
   const entries = board[tab];
+  const headline = boardHeadline(entries, tab, names);
+  const headlineText =
+    headline.kind === 'empty'
+      ? t(tab === 'departures' ? 'headline.emptyDepartures' : 'headline.emptyArrivals')
+      : t(tab === 'departures' ? 'headline.nextDepartures' : 'headline.nextArrivals', {
+          time: headline.time,
+          station: headline.station,
+        }) + (headline.lateCount > 0 ? t('headline.late', { count: headline.lateCount }) : '');
 
   return (
     <DetailSurface
@@ -69,7 +75,7 @@ export function StationBoardView({
           <h1 className="text-[20px] leading-tight font-semibold md:text-[22px]">
             {board.stationName}
           </h1>
-          <p className="mt-1 text-sm font-normal text-ink-2">{t('window')}</p>
+          <p className="mt-1 text-sm font-normal tabular-nums text-ink-2">{headlineText}</p>
         </div>
       }
     >

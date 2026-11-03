@@ -78,6 +78,13 @@
     "from": "From {station}",
     "empty": "No Runs in the next 2 hours",
     "stale": "Could not refresh; showing the last known board",
+    "headline": {
+      "nextDepartures": "Next departure: {time} to {station}",
+      "nextArrivals": "Next arrival: {time} from {station}",
+      "late": " · {count} late",
+      "emptyDepartures": "No departures in the next 2 hours",
+      "emptyArrivals": "No arrivals in the next 2 hours"
+    },
     "description": "Next departures and arrivals at {station}"
   },
   "Share": {
