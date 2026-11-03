@@ -152,7 +152,8 @@
     "play": "Reproducir",
     "pause": "Pausa",
     "scrubber": "Hora de la reproducción",
-    "loading": "Cargando avistamientos…",
+    "loading": "Buscando la última hora con posiciones…",
+    "noRecentData": "No hay posiciones en las últimas {hours} horas.",
     "error": "No se pudieron cargar los avistamientos de esta hora.",
     "empty": "No hay avistamientos registrados para esta hora.",
     "runs": "{count, plural, one {# tren} other {# trenes}}"

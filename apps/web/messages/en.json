@@ -152,7 +152,8 @@
     "play": "Play",
     "pause": "Pause",
     "scrubber": "Replay time",
-    "loading": "Loading Sightings…",
+    "loading": "Finding the latest hour with positions…",
+    "noRecentData": "No positions in the last {hours} hours.",
     "error": "Could not load Sightings for this hour.",
     "empty": "No Sightings recorded for this hour.",
     "runs": "{count, plural, one {# train} other {# trains}}"

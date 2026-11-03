@@ -81,3 +81,54 @@ export function defaultWindowStart(now = new Date()): Date {
   start.setUTCHours(start.getUTCHours() - 1);
   return start;
 }
+
+/** How many past hours the Replay looks back through to find one with data. */
+export const LOOKBACK_HOURS = 6;
+
+/** Window starts to try, newest first: the last full hour, then each hour before it. */
+export function candidateStarts(now: Date, hours = LOOKBACK_HOURS): Date[] {
+  const latest = defaultWindowStart(now).getTime();
+  return Array.from({ length: hours }, (_, i) => new Date(latest - i * WINDOW_MS));
+}
+
+export type LatestWindowResult =
+  | { status: 'found'; from: Date; window: SightingWindow }
+  | { status: 'none' }
+  | { status: 'error' }
+  | { status: 'aborted' };
+
+/**
+ * Tries each start in order, one request at a time (a window can be large), and stops at the
+ * first with Sightings. A failed request is an error, not a reason to try the next hour.
+ */
+export async function findLatestWindow(
+  fetchWindow: (from: Date, signal?: AbortSignal) => Promise<SightingWindow>,
+  starts: readonly Date[],
+  signal?: AbortSignal,
+): Promise<LatestWindowResult> {
+  for (const from of starts) {
+    if (signal?.aborted) return { status: 'aborted' };
+    let window: SightingWindow;
+    try {
+      window = await fetchWindow(from, signal);
+    } catch {
+      return signal?.aborted ? { status: 'aborted' } : { status: 'error' };
+    }
+    if (signal?.aborted) return { status: 'aborted' };
+    if (window.sightings.length > 0) return { status: 'found', from, window };
+  }
+  return { status: 'none' };
+}
+
+/** Fetches the Sightings of the hour starting at `from`. */
+export async function fetchSightingWindow(
+  from: Date,
+  signal?: AbortSignal,
+): Promise<SightingWindow> {
+  const res = await fetch(sightingWindowUrl(from), {
+    cache: 'no-store',
+    ...(signal && { signal }),
+  });
+  if (!res.ok) throw new Error(`Sighting window request failed: ${res.status}`);
+  return (await res.json()) as SightingWindow;
+}

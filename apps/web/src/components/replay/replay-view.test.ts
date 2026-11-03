@@ -2,8 +2,11 @@ import type { SightingWindow, WindowSighting } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
 import {
   advance,
+  candidateStarts,
   defaultWindowStart,
+  findLatestWindow,
   indexSightings,
+  LOOKBACK_HOURS,
   replayRuns,
   STALE_AFTER_MS,
   sightingWindowUrl,
@@ -112,4 +115,73 @@ describe('defaultWindowStart', () => {
     expect(defaultWindowStart(new Date('2026-10-31T10:42:10Z')).toISOString()).toBe(
       '2026-10-31T09:00:00.000Z',
     ));
+});
+
+describe('candidateStarts', () => {
+  const now = new Date('2026-10-25T01:30:00+01:00'); // 00:30 UTC, DST ends this night in Madrid
+
+  it('returns LOOKBACK_HOURS hours, the last full hour first, then each hour before', () => {
+    const starts = candidateStarts(now);
+    expect(starts).toHaveLength(LOOKBACK_HOURS);
+    expect(starts.map((d) => d.toISOString())).toEqual([
+      '2026-10-24T23:00:00.000Z',
+      '2026-10-24T22:00:00.000Z',
+      '2026-10-24T21:00:00.000Z',
+      '2026-10-24T20:00:00.000Z',
+      '2026-10-24T19:00:00.000Z',
+      '2026-10-24T18:00:00.000Z',
+    ]);
+  });
+
+  it('starts at the same hour as defaultWindowStart and honours a custom count', () => {
+    const starts = candidateStarts(now, 2);
+    expect(starts).toHaveLength(2);
+    expect(starts[0]).toEqual(defaultWindowStart(now));
+  });
+});
+
+describe('findLatestWindow', () => {
+  const starts = [0, 1, 2].map((i) => new Date(T0 - i * WINDOW_MS));
+  const empty = windowOf([]);
+  const full = windowOf([sighting({ s: 10 })]);
+
+  it('stops at the first window with Sightings, fetching one at a time', async () => {
+    const calls: number[] = [];
+    const result = await findLatestWindow(async (from) => {
+      calls.push(from.getTime());
+      return calls.length === 2 ? full : empty;
+    }, starts);
+    expect(result).toEqual({ status: 'found', from: starts[1], window: full });
+    expect(calls).toEqual([starts[0]?.getTime(), starts[1]?.getTime()]);
+  });
+
+  it('is none when every window is empty', async () => {
+    expect(await findLatestWindow(async () => empty, starts)).toEqual({ status: 'none' });
+  });
+
+  it('is error, without trying the next hour, when a request fails', async () => {
+    let calls = 0;
+    const result = await findLatestWindow(async () => {
+      calls++;
+      throw new Error('boom');
+    }, starts);
+    expect(result).toEqual({ status: 'error' });
+    expect(calls).toBe(1);
+  });
+
+  it('stops looping once aborted', async () => {
+    const controller = new AbortController();
+    let calls = 0;
+    const result = await findLatestWindow(
+      async () => {
+        calls++;
+        controller.abort();
+        return empty;
+      },
+      starts,
+      controller.signal,
+    );
+    expect(result).toEqual({ status: 'aborted' });
+    expect(calls).toBe(1);
+  });
 });

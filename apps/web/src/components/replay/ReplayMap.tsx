@@ -17,10 +17,12 @@ import {
   DEFAULT_SPEED,
   defaultWindowStart,
   indexSightings,
+  LOOKBACK_HOURS,
   replayRuns,
   SPEEDS,
   WINDOW_MS,
 } from './replay-view';
+import { useLatestWindow } from './use-latest-window';
 import { useSightingWindow } from './use-sighting-window';
 
 setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url).href);
@@ -38,17 +40,21 @@ export function ReplayMap({ label }: { label: string }) {
   const container = useRef<HTMLElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const track = useTrackGeometry();
-  const [from, setFrom] = useState(() => defaultWindowStart());
+  const latest = useLatestWindow();
+  const [picked, setPicked] = useState<Date | null>(null);
+  // The hour picked by hand wins; otherwise the latest hour with data (none until it is found).
+  const from = picked ?? (latest.status === 'found' ? latest.from : null);
+  const pickerValue = from ?? defaultWindowStart();
   const [position, setPosition] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>(DEFAULT_SPEED);
-  const state = useSightingWindow(from);
+  const state = useSightingWindow(from, latest.status === 'found' ? latest : undefined);
 
   const index = useMemo(
     () => (state.status === 'ready' ? indexSightings(state.window) : undefined),
     [state],
   );
-  const instant = from.getTime() + position;
+  const instant = (from?.getTime() ?? 0) + position;
   const runs = useMemo(() => (index ? replayRuns(index, instant) : new Map()), [index, instant]);
 
   const { theme } = useTheme();
@@ -74,7 +80,7 @@ export function ReplayMap({ label }: { label: string }) {
   useEffect(() => {
     setPosition(0);
     setPlaying(false);
-  }, [from]);
+  }, [from?.getTime()]);
 
   const positionRef = useRef(0);
   positionRef.current = position;
@@ -123,11 +129,11 @@ export function ReplayMap({ label }: { label: string }) {
             <input
               type="datetime-local"
               step={3600}
-              value={toInputValue(from)}
+              value={toInputValue(pickerValue)}
               max={toInputValue(new Date())}
               onChange={(e) => {
                 const next = new Date(e.target.value);
-                if (!Number.isNaN(next.getTime())) setFrom(next);
+                if (!Number.isNaN(next.getTime())) setPicked(next);
               }}
               className="rounded border px-2 py-1"
             />
@@ -170,9 +176,13 @@ export function ReplayMap({ label }: { label: string }) {
           />
         </div>
         <p className="text-sm tabular-nums" aria-live="off">
-          {state.status === 'loading' && t('loading')}
-          {state.status === 'error' && t('error')}
-          {state.status === 'ready' &&
+          {latest.status === 'searching' && t('loading')}
+          {latest.status === 'error' && !picked && t('error')}
+          {latest.status === 'none' && !picked && t('noRecentData', { hours: LOOKBACK_HOURS })}
+          {(latest.status === 'found' || picked) && state.status === 'loading' && t('loading')}
+          {(latest.status === 'found' || picked) && state.status === 'error' && t('error')}
+          {(latest.status === 'found' || picked) &&
+            state.status === 'ready' &&
             (state.window.sightings.length === 0
               ? t('empty')
               : `${clock} · ${t('runs', { count: runs.size })}`)}
