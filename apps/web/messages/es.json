@@ -154,9 +154,12 @@
     "scrubber": "Hora de la reproducción",
     "loading": "Buscando la última hora con posiciones…",
     "noRecentData": "No hay posiciones en las últimas {hours} horas.",
-    "error": "No se pudieron cargar los avistamientos de esta hora.",
-    "empty": "No hay avistamientos registrados para esta hora.",
-    "runs": "{count, plural, one {# tren} other {# trenes}}"
+    "error": "No se pudieron cargar las posiciones de esta hora.",
+    "empty": "No hay posiciones guardadas para esta hora.",
+    "runs": "{count, plural, one {# tren} other {# trenes}}",
+    "explainer": "Vuelve a ver cómo se movieron los trenes durante una hora pasada.",
+    "emptyAction": "Probar una hora antes",
+    "retry": "Reintentar"
   },
   "DelayBand": {
     "on_time": "Puntual",

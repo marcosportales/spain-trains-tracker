@@ -5,11 +5,13 @@ import {
   candidateStarts,
   defaultWindowStart,
   findLatestWindow,
+  fromMadridInputValue,
   indexSightings,
   LOOKBACK_HOURS,
   replayRuns,
   STALE_AFTER_MS,
   sightingWindowUrl,
+  toMadridInputValue,
   WINDOW_MS,
 } from './replay-view';
 
@@ -183,5 +185,53 @@ describe('findLatestWindow', () => {
     );
     expect(result).toEqual({ status: 'aborted' });
     expect(calls).toBe(1);
+  });
+});
+
+describe('Madrid input helpers', () => {
+  it('shows an instant as Madrid wall-clock time', () => {
+    expect(toMadridInputValue(new Date('2026-01-15T10:00:00Z'))).toBe('2026-01-15T11:00');
+    expect(toMadridInputValue(new Date('2026-07-15T10:00:00Z'))).toBe('2026-07-15T12:00');
+  });
+
+  it('reads an input value as Madrid time', () => {
+    expect(fromMadridInputValue('2026-01-15T11:00')?.toISOString()).toBe(
+      '2026-01-15T10:00:00.000Z',
+    );
+    expect(fromMadridInputValue('2026-07-15T12:00')?.toISOString()).toBe(
+      '2026-07-15T10:00:00.000Z',
+    );
+  });
+
+  it('rejects a value that is not a date', () => {
+    expect(fromMadridInputValue('')).toBeNull();
+  });
+
+  it('round-trips every hour of the March change day (last Sunday, 2026-03-29)', () => {
+    for (let h = 0; h < 24; h++) {
+      const date = new Date(Date.UTC(2026, 2, 28, 23) + h * WINDOW_MS);
+      expect(fromMadridInputValue(toMadridInputValue(date))?.getTime()).toBe(date.getTime());
+    }
+    // 02:00 does not exist: 01:00Z is already 03:00 in Madrid.
+    expect(toMadridInputValue(new Date('2026-03-29T01:00:00Z'))).toBe('2026-03-29T03:00');
+    expect(toMadridInputValue(new Date('2026-03-29T00:00:00Z'))).toBe('2026-03-29T01:00');
+  });
+
+  it('round-trips the October change day (last Sunday, 2026-10-25)', () => {
+    // 02:00 happens twice: 00:00Z (summer time) and 01:00Z (winter time).
+    const first = new Date('2026-10-25T00:00:00Z');
+    const second = new Date('2026-10-25T01:00:00Z');
+    expect(toMadridInputValue(first)).toBe('2026-10-25T02:00');
+    expect(toMadridInputValue(second)).toBe('2026-10-25T02:00');
+    expect(fromMadridInputValue('2026-10-25T02:00')?.getTime()).toBe(first.getTime());
+    for (const h of [22, 23, 0, 2, 3, 4]) {
+      const date = new Date(Date.UTC(2026, 9, 24, 22) + ((h + 2) % 24) * WINDOW_MS);
+      expect(toMadridInputValue(fromMadridInputValue(toMadridInputValue(date)) as Date)).toBe(
+        toMadridInputValue(date),
+      );
+    }
+    expect(fromMadridInputValue('2026-10-25T03:00')?.toISOString()).toBe(
+      '2026-10-25T02:00:00.000Z',
+    );
   });
 });

@@ -2,7 +2,7 @@
 
 import type { RunId } from '@stt/contracts';
 import { type Map as MapLibreMap, setWorkerUrl } from 'maplibre-gl';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useRouter } from '@/i18n/navigation';
@@ -11,15 +11,17 @@ import { applyMapTheme, createMap } from '../map/create-map';
 import { LiveRunsLayer } from '../map/live/LiveRunsLayer';
 import { TrackGeometryLayer } from '../map/track/TrackGeometryLayer';
 import { useTrackGeometry } from '../map/track/use-track-geometry';
-import { runDetailPath } from '../run/run-detail-view';
+import { formatMadridDateTime, runDetailPath } from '../run/run-detail-view';
 import {
   advance,
   DEFAULT_SPEED,
   defaultWindowStart,
+  fromMadridInputValue,
   indexSightings,
   LOOKBACK_HOURS,
   replayRuns,
   SPEEDS,
+  toMadridInputValue,
   WINDOW_MS,
 } from './replay-view';
 import { useLatestWindow } from './use-latest-window';
@@ -29,13 +31,10 @@ setWorkerUrl(new URL('maplibre-gl/dist/maplibre-gl-worker.mjs', import.meta.url)
 
 const SCRUB_STEP_MS = 60_000;
 
-/** `datetime-local` values are in local time without an offset. */
-const toInputValue = (date: Date): string =>
-  new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-
 /** Replays a past hour of Sightings on the map, with a play/pause button, speed and a scrubber. */
 export function ReplayMap({ label }: { label: string }) {
   const t = useTranslations('Replay');
+  const locale = useLocale();
   const router = useRouter();
   const container = useRef<HTMLElement>(null);
   const [map, setMap] = useState<MapLibreMap | null>(null);
@@ -109,10 +108,7 @@ export function ReplayMap({ label }: { label: string }) {
     setPlaying((p) => !p);
   };
   const openRun = (id: RunId) => router.push(runDetailPath(id));
-  const clock = new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'medium',
-  }).format(instant);
+  const clock = formatMadridDateTime(instant, locale);
 
   return (
     <>
@@ -129,11 +125,11 @@ export function ReplayMap({ label }: { label: string }) {
             <input
               type="datetime-local"
               step={3600}
-              value={toInputValue(pickerValue)}
-              max={toInputValue(new Date())}
+              value={toMadridInputValue(pickerValue)}
+              max={toMadridInputValue(new Date())}
               onChange={(e) => {
-                const next = new Date(e.target.value);
-                if (!Number.isNaN(next.getTime())) setPicked(next);
+                const next = fromMadridInputValue(e.target.value);
+                if (next) setPicked(next);
               }}
               className="rounded border px-2 py-1"
             />
