@@ -1,15 +1,17 @@
 'use client';
 
 import type { SearchResult } from '@stt/contracts';
-import { Search } from 'lucide-react';
+import { Search, Signpost } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { fetchSearch } from '@/lib/search-api';
+import { serviceTypeVar } from '@/theme/tokens';
 import {
   moveActive,
   normaliseQuery,
   optionHref,
+  runRouteText,
   SEARCH_DEBOUNCE_MS,
   type SearchOption,
   searchOptions,
@@ -102,9 +104,9 @@ export function SearchBox() {
         ? t('noResults')
         : undefined;
   const groups = [
-    { kind: 'line', label: t('lines') },
-    { kind: 'station', label: t('stations') },
     { kind: 'run', label: t('runs') },
+    { kind: 'station', label: t('stations') },
+    { kind: 'line', label: t('lines') },
   ] as const;
 
   return (
@@ -132,7 +134,7 @@ export function SearchBox() {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        className="min-h-10 w-full rounded-md bg-surface-2 py-1.5 pr-3 pl-9 text-sm text-ink placeholder:text-ink-3 focus-visible:outline-2 focus-visible:outline-accent"
+        className="min-h-10 w-full rounded-md bg-surface-2 py-1.5 pr-3 pl-9 text-sm text-ink placeholder:text-ink-3 focus:outline-none focus-visible:outline-none border border-transparent focus:border-accent focus:ring-1 focus:ring-accent"
       />
       <div role="status" className="sr-only">
         {showPopup &&
@@ -154,7 +156,10 @@ export function SearchBox() {
           return (
             // biome-ignore lint/a11y/useSemanticElements: a listbox group must be role=group, not a fieldset
             <div key={kind} role="group" aria-label={label}>
-              <div aria-hidden="true" className="px-3 pt-2 text-xs font-semibold text-ink-3">
+              <div
+                aria-hidden="true"
+                className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase"
+              >
                 {label}
               </div>
               {group.map((option) => {
@@ -191,6 +196,7 @@ export function SearchBox() {
 
 function OptionLabel({ option }: { option: SearchOption }) {
   const t = useTranslations('Search');
+  const types = useTranslations('RunDetail.serviceTypes');
   switch (option.kind) {
     case 'line':
       return (
@@ -202,13 +208,28 @@ function OptionLabel({ option }: { option: SearchOption }) {
         </>
       );
     case 'station':
-      return <>{option.hit.name}</>;
-    case 'run':
       return (
-        <>
-          <span className="font-medium">{t('run', { trainNumber: option.hit.trainNumber })}</span>
-          {option.hit.lineCode && <span className="text-ink-2"> · {option.hit.lineCode}</span>}
-        </>
+        <span className="flex items-center gap-2">
+          <Signpost aria-hidden="true" size={14} className="shrink-0 text-ink-3" />
+          <span className="min-w-0 truncate">{option.hit.name}</span>
+        </span>
       );
+    case 'run': {
+      const route = runRouteText(option.hit);
+      return (
+        <span className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="inline-block size-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: serviceTypeVar(option.hit.serviceType) }}
+          />
+          <span className="sr-only">{types(option.hit.serviceType)}, </span>
+          <span className="shrink-0 font-medium">
+            {t('run', { trainNumber: option.hit.trainNumber })}
+          </span>
+          {route && <span className="ml-auto min-w-0 truncate text-xs text-ink-2">{route}</span>}
+        </span>
+      );
+    }
   }
 }

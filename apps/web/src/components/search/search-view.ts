@@ -5,6 +5,8 @@ import { stationBoardPath } from '../station/station-board-view';
 /** Mirrors the API's minimum query length (`SEARCH_MIN_QUERY_LENGTH`). */
 export const SEARCH_MIN_QUERY_LENGTH = 2;
 export const SEARCH_DEBOUNCE_MS = 200;
+/** Most rows shown per group. */
+export const SEARCH_GROUP_LIMIT = 4;
 
 export function normaliseQuery(raw: string): { query: string; searchable: boolean } {
   const query = raw.trim();
@@ -16,21 +18,29 @@ export type SearchOption =
   | { kind: 'station'; id: string; hit: StationSearchHit }
   | { kind: 'run'; id: string; hit: RunSearchHit };
 
-/** The flat, keyboard-navigable list: Lines, then Stations, then Runs. */
+/** The flat, keyboard-navigable list: Runs, then Stations, then Lines, each group capped. */
 export function searchOptions(result: SearchResult): SearchOption[] {
   return [
-    ...result.lines.map((hit): SearchOption => ({ kind: 'line', id: `line:${hit.lineCode}`, hit })),
-    ...result.stations.map(
-      (hit): SearchOption => ({ kind: 'station', id: `station:${hit.stationCode}`, hit }),
-    ),
-    ...result.runs.map(
+    ...result.runs.slice(0, SEARCH_GROUP_LIMIT).map(
       (hit): SearchOption => ({
         kind: 'run',
         id: `run:${hit.serviceDate}:${hit.trainNumber}`,
         hit,
       }),
     ),
+    ...result.stations
+      .slice(0, SEARCH_GROUP_LIMIT)
+      .map((hit): SearchOption => ({ kind: 'station', id: `station:${hit.stationCode}`, hit })),
+    ...result.lines
+      .slice(0, SEARCH_GROUP_LIMIT)
+      .map((hit): SearchOption => ({ kind: 'line', id: `line:${hit.lineCode}`, hit })),
   ];
+}
+
+/** "Origen → Destino" when both ends are known, else the Line, else nothing. */
+export function runRouteText(hit: RunSearchHit): string | undefined {
+  if (hit.originName && hit.destinationName) return `${hit.originName} → ${hit.destinationName}`;
+  return hit.lineCode;
 }
 
 /** Where selecting an option goes: a Line filters the map, the others open their page. */

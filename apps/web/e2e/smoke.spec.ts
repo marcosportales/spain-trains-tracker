@@ -36,6 +36,11 @@ test('map shows a live Run, its panel, and a searched Station board', async ({ p
 
   // Search a Station and open its board.
   await page.getByRole('combobox', { name: 'Search' }).fill('atocha');
+  // Runs come first, with the Service type for screen readers and the route on the right.
+  const options = page.getByRole('option');
+  await expect(options.first()).toContainText('AVE, Run 03063');
+  await expect(options.first()).toContainText('Madrid Atocha → Sevilla-Santa Justa');
+  await expect(options.nth(1)).toHaveText(STATION_NAME);
   await page.getByRole('option', { name: STATION_NAME }).click();
   await expect(page.getByRole('heading', { name: STATION_NAME })).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Departures' })).toHaveAttribute(
