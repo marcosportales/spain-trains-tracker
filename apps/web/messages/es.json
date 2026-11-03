@@ -134,7 +134,12 @@
     "forLine": "{line}, retraso medio por hora (hora de Madrid)",
     "hourTitle": "{hour}:00, retraso medio de {minutes} min",
     "noData": "{hour}:00, sin datos",
-    "error": "No se pudo actualizar; se muestran las últimas cifras conocidas"
+    "error": "No se pudo actualizar; se muestran las últimas cifras conocidas",
+    "headline": "En los últimos {days} días, el {pct} de los trenes llegó a destino con menos de 5 min de retraso",
+    "headlineNone": "Aún no hay datos suficientes de los últimos {days} días",
+    "onTimeExplainer": "«A su hora» = menos de 5 min de retraso. Llegar antes también cuenta.",
+    "onTimeInfo": "Qué significa «a su hora»",
+    "onTimeDetail": "Cada tren cuenta una sola vez, por su último retraso conocido. Los trenes cancelados no se incluyen."
   },
   "Replay": {
     "title": "Reproducción",

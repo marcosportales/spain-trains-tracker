@@ -134,7 +134,12 @@
     "forLine": "{line}, average delay per hour (Madrid time)",
     "hourTitle": "{hour}:00, {minutes} min average delay",
     "noData": "{hour}:00, no data",
-    "error": "Could not refresh; showing the last known figures"
+    "error": "Could not refresh; showing the last known figures",
+    "headline": "In the last {days} days, {pct} of trains reached their destination less than 5 min late",
+    "headlineNone": "Not enough data for the last {days} days yet",
+    "onTimeExplainer": "\"On time\" = less than 5 min late. Arriving early counts too.",
+    "onTimeInfo": "What \"on time\" means",
+    "onTimeDetail": "Each train is counted once, by its last known Delay. Cancelled trains are left out."
   },
   "Replay": {
     "title": "Replay",

@@ -1,7 +1,16 @@
-import type { HourPunctuality, LinePunctuality } from '@stt/contracts';
+import type { HourPunctuality, LinePunctuality, PunctualityRanking } from '@stt/contracts';
 import { delayMinutes } from '../delay/delay-band';
 
 export const punctualityPath = '/punctuality';
+
+export type PunctualityHeadline = { kind: 'per_run'; pct: number } | { kind: 'none' };
+
+/** The network-wide On time share (0-1) for the page headline; none when no Line is ranked. */
+export function punctualityHeadline(ranking: PunctualityRanking): PunctualityHeadline {
+  return ranking.overall === null
+    ? { kind: 'none' }
+    : { kind: 'per_run', pct: ranking.overall.onTimePct / 100 };
+}
 
 export type SortKey = 'lineCode' | 'onTimePct' | 'avgSeconds' | 'runs';
 export type SortDirection = 'asc' | 'desc';

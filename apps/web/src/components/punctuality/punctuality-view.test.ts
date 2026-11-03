@@ -1,6 +1,6 @@
-import type { HourPunctuality, LinePunctuality } from '@stt/contracts';
+import type { HourPunctuality, LinePunctuality, PunctualityRanking } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
-import { hourBars, punctualityPath, sortLines } from './punctuality-view';
+import { hourBars, punctualityHeadline, punctualityPath, sortLines } from './punctuality-view';
 
 const line = (lineCode: string, onTimePct: number, avgSeconds = 0, runs = 100) =>
   ({
@@ -63,4 +63,28 @@ describe('hourBars', () => {
 
 describe('punctualityPath', () => {
   it('is the page route', () => expect(punctualityPath).toBe('/punctuality'));
+});
+
+describe('punctualityHeadline', () => {
+  const ranking = (overall: PunctualityRanking['overall']): PunctualityRanking => ({
+    days: 7,
+    overall,
+    lines: [],
+  });
+
+  it('is the overall share of Runs as a 0-1 fraction', () =>
+    expect(punctualityHeadline(ranking({ runs: 400, onTimePct: 60 }))).toEqual({
+      kind: 'per_run',
+      pct: 0.6,
+    }));
+  it('is none when no Line is ranked', () =>
+    expect(punctualityHeadline(ranking(null))).toEqual({ kind: 'none' }));
+});
+
+describe('percent formatting', () => {
+  const format = (locale: string) =>
+    new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(0.87);
+
+  it('uses a non-breaking space in es', () => expect(format('es')).toBe('87\u00a0%'));
+  it('has no space in en', () => expect(format('en')).toBe('87%'));
 });

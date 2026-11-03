@@ -1,11 +1,19 @@
 'use client';
 
 import type { DelayByHour, PunctualityRanking } from '@stt/contracts';
-import { useTranslations } from 'next-intl';
+import { Info } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { fetchDelayByHour, fetchPunctualityRanking } from '@/lib/punctuality-api';
 import { delayMinutes } from '../delay/delay-band';
-import { hourBars, type SortDirection, type SortKey, sortLines } from './punctuality-view';
+import { Popover } from '../ui/Popover';
+import {
+  hourBars,
+  punctualityHeadline,
+  type SortDirection,
+  type SortKey,
+  sortLines,
+} from './punctuality-view';
 
 const DAY_OPTIONS = [7, 30, 90] as const;
 
@@ -14,6 +22,7 @@ type Initial = { ranking: PunctualityRanking; byHour: DelayByHour };
 /** Line ranking and delay-by-hour chart over a selectable window of days. */
 export function PunctualityView({ initial }: { initial: Initial }) {
   const t = useTranslations('Punctuality');
+  const locale = useLocale();
   const tFooter = useTranslations('Footer');
   const [days, setDays] = useState<number>(initial.ranking.days);
   const [lineCode, setLineCode] = useState<string | undefined>(undefined);
@@ -46,6 +55,8 @@ export function PunctualityView({ initial }: { initial: Initial }) {
   }, [days, lineCode, ranking, byHour.lineCode]);
 
   const lines = sortLines(ranking.lines, sort.key, sort.direction);
+  const headline = punctualityHeadline(ranking);
+  const percent = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
   const bars = hourBars(byHour.hours);
   const selected = ranking.lines.find((line) => line.lineCode === lineCode);
   const toggleSort = (key: SortKey) =>
@@ -62,8 +73,27 @@ export function PunctualityView({ initial }: { initial: Initial }) {
 
   return (
     <div className="mx-auto h-full w-full max-w-3xl overflow-y-auto px-4 pt-below-bar pb-4">
-      <h1 className="text-xl font-semibold">{t('title')}</h1>
-      <p className="text-sm text-gray-600">{t('description')}</p>
+      <h1 className="text-2xl font-semibold md:text-3xl">
+        {headline.kind === 'none'
+          ? t('headlineNone', { days: ranking.days })
+          : t('headline', { days: ranking.days, pct: percent.format(headline.pct) })}
+      </h1>
+      <p className="mt-1 flex items-center gap-1 text-sm text-ink-2">
+        {t('onTimeExplainer')}
+        <Popover
+          trigger={
+            <button
+              type="button"
+              aria-label={t('onTimeInfo')}
+              className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md text-ink-2 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
+            >
+              <Info aria-hidden="true" size={18} />
+            </button>
+          }
+        >
+          <p className="max-w-xs text-sm">{t('onTimeDetail')}</p>
+        </Popover>
+      </p>
 
       <fieldset className="mt-3 flex gap-2 border-0 p-0">
         <legend className="sr-only">{t('window')}</legend>
