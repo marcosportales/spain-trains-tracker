@@ -46,7 +46,7 @@ export function BoardTable({
           const station = names(entry.counterpartStationCode);
           return (
             <tr
-              key={`${entry.serviceDate}/${entry.trainNumber}`}
+              key={`${entry.serviceDate}/${entry.trainNumber}/${entry.scheduledAt}/${entry.counterpartStationCode}`}
               className="relative h-11 border-b border-line hover:bg-surface-2"
             >
               <td className={`${cell} tabular-nums`}>
