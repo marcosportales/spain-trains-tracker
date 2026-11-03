@@ -32,24 +32,18 @@
     "clear": "Quitar filtros"
   },
   "RunDetail": {
-    "title": "Circulación {trainNumber}",
+    "title": "Tren {trainNumber}",
     "close": "Cerrar",
     "route": "{origin} → {destination}",
-    "nextStation": "Próxima estación",
-    "accessibility": "Accesibilidad",
     "accessible": "Accesible en silla de ruedas",
-    "notAccessible": "No accesible en silla de ruedas",
-    "rollingStock": "Material",
+    "notAccessible": "No accesible",
+    "rollingStock": "Modelo de tren: {rollingStock}",
     "stops": "Paradas",
     "noStops": "Horario no disponible",
     "history": "Historial de retrasos",
-    "historyOnTime": "Suele ir puntual (últimas {runs} circulaciones)",
-    "historyLate": "Suele llegar {minutes} min tarde (últimas {runs} circulaciones)",
+    "historyOnTime": "Normalmente llega puntual (últimos {runs} trenes)",
+    "historyLate": "Normalmente llega unos {minutes} min tarde (últimos {runs} trenes)",
     "historyNone": "Aún no hay historial de este tren",
-    "historyRun": "{date}: {minutes} min de media, hasta {maxMinutes} min",
-    "badge": {
-      "noPosition": "Sin posición en directo todavía"
-    },
     "serviceTypes": {
       "cercanias": "Cercanías",
       "ave": "AVE",
@@ -57,7 +51,20 @@
       "media_distancia": "Media Distancia",
       "ancho_metrico": "Ancho métrico"
     },
-    "description": "{serviceType} {trainNumber}: {status}"
+    "description": "{serviceType} {trainNumber}: {status}",
+    "headline": {
+      "cancelled": "Cancelado",
+      "notDeparted": "Aún no ha salido · sale de {origin} a las {time}",
+      "notDepartedNoTime": "Aún no ha salido · sale de {origin}",
+      "late": "Va {minutes} min tarde",
+      "onTime": "Puntual",
+      "unknown": "Sin datos de retraso",
+      "nextStop": "próxima parada {station}, {time}",
+      "nextStopNoTime": "próxima parada {station}"
+    },
+    "trainHere": "El tren está aquí",
+    "historyBar": "{date}: {minutes} min de media, hasta {maxMinutes} min",
+    "historyRuns": "{n} trenes"
   },
   "StationBoard": {
     "title": "Panel de {station}",

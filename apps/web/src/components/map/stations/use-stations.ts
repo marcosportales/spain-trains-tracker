@@ -11,7 +11,7 @@ export function useStations(): StationList {
   const [stations, setStations] = useState<StationList>(NONE);
   useEffect(() => {
     const controller = new AbortController();
-    fetchStations(undefined, controller.signal).then(setStations, () => {});
+    fetchStations({ signal: controller.signal }).then(setStations, () => {});
     return () => controller.abort();
   }, []);
   return stations;

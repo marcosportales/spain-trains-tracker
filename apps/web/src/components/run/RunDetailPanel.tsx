@@ -1,122 +1,118 @@
 import type { RunDetail, TrainHistory } from '@stt/contracts';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
+import type { StationNames } from '@/lib/station-names';
 import { serviceTypeVar } from '@/theme/tokens';
-import { BAND_CLASSES, DelayBadge } from '../delay/DelayBadge';
+import { DelayBadge } from '../delay/DelayBadge';
 import { ShareButton } from '../share/ShareButton';
-import { delayBand, showsNoPositionBadge, stopTimes } from './run-detail-view';
-import { recentRuns, typicalDelay } from './train-history-view';
+import { DetailSurface } from '../ui/DetailSurface';
+import { HistoryBars } from './HistoryBars';
+import { RunChips } from './RunChips';
+import { RunCloseButton } from './RunCloseButton';
+import { RunTimeline } from './RunTimeline';
+import { delayBand, type RunHeadline, runHeadline } from './run-detail-view';
+import { typicalDelay } from './train-history-view';
 
-/** Run detail: a side panel on larger screens, a bottom sheet on mobile. Server-renderable. */
+type Translate = ReturnType<typeof useTranslations<'RunDetail'>>;
+
+/** The headline sentence: the status, then "· next stop …" when the next stop is known. */
+function headlineText(t: Translate, headline: RunHeadline): string {
+  switch (headline.kind) {
+    case 'cancelled':
+      return t('headline.cancelled');
+    case 'not_departed':
+      return headline.time
+        ? t('headline.notDeparted', { origin: headline.origin, time: headline.time })
+        : t('headline.notDepartedNoTime', { origin: headline.origin });
+    case 'running': {
+      const status =
+        headline.band === 'on_time'
+          ? t('headline.onTime')
+          : headline.band === 'unknown'
+            ? t('headline.unknown')
+            : t('headline.late', { minutes: headline.minutes ?? 0 });
+      const { nextStop } = headline;
+      if (!nextStop) return status;
+      const next = nextStop.time
+        ? t('headline.nextStop', { station: nextStop.station, time: nextStop.time })
+        : t('headline.nextStopNoTime', { station: nextStop.station });
+      return `${status} · ${next}`;
+    }
+  }
+}
+
+/** Run detail on a `DetailSurface`: a side panel on larger screens, a bottom sheet on mobile. */
 export function RunDetailPanel({
   detail,
   history,
+  names,
 }: {
   detail: RunDetail;
+  /** Station name for a code (see `stationNames`). */
+  names: StationNames;
   /** Delay history of the Train number; leave out when it could not be loaded. */
   history?: TrainHistory | undefined;
 }) {
   const t = useTranslations('RunDetail');
   const { run } = detail;
   const band = delayBand(detail);
-  const nextStop = detail.position?.nextStationCode;
+  const headline = runHeadline(detail, names);
   const typical = history && typicalDelay(history);
 
   return (
-    <aside
-      aria-label={t('title', { trainNumber: run.trainNumber })}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-20 max-h-[60dvh] overflow-y-auto rounded-t-xl border bg-white p-4 shadow-lg md:top-below-bar md:right-3 md:bottom-3 md:left-auto md:max-h-none md:w-96 md:rounded-xl"
-    >
-      <div className="flex items-start justify-between gap-2">
+    <DetailSurface
+      label={t('title', { trainNumber: run.trainNumber })}
+      actions={
+        <>
+          <ShareButton title={t('title', { trainNumber: run.trainNumber })} />
+          <RunCloseButton />
+        </>
+      }
+      headline={
         <div>
-          <h1 className="flex items-center gap-2 text-lg font-semibold">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1
+              data-testid="run-headline"
+              className="text-[20px] leading-tight font-semibold tabular-nums md:text-[22px]"
+            >
+              {headlineText(t, headline)}
+            </h1>
+            {headline.kind !== 'not_departed' && (
+              <DelayBadge
+                band={band}
+                delaySeconds={detail.delaySeconds}
+                data-testid="delay-badge"
+              />
+            )}
+          </div>
+          <p className="mt-1 flex items-center gap-2 text-sm font-normal text-ink-2">
             <span
               aria-hidden="true"
-              className="inline-block size-3 rounded-full"
+              className="inline-block size-2.5 shrink-0 rounded-full"
               style={{ backgroundColor: serviceTypeVar(run.serviceType) }}
             />
-            {t(`serviceTypes.${run.serviceType}`)} {run.trainNumber}
-            {run.lineCode && <span className="text-sm font-normal">· {run.lineCode}</span>}
-          </h1>
-          <p className="text-sm text-gray-600">
-            {detail.originStationCode && detail.destinationStationCode
-              ? t('route', {
-                  origin: detail.originStationCode,
-                  destination: detail.destinationStationCode,
-                })
-              : null}
+            {[
+              t(`serviceTypes.${run.serviceType}`),
+              run.lineCode,
+              detail.originStationCode &&
+                detail.destinationStationCode &&
+                t('route', {
+                  origin: names(detail.originStationCode),
+                  destination: names(detail.destinationStationCode),
+                }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <ShareButton title={t('title', { trainNumber: run.trainNumber })} />
-          <Link href="/" className="rounded border px-2 py-1 text-sm">
-            {t('close')}
-          </Link>
-        </div>
-      </div>
-
-      {showsNoPositionBadge(detail) ? (
-        <p
-          data-testid="no-position-badge"
-          className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-medium tabular-nums ${BAND_CLASSES.unknown}`}
-        >
-          {t('badge.noPosition')}
-        </p>
-      ) : (
-        <div className="mt-3">
-          <DelayBadge band={band} delaySeconds={detail.delaySeconds} data-testid="delay-badge" />
-        </div>
-      )}
-
-      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        {nextStop && (
-          <>
-            <dt className="font-semibold">{t('nextStation')}</dt>
-            <dd>{nextStop}</dd>
-          </>
-        )}
-        {detail.wheelchairAccessible !== undefined && (
-          <>
-            <dt className="font-semibold">{t('accessibility')}</dt>
-            <dd>{t(detail.wheelchairAccessible ? 'accessible' : 'notAccessible')}</dd>
-          </>
-        )}
-        {detail.rollingStock && (
-          <>
-            <dt className="font-semibold">{t('rollingStock')}</dt>
-            <dd>{detail.rollingStock}</dd>
-          </>
-        )}
-      </dl>
+      }
+    >
+      <RunChips
+        wheelchairAccessible={detail.wheelchairAccessible}
+        rollingStock={detail.rollingStock}
+      />
 
       <h2 className="mt-4 text-sm font-semibold">{t('stops')}</h2>
-      {detail.stops.length === 0 ? (
-        <p className="text-sm text-gray-600">{t('noStops')}</p>
-      ) : (
-        <ol className="mt-1 space-y-1 text-sm">
-          {detail.stops.map((stop) => {
-            const times = stopTimes(stop);
-            return (
-              <li
-                key={stop.sequence}
-                aria-current={stop.stationCode === nextStop ? 'step' : undefined}
-                className={`flex justify-between gap-2 rounded px-2 py-1 ${stop.stationCode === nextStop ? 'bg-gray-100 font-medium' : ''}`}
-              >
-                <span>{stop.stationCode}</span>
-                <span className="tabular-nums">
-                  {times.changed ? (
-                    <>
-                      <s className="text-gray-500">{times.scheduled}</s> {times.estimated}
-                    </>
-                  ) : (
-                    (times.estimated ?? times.scheduled)
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      )}
+      <RunTimeline detail={detail} names={names} />
 
       {history && (
         <section data-testid="train-history" aria-labelledby="train-history-title">
@@ -133,23 +129,13 @@ export function RunDetailPanel({
                       runs: typical.runs,
                     })}
               </p>
-              <ul className="mt-1 space-y-1 text-sm text-gray-600">
-                {recentRuns(history).map((row) => (
-                  <li key={row.serviceDate} className="tabular-nums">
-                    {t('historyRun', {
-                      date: row.serviceDate,
-                      minutes: row.minutes,
-                      maxMinutes: row.maxMinutes,
-                    })}
-                  </li>
-                ))}
-              </ul>
+              <HistoryBars history={history} />
             </>
           ) : (
-            <p className="text-sm text-gray-600">{t('historyNone')}</p>
+            <p className="text-sm text-ink-2">{t('historyNone')}</p>
           )}
         </section>
       )}
-    </aside>
+    </DetailSurface>
   );
 }

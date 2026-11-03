@@ -28,8 +28,10 @@ test('map shows a live Run, its panel, and a searched Station board', async ({ p
   // Selecting the Run opens its detail panel.
   await map.click();
   await expect(page).toHaveURL(new RegExp(`/runs/${RUN.serviceDate}/${RUN.trainNumber}`));
-  const panel = page.getByRole('complementary', { name: `Run ${RUN.trainNumber}` });
-  await expect(panel.getByRole('heading', { name: new RegExp(RUN.trainNumber) })).toBeVisible();
+  const panel = page.getByRole('complementary', { name: `Train ${RUN.trainNumber}` });
+  await expect(panel.getByTestId('run-headline')).toHaveText(
+    'Running 5 min late · next stop Sevilla-Santa Justa, 11:45',
+  );
   await expect(panel.getByTestId('delay-badge')).toHaveText('5 min late');
 
   // Search a Station and open its board.
