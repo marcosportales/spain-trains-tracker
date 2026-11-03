@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { fetchSearch, fetchSuggestions } from '@/lib/search-api';
 import { serviceTypeVar } from '@/theme/tokens';
+import { addRecent, browserStorage, clearRecents, loadRecents, madridToday } from './recents';
 import {
   moveActive,
   normaliseQuery,
@@ -32,14 +33,16 @@ export function SearchBox() {
   const [status, setStatus] = useState<Status>('idle');
   const [suggestions, setSuggestions] = useState<SearchSuggestions>();
   const [suggestionStatus, setSuggestionStatus] = useState<'loading' | 'ready' | 'error'>('ready');
+  const [recents, setRecents] = useState<SearchOption[]>([]);
   const suggestionRequest = useRef<AbortController>(null);
   const root = useRef<HTMLDivElement>(null);
 
   const { query, searchable } = normaliseQuery(text);
   // Only the answer to the current query: a stale one must not be selectable.
   const empty = query === '';
+  const recentIds = new Set(recents.map((o) => o.id));
   const options = empty
-    ? suggestionOptions(suggestions)
+    ? [...recents, ...suggestionOptions(suggestions).filter((o) => !recentIds.has(o.id))]
     : result && searchable && result.query === query
       ? searchOptions(result)
       : [];
@@ -105,7 +108,10 @@ export function SearchBox() {
     return () => document.removeEventListener('pointerdown', close);
   }, []);
 
+  const refreshRecents = () => setRecents(loadRecents(browserStorage(), madridToday(new Date())));
+
   const select = (option: SearchOption) => {
+    setRecents(addRecent(browserStorage(), madridToday(new Date()), option));
     setOpen(false);
     setText('');
     router.push(optionHref(option));
@@ -136,11 +142,22 @@ export function SearchBox() {
         ? t('noResults')
         : undefined;
   const loadingRuns = empty && suggestionStatus === 'loading';
-  const groups = [
-    { kind: 'run', label: t('runs') },
-    { kind: 'station', label: t('stations') },
-    { kind: 'line', label: t('lines') },
-  ] as const;
+  const indexed = options.map((option, index) => ({ option, index }));
+  const recentCount = empty ? recents.length : 0;
+  const sections = [
+    { key: 'recents', label: t('recents'), items: indexed.slice(0, recentCount) },
+    ...(
+      [
+        { key: 'run', label: t('runs') },
+        { key: 'station', label: t('stations') },
+        { key: 'line', label: t('lines') },
+      ] as const
+    ).map(({ key, label }) => ({
+      key,
+      label,
+      items: indexed.slice(recentCount).filter(({ option }) => option.kind === key),
+    })),
+  ].filter(({ items }) => items.length > 0);
 
   return (
     <div ref={root} className="w-full max-w-xl md:relative">
@@ -168,6 +185,7 @@ export function SearchBox() {
           }}
           onFocus={() => {
             setOpen(true);
+            refreshRecents();
             loadSuggestions();
           }}
           onKeyDown={onKeyDown}
@@ -195,40 +213,49 @@ export function SearchBox() {
             {t('loadingRuns')}
           </p>
         )}
-        {groups.map(({ kind, label }) => {
-          const group = options.filter((o) => o.kind === kind);
-          if (group.length === 0) return null;
-          return (
-            // biome-ignore lint/a11y/useSemanticElements: a listbox group must be role=group, not a fieldset
-            <div key={kind} role="group" aria-label={label}>
+        {sections.map(({ key, label, items }) => (
+          // biome-ignore lint/a11y/useSemanticElements: a listbox group must be role=group, not a fieldset
+          <div key={key} role="group" aria-label={label}>
+            <div className="flex items-center justify-between px-3 pt-2 pb-1">
               <div
                 aria-hidden="true"
-                className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase"
+                className="text-[11px] font-semibold tracking-wider text-ink-3 uppercase"
               >
                 {label}
               </div>
-              {group.map((option) => {
-                const index = options.indexOf(option);
-                return (
-                  // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard is handled on the combobox input (aria-activedescendant)
-                  <div
-                    key={option.id}
-                    id={`${listId}-${index}`}
-                    role="option"
-                    aria-selected={index === active}
-                    tabIndex={-1}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => select(option)}
-                    onMouseMove={() => setActive(index)}
-                    className={`cursor-pointer rounded-md px-3 py-1.5 text-sm ${index === active ? 'bg-surface-2' : ''}`}
-                  >
-                    <OptionLabel option={option} />
-                  </div>
-                );
-              })}
+              {key === 'recents' && (
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    clearRecents(browserStorage());
+                    setRecents([]);
+                    setActive(-1);
+                  }}
+                  className="rounded px-1 text-[11px] font-medium text-ink-3 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                >
+                  {t('clearRecents')}
+                </button>
+              )}
             </div>
-          );
-        })}
+            {items.map(({ option, index }) => (
+              // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard is handled on the combobox input (aria-activedescendant)
+              <div
+                key={option.id}
+                id={`${listId}-${index}`}
+                role="option"
+                aria-selected={index === active}
+                tabIndex={-1}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => select(option)}
+                onMouseMove={() => setActive(index)}
+                className={`cursor-pointer rounded-md px-3 py-1.5 text-sm ${index === active ? 'bg-surface-2' : ''}`}
+              >
+                <OptionLabel option={option} />
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
       {showPopup && message && (
         <p className="absolute inset-x-0 top-full z-30 mt-2 rounded-lg bg-surface px-3 py-2 text-sm text-ink shadow-2">

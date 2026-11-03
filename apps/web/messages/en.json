@@ -108,6 +108,8 @@
     "run": "Run {trainNumber}",
     "noResults": "No results",
     "error": "Search is unavailable right now",
+    "recents": "Recent",
+    "clearRecents": "Clear",
     "loadingRuns": "Loading trains…",
     "count": "{count, plural, one {# result} other {# results}}"
   },

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PUNCTUALITY_LINE, RUN, STATION_NAME } from './fixtures.js';
+import { PUNCTUALITY_LINE, RUN, SERVICE_DATE, STATION_NAME } from './fixtures.js';
 
 // A bare style keeps the map off the network: the tests need the Run layer, not the tiles.
 const BLANK_STYLE = {
@@ -89,6 +89,101 @@ test.describe('search suggestions', () => {
     await expect(page.getByRole('option')).toHaveCount(4);
     await expect(page.getByText('Loading trains…', { exact: true }).first()).toBeHidden();
     await expect(page.getByText(/unavailable/)).toBeHidden();
+  });
+});
+
+test.describe('search recents', () => {
+  const STORE_KEY = 'stt.search.recents';
+  const staleRun = {
+    kind: 'run',
+    id: 'run:2026-10-01:99999',
+    hit: { trainNumber: '99999', serviceDate: '2026-10-01', serviceType: 'ave' },
+  };
+
+  test.beforeEach(async ({ page }) => {
+    // The mock API is pinned to SERVICE_DATE, so pin "today" to it too.
+    await page.clock.setFixedTime(new Date(`${SERVICE_DATE}T10:00:00+01:00`));
+  });
+
+  test('remember picks: add, dedupe, cap at 4, then clear', async ({ page }) => {
+    await page.goto('/en');
+    const search = page.getByRole('combobox', { name: 'Search' });
+    const recents = page.getByRole('group', { name: 'Recent' });
+    await search.focus();
+    await expect(recents).toBeHidden();
+
+    // Pick the main Stations one after another, each from the empty state.
+    for (const name of [
+      'Madrid Atocha',
+      'Madrid Chamartín',
+      'Barcelona Sants',
+      'Sevilla-Santa Justa',
+    ]) {
+      await page.goto('/en');
+      await search.focus();
+      await page.getByRole('option', { name, exact: true }).click();
+      await expect(page).toHaveURL(/\/stations\//);
+    }
+    // A fifth, distinct pick (the Run) pushes the oldest out.
+    await page.goto('/en');
+    await search.focus();
+    await page.getByRole('option', { name: /Run 03063/ }).click();
+    await expect(page).toHaveURL(/\/runs\//);
+
+    await page.goto('/en');
+    await search.focus();
+    await expect(recents.getByRole('option')).toHaveText([
+      /Run 03063/,
+      'Sevilla-Santa Justa',
+      'Barcelona Sants',
+      'Madrid Chamartín',
+    ]);
+
+    // Picking an older Recent again moves it to the top without duplicating it.
+    await recents.getByRole('option', { name: 'Barcelona Sants' }).click();
+    await page.goto('/en');
+    await search.focus();
+    await expect(recents.getByRole('option')).toHaveCount(4);
+    await expect(recents.getByRole('option').first()).toHaveText('Barcelona Sants');
+
+    await recents.getByRole('button', { name: 'Clear' }).click();
+    await expect(recents).toBeHidden();
+    await page.reload();
+    await search.focus();
+    await expect(recents).toBeHidden();
+    await expect(page.getByRole('option')).toHaveCount(5);
+  });
+
+  test('drops Runs from past Service dates and tolerates a corrupt store', async ({ page }) => {
+    await page.addInitScript(
+      ([key, stale]) => {
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(
+            key,
+            JSON.stringify([
+              stale,
+              {
+                kind: 'station',
+                id: 'station:60000',
+                hit: { stationCode: '60000', name: 'Madrid Atocha' },
+              },
+            ]),
+          );
+        }
+      },
+      [STORE_KEY, staleRun] as const,
+    );
+    await page.goto('/en');
+    await page.getByRole('combobox', { name: 'Search' }).focus();
+    const recents = page.getByRole('group', { name: 'Recent' });
+    await expect(recents.getByRole('option')).toHaveText(['Madrid Atocha']);
+    await expect(page.getByText('Run 99999')).toBeHidden();
+
+    await page.evaluate((key) => localStorage.setItem(key, '{broken'), STORE_KEY);
+    await page.reload();
+    await page.getByRole('combobox', { name: 'Search' }).focus();
+    await expect(recents).toBeHidden();
+    await expect(page.getByRole('option')).toHaveCount(5);
   });
 });
 
