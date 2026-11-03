@@ -8,7 +8,7 @@ import { fetchDelayByHour, fetchPunctualityRanking } from '@/lib/punctuality-api
 import { type DelayBand, delayMinutes } from '../delay/delay-band';
 import { Popover } from '../ui/Popover';
 import { SegmentedControl } from '../ui/SegmentedControl';
-import { hourBars, punctualityHeadline, rankingBars } from './punctuality-view';
+import { byHourSummary, hourBars, punctualityHeadline, rankingBars } from './punctuality-view';
 
 const BAND_BAR: Partial<Record<DelayBand, string>> = {
   on_time: 'bg-band-on-time',
@@ -56,6 +56,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
   const headline = punctualityHeadline(ranking);
   const percent = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
   const bars = hourBars(byHour.hours);
+  const summary = byHourSummary(byHour.hours);
   const selected = ranking.lines.find((line) => line.lineCode === lineCode);
 
   return (
@@ -105,7 +106,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
       ) : (
         <ol aria-label={t('ranking')} className="mt-2 flex flex-col">
           {rows.map(({ line, widthPct, band }) => {
-            const summary = t('lineSummary', {
+            const lineSummary = t('lineSummary', {
               line: line.lineCode,
               pct: percent.format(line.onTimePct / 100),
               minutes: delayMinutes(line.avgSeconds),
@@ -116,7 +117,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
                 <button
                   type="button"
                   aria-pressed={line.lineCode === lineCode}
-                  title={summary}
+                  title={lineSummary}
                   onClick={() =>
                     setLineCode(line.lineCode === lineCode ? undefined : line.lineCode)
                   }
@@ -137,7 +138,7 @@ export function PunctualityView({ initial }: { initial: Initial }) {
                   <span aria-hidden className="w-12 shrink-0 text-right tabular-nums">
                     {percent.format(line.onTimePct / 100)}
                   </span>
-                  <span className="sr-only">{summary}</span>
+                  <span className="sr-only">{lineSummary}</span>
                 </button>
               </li>
             );
@@ -149,25 +150,38 @@ export function PunctualityView({ initial }: { initial: Initial }) {
       <p className="text-sm text-gray-600">
         {selected ? t('forLine', { line: selected.name }) : t('forAllLines')}
       </p>
-      <ol aria-label={t('byHour')} className="mt-3 flex h-40 items-end gap-0.5 border-b">
-        {bars.map((bar) => (
-          <li
-            key={bar.hour}
-            className="flex h-full min-w-0 flex-1 flex-col justify-end"
-            title={
-              bar.minutes === undefined
-                ? t('noData', { hour: bar.label })
-                : t('hourTitle', { hour: bar.label, minutes: bar.minutes })
-            }
-          >
-            <div className="w-full rounded-t bg-red-400" style={{ height: `${bar.heightPct}%` }} />
-            <span className="sr-only">
-              {bar.minutes === undefined
-                ? t('noData', { hour: bar.label })
-                : t('hourTitle', { hour: bar.label, minutes: bar.minutes })}
-            </span>
-          </li>
-        ))}
+      <p className="mt-2 text-sm">
+        {summary.kind === 'none'
+          ? t('byHourNone')
+          : summary.kind === 'calm'
+            ? t('byHourCalm')
+            : t('byHourPeak', { from: summary.from, to: summary.to })}
+      </p>
+      <ol
+        aria-label={t('byHour')}
+        className="mt-3 flex h-40 items-end gap-0.5 border-b border-surface-3"
+      >
+        {bars.map((bar) => {
+          const label =
+            bar.minutes === undefined
+              ? t('noData', { hour: bar.label })
+              : t('hourTitle', { hour: bar.label, minutes: bar.minutes, count: bar.count });
+          return (
+            <li
+              key={bar.hour}
+              className="flex h-full min-w-0 flex-1 flex-col justify-end"
+              title={label}
+            >
+              {bar.minutes !== undefined && (
+                <div
+                  className={`w-full rounded-t ${BAND_BAR[bar.band] ?? 'bg-band-unknown'}`}
+                  style={{ height: `${bar.heightPct}%` }}
+                />
+              )}
+              <span className="sr-only">{label}</span>
+            </li>
+          );
+        })}
       </ol>
       <div aria-hidden className="mt-1 flex justify-between text-xs text-gray-600">
         <span>00</span>
