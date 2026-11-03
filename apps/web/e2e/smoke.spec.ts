@@ -50,6 +50,48 @@ test('map shows a live Run, its panel, and a searched Station board', async ({ p
   await expect(page.getByRole('link', { name: new RegExp(RUN.trainNumber) })).toBeVisible();
 });
 
+test.describe('search suggestions', () => {
+  test('focusing the empty bar offers delayed Runs and the main Stations, with the keyboard', async ({
+    page,
+  }) => {
+    await page.goto('/en');
+    const search = page.getByRole('combobox', { name: 'Search' });
+    await search.focus();
+
+    const options = page.getByRole('option');
+    await expect(options).toHaveCount(5);
+    await expect(options.first()).toContainText('Run 03063');
+    await expect(options.nth(1)).toHaveText('Madrid Atocha');
+    await expect(options.nth(4)).toHaveText('Sevilla-Santa Justa');
+
+    // Typing 2+ characters replaces them with matches.
+    await search.fill('atocha');
+    await expect(options.nth(1)).toHaveText(STATION_NAME);
+    await search.clear();
+    await expect(options).toHaveCount(5);
+
+    await search.press('ArrowDown');
+    await search.press('ArrowDown');
+    await expect(options.nth(1)).toHaveAttribute('aria-selected', 'true');
+    await search.press('Enter');
+    await expect(page).toHaveURL(/\/stations\/60000$/);
+  });
+
+  test('shows a loading state, and the Stations alone when the Runs fail', async ({ page }) => {
+    await page.route('**/search/suggestions', async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await route.fulfill({ status: 500, body: '{}' });
+    });
+    await page.goto('/en');
+    await page.getByRole('combobox', { name: 'Search' }).focus();
+
+    await expect(page.getByText('Loading trains…', { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('option')).toHaveCount(4);
+    await expect(page.getByText('Loading trains…', { exact: true }).first()).toBeHidden();
+    await expect(page.getByText(/unavailable/)).toBeHidden();
+  });
+});
+
 test('alerts chip lists an alert and highlights its Lines when tapped', async ({ page }) => {
   await page.goto('/en');
 
@@ -111,6 +153,23 @@ test.describe('on a phone', () => {
     await page.getByRole('button', { name: 'Open search' }).click();
     await page.getByRole('button', { name: 'Close search' }).click();
     await expect(search).toBeHidden();
+  });
+
+  test('the search icon opens the suggestions panel, focused and full width', async ({ page }) => {
+    await page.goto('/en');
+    await page.getByRole('button', { name: 'Open search' }).click();
+    const search = page.getByRole('combobox', { name: 'Search' });
+    await expect(search).toBeFocused();
+
+    const list = page.getByRole('listbox', { name: 'Search' });
+    await expect(page.getByRole('option')).toHaveCount(5);
+    const bar = await page.getByRole('banner').boundingBox();
+    const panel = await list.boundingBox();
+    expect(Math.abs((panel?.x ?? 0) - (bar?.x ?? 99))).toBeLessThan(1);
+    expect(Math.abs((panel?.width ?? 0) - (bar?.width ?? 0))).toBeLessThan(1);
+
+    await page.getByRole('button', { name: 'Close search' }).click();
+    await expect(list).toBeHidden();
   });
 
   test('the menu holds the nav', async ({ page }) => {

@@ -1,11 +1,11 @@
 'use client';
 
-import type { SearchResult } from '@stt/contracts';
+import type { SearchResult, SearchSuggestions } from '@stt/contracts';
 import { Search, Signpost } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from '@/i18n/navigation';
-import { fetchSearch } from '@/lib/search-api';
+import { fetchSearch, fetchSuggestions } from '@/lib/search-api';
 import { serviceTypeVar } from '@/theme/tokens';
 import {
   moveActive,
@@ -15,6 +15,7 @@ import {
   SEARCH_DEBOUNCE_MS,
   type SearchOption,
   searchOptions,
+  suggestionOptions,
 } from './search-view';
 
 type Status = 'idle' | 'loading' | 'ready' | 'error';
@@ -29,11 +30,41 @@ export function SearchBox() {
   const [active, setActive] = useState(-1);
   const [result, setResult] = useState<SearchResult>();
   const [status, setStatus] = useState<Status>('idle');
+  const [suggestions, setSuggestions] = useState<SearchSuggestions>();
+  const [suggestionStatus, setSuggestionStatus] = useState<'loading' | 'ready' | 'error'>('ready');
+  const suggestionRequest = useRef<AbortController>(null);
   const root = useRef<HTMLDivElement>(null);
 
   const { query, searchable } = normaliseQuery(text);
   // Only the answer to the current query: a stale one must not be selectable.
-  const options = result && searchable && result.query === query ? searchOptions(result) : [];
+  const empty = query === '';
+  const options = empty
+    ? suggestionOptions(suggestions)
+    : result && searchable && result.query === query
+      ? searchOptions(result)
+      : [];
+
+  // Suggestions are requested each time the bar gains focus (no polling). A failure is silent: the
+  // fixed Stations still show.
+  const loadSuggestions = () => {
+    suggestionRequest.current?.abort();
+    const controller = new AbortController();
+    suggestionRequest.current = controller;
+    setSuggestionStatus('loading');
+    fetchSuggestions(undefined, controller.signal).then(
+      (found) => {
+        setSuggestions(found);
+        setSuggestionStatus('ready');
+      },
+      (error: unknown) => {
+        if (controller.signal.aborted) return;
+        console.error(error);
+        setSuggestions(undefined);
+        setSuggestionStatus('error');
+      },
+    );
+  };
+  useEffect(() => () => suggestionRequest.current?.abort(), []);
 
   useEffect(() => {
     if (!searchable) {
@@ -96,13 +127,15 @@ export function SearchBox() {
     }
   };
 
-  const showPopup = open && searchable;
-  const message =
-    status === 'error'
+  const showPopup = open && (searchable || empty);
+  const message = empty
+    ? undefined
+    : status === 'error'
       ? t('error')
       : status === 'ready' && options.length === 0
         ? t('noResults')
         : undefined;
+  const loadingRuns = empty && suggestionStatus === 'loading';
   const groups = [
     { kind: 'run', label: t('runs') },
     { kind: 'station', label: t('stations') },
@@ -110,35 +143,42 @@ export function SearchBox() {
   ] as const;
 
   return (
-    <div ref={root} className="relative w-full max-w-xl">
-      <Search
-        aria-hidden="true"
-        size={16}
-        className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
-      />
-      <input
-        type="search"
-        role="combobox"
-        aria-label={t('label')}
-        aria-haspopup="listbox"
-        aria-expanded={showPopup}
-        aria-controls={listId}
-        aria-autocomplete="list"
-        aria-activedescendant={showPopup && options[active] ? `${listId}-${active}` : undefined}
-        autoComplete="off"
-        placeholder={t('placeholder')}
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={onKeyDown}
-        className="min-h-10 w-full rounded-md bg-surface-2 py-1.5 pr-3 pl-9 text-sm text-ink placeholder:text-ink-3 focus:outline-none focus-visible:outline-none border border-transparent focus:border-accent focus:ring-1 focus:ring-accent"
-      />
+    <div ref={root} className="w-full max-w-xl md:relative">
+      <div className="relative">
+        <Search
+          aria-hidden="true"
+          size={16}
+          className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-3"
+        />
+        <input
+          type="search"
+          role="combobox"
+          aria-label={t('label')}
+          aria-haspopup="listbox"
+          aria-expanded={showPopup}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-activedescendant={showPopup && options[active] ? `${listId}-${active}` : undefined}
+          autoComplete="off"
+          placeholder={t('placeholder')}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => {
+            setOpen(true);
+            loadSuggestions();
+          }}
+          onKeyDown={onKeyDown}
+          className="min-h-10 w-full rounded-md bg-surface-2 py-1.5 pr-3 pl-9 text-sm text-ink placeholder:text-ink-3 focus:outline-none focus-visible:outline-none border border-transparent focus:border-accent focus:ring-1 focus:ring-accent"
+        />
+      </div>
       <div role="status" className="sr-only">
+        {showPopup && loadingRuns && t('loadingRuns')}
         {showPopup &&
-          status === 'ready' &&
+          !loadingRuns &&
+          (empty || status === 'ready') &&
           options.length > 0 &&
           t('count', { count: options.length })}
         {showPopup && message}
@@ -150,6 +190,11 @@ export function SearchBox() {
         hidden={!showPopup || options.length === 0}
         className="absolute inset-x-0 top-full z-30 mt-2 max-h-[60dvh] overflow-y-auto rounded-lg bg-surface p-1 text-ink shadow-2"
       >
+        {loadingRuns && (
+          <p aria-hidden="true" className="px-3 py-2 text-sm text-ink-3">
+            {t('loadingRuns')}
+          </p>
+        )}
         {groups.map(({ kind, label }) => {
           const group = options.filter((o) => o.kind === kind);
           if (group.length === 0) return null;

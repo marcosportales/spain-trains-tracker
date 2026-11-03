@@ -1,6 +1,7 @@
-import type { SearchResult } from '@stt/contracts';
+import type { SearchResult, SearchSuggestions } from '@stt/contracts';
 import { describe, expect, it } from 'vitest';
 import {
+  FIXED_STATIONS,
   moveActive,
   normaliseQuery,
   optionHref,
@@ -9,6 +10,7 @@ import {
   SEARCH_MIN_QUERY_LENGTH,
   type SearchOption,
   searchOptions,
+  suggestionOptions,
 } from './search-view';
 
 const result: SearchResult = {
@@ -92,5 +94,46 @@ describe('runRouteText', () => {
   });
   it('is undefined with neither route nor Line', () => {
     expect(runRouteText(base)).toBeUndefined();
+  });
+});
+
+describe('suggestionOptions', () => {
+  const suggestions: SearchSuggestions = {
+    runs: [{ trainNumber: '03063', serviceDate: '2026-11-01', serviceType: 'ave' }],
+  };
+
+  it('lists the suggested Runs, then the four fixed main Stations', () => {
+    const options = suggestionOptions(suggestions);
+    expect(options.map((o) => o.id)).toEqual([
+      'run:2026-11-01:03063',
+      'station:60000',
+      'station:17000',
+      'station:71801',
+      'station:51003',
+    ]);
+    expect(FIXED_STATIONS.map((s) => s.name)).toEqual([
+      'Madrid Atocha',
+      'Madrid Chamartín',
+      'Barcelona Sants',
+      'Sevilla-Santa Justa',
+    ]);
+  });
+
+  it('still lists the Stations while the Runs are loading or failed', () => {
+    expect(suggestionOptions(undefined).map((o) => o.kind)).toEqual([
+      'station',
+      'station',
+      'station',
+      'station',
+    ]);
+  });
+
+  it('caps the Runs at 4', () => {
+    const runs = Array.from({ length: 6 }, (_, i) => ({
+      trainNumber: `0000${i}`,
+      serviceDate: '2026-11-01',
+      serviceType: 'ave' as const,
+    }));
+    expect(suggestionOptions({ runs }).filter((o) => o.kind === 'run')).toHaveLength(4);
   });
 });
