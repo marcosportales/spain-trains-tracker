@@ -35,3 +35,9 @@ export const SearchResult = z.object({
   lines: z.array(LineSearchHit),
 });
 export type SearchResult = z.infer<typeof SearchResult>;
+
+/** Tracked Runs with the largest Delay right now, offered before the user has typed anything. */
+export const SearchSuggestions = z.object({
+  runs: z.array(RunSearchHit),
+});
+export type SearchSuggestions = z.infer<typeof SearchSuggestions>;

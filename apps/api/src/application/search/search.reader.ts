@@ -4,6 +4,8 @@ import type { LineSearchHit, RunSearchHit, StationSearchHit } from '@stt/contrac
 export abstract class SearchReader {
   /** Runs seen at or after `since` whose Train number equals or starts with `query`, newest first. */
   abstract findRuns(query: string, since: Date, limit: number): Promise<RunSearchHit[]>;
+  /** Runs seen at or after `since`, ordered by latest Delay, largest first; Runs with no known Delay come last. */
+  abstract findMostDelayedRuns(since: Date, limit: number): Promise<RunSearchHit[]>;
   /** Stations whose name matches `query` ignoring case and accents, tolerating small typos, best first. */
   abstract findStations(query: string, limit: number): Promise<StationSearchHit[]>;
   /** Lines whose name or code starts with `query` ignoring case, exact matches first. */

@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { LineSearchHit, RunSearchHit, StationSearchHit } from '@stt/contracts';
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { SearchReader } from '../../application/search/search.reader.js';
 import type { ServiceType } from '../../domain/network/index.js';
@@ -26,6 +26,28 @@ export class DrizzleSearchReader extends SearchReader {
   }
 
   async findRuns(query: string, since: Date, limit: number): Promise<RunSearchHit[]> {
+    return this.queryRuns(
+      sql`r.train_number LIKE ${`${likeEscape(query)}%`}
+        AND r.last_seen_at >= ${since.toISOString()}::timestamptz
+      ORDER BY (r.train_number = ${query}) DESC, r.service_date DESC, r.train_number`,
+      limit,
+    );
+  }
+
+  async findMostDelayedRuns(since: Date, limit: number): Promise<RunSearchHit[]> {
+    return this.queryRuns(
+      sql`r.last_seen_at >= ${since.toISOString()}::timestamptz
+      ORDER BY (
+        SELECT dl.seconds FROM ${t.delays} dl
+        WHERE dl.train_number = r.train_number AND dl.service_date = r.service_date
+        ORDER BY dl.observed_at DESC LIMIT 1
+      ) DESC NULLS LAST, r.last_seen_at DESC, r.train_number`,
+      limit,
+    );
+  }
+
+  /** Runs with origin and destination names, from a WHERE condition plus ORDER BY. */
+  private async queryRuns(whereAndOrder: SQL, limit: number): Promise<RunSearchHit[]> {
     const rows = await this.db.execute<{
       train_number: string;
       service_date: string;
@@ -39,9 +61,7 @@ export class DrizzleSearchReader extends SearchReader {
       FROM ${t.runs} r
       LEFT JOIN ${t.stations} o ON o.code = r.origin_station_code
       LEFT JOIN ${t.stations} d ON d.code = r.destination_station_code
-      WHERE r.train_number LIKE ${`${likeEscape(query)}%`}
-        AND r.last_seen_at >= ${since.toISOString()}::timestamptz
-      ORDER BY (r.train_number = ${query}) DESC, r.service_date DESC, r.train_number
+      WHERE ${whereAndOrder}
       LIMIT ${limit}`);
     return rows.map((row) => ({
       trainNumber: row.train_number,
