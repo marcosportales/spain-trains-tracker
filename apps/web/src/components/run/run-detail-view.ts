@@ -27,6 +27,25 @@ export const formatMadridDateTime = (instant: Date | number, locale: string): st
     timeStyle: 'medium',
   }).format(instant);
 
+/** Time of day with seconds, in Madrid time ("10:42:15"). */
+export const formatMadridClock = (instant: Date | number, locale: string): string =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Europe/Madrid',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).format(instant);
+
+/** Time of day to the minute, in Madrid time ("10:00"). */
+export const formatMadridHourMinute = (instant: Date | number, locale: string): string =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Europe/Madrid',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).format(instant);
+
 export type StopTimes = {
   scheduled: string | undefined;
   estimated: string | undefined;
