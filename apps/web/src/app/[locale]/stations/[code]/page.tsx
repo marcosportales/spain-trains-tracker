@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { Suspense } from 'react';
+import { TrainMap } from '@/components/map/TrainMap';
 import { StationBoardView } from '@/components/station/StationBoardView';
 import { fetchStationBoard } from '@/lib/station-board-api';
 
@@ -29,5 +31,17 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 export default async function StationPage({ params }: { params: Params }) {
   const { locale, board } = await loadBoard(params);
   setRequestLocale(locale);
-  return <StationBoardView initial={board} />;
+  const t = await getTranslations({ locale, namespace: 'Home' });
+  return (
+    <>
+      <Suspense>
+        <TrainMap
+          label={t('mapLabel')}
+          stationsHint={t('stationsHint')}
+          focusStationCode={board.stationCode}
+        />
+      </Suspense>
+      <StationBoardView initial={board} />
+    </>
+  );
 }
