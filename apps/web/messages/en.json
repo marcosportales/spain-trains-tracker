@@ -72,11 +72,16 @@
     "close": "Close",
     "window": "Next 2 hours",
     "tabs": "Board type",
+    "columns": {
+      "time": "Time",
+      "destination": "Destination",
+      "origin": "Origin",
+      "train": "Train",
+      "status": "Status"
+    },
+    "train": "Train {trainNumber}",
     "departures": "Departures",
     "arrivals": "Arrivals",
-    "to": "To {station}",
-    "from": "From {station}",
-    "empty": "No Runs in the next 2 hours",
     "stale": "Could not refresh; showing the last known board",
     "headline": {
       "nextDepartures": "Next departure: {time} to {station}",

@@ -4,16 +4,15 @@ import type { StationBoard, StationList } from '@stt/contracts';
 import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { fetchStationBoard } from '@/lib/station-board-api';
 import { stationNames } from '@/lib/station-names';
-import { serviceTypeVar } from '@/theme/tokens';
-import { DelayBadge } from '../delay/DelayBadge';
-import { runDetailPath } from '../run/run-detail-view';
 import { ShareButton } from '../share/ShareButton';
 import { Button } from '../ui/Button';
 import { DetailSurface } from '../ui/DetailSurface';
-import { boardHeadline, entryBand, entryTimes, type Tab } from './station-board-view';
+import { EmptyState } from '../ui/EmptyState';
+import { BoardTable } from './BoardTable';
+import { boardHeadline, type Tab } from './station-board-view';
 
 export const REFRESH_MS = 30_000;
 
@@ -85,7 +84,11 @@ export function StationBoardView({
         </p>
       )}
 
-      <div role="tablist" aria-label={t('tabs')} className="flex gap-2">
+      <div
+        role="tablist"
+        aria-label={t('tabs')}
+        className="inline-flex gap-0.5 rounded-md bg-surface-3 p-0.5"
+      >
         {(['departures', 'arrivals'] as const).map((name) => (
           <button
             key={name}
@@ -95,7 +98,9 @@ export function StationBoardView({
             aria-selected={tab === name}
             aria-controls="board-panel"
             onClick={() => setTab(name)}
-            className={`min-h-11 flex-1 rounded border px-3 text-sm font-medium ${tab === name ? 'bg-gray-900 text-white' : 'bg-white'}`}
+            className={`inline-flex min-h-9 items-center justify-center rounded-sm px-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-accent ${
+              tab === name ? 'bg-surface text-ink shadow-1' : 'text-ink-2 hover:text-ink'
+            }`}
           >
             {t(name)}
           </button>
@@ -104,58 +109,9 @@ export function StationBoardView({
 
       <div role="tabpanel" id="board-panel" aria-labelledby={`tab-${tab}`} className="mt-3">
         {entries.length === 0 ? (
-          <p className="text-sm text-gray-600">{t('empty')}</p>
+          <EmptyState message={headlineText} />
         ) : (
-          <ul className="divide-y rounded border bg-white">
-            {entries.map((entry) => {
-              const band = entryBand(entry);
-              const times = entryTimes(entry);
-              return (
-                <li key={`${entry.serviceDate}/${entry.trainNumber}`}>
-                  <Link
-                    href={runDetailPath(entry)}
-                    className="flex min-h-14 items-center justify-between gap-3 px-3 py-2"
-                  >
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-2 font-medium">
-                        <span
-                          aria-hidden="true"
-                          className="inline-block size-3 shrink-0 rounded-full"
-                          style={{ backgroundColor: serviceTypeVar(entry.serviceType) }}
-                        />
-                        {entry.trainNumber}
-                        {entry.lineCode && (
-                          <span className="text-sm font-normal">· {entry.lineCode}</span>
-                        )}
-                      </span>
-                      <span className="block truncate text-sm text-gray-600">
-                        {t(tab === 'departures' ? 'to' : 'from', {
-                          station: names(entry.counterpartStationCode),
-                        })}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block tabular-nums">
-                        {times.changed ? (
-                          <>
-                            <s className="text-gray-500">{times.scheduled}</s> {times.estimated}
-                          </>
-                        ) : (
-                          times.scheduled
-                        )}
-                      </span>
-                      <DelayBadge
-                        band={band}
-                        delaySeconds={entry.delaySeconds}
-                        size="sm"
-                        data-testid="delay-badge"
-                      />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <BoardTable entries={entries} tab={tab} names={names} />
         )}
       </div>
     </DetailSurface>

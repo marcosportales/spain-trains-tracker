@@ -72,11 +72,16 @@
     "close": "Cerrar",
     "window": "Próximas 2 horas",
     "tabs": "Tipo de panel",
+    "columns": {
+      "time": "Hora",
+      "destination": "Destino",
+      "origin": "Origen",
+      "train": "Tren",
+      "status": "Estado"
+    },
+    "train": "Tren {trainNumber}",
     "departures": "Salidas",
     "arrivals": "Llegadas",
-    "to": "A {station}",
-    "from": "De {station}",
-    "empty": "No hay circulaciones en las próximas 2 horas",
     "stale": "No se pudo actualizar; mostrando el último panel conocido",
     "headline": {
       "nextDepartures": "Próxima salida: {time} a {station}",
